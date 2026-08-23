@@ -237,3 +237,5 @@ def _vant(dH: float, T_K: float) -> float:
 def pKw_of(T_K: float) -> float:
     """pKw(T) 经验式：298.15 K -> 14.0，373 K -> 12.3。"""
     return 4471.0 / T_K - 6.09 + 0.0171 * T_K
+
+

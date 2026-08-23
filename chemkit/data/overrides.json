@@ -1,0 +1,973 @@
+[
+ {
+  "id": "white_phosphorus_disproportionation",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "P_4",
+    "NaOH"
+   ],
+   "T_min": 333
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "P_4",
+     "mol": 1.0
+    },
+    {
+     "name": "OH^-",
+     "mol": 3.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 3.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "PH_3",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2PO_2^-",
+     "mol": 3.0
+    }
+   ],
+   "note": "白磷歧化：P4 + 3OH- + 3H2O -> PH3 + 3H2PO2-（热浓碱）"
+  }
+ },
+ {
+  "id": "pb3o4_nitric_acid",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "Pb_3O_4",
+    "HNO_3"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Pb_3O_4",
+     "mol": 1.0
+    },
+    {
+     "name": "H^+",
+     "mol": 4.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "Pb^{2+}",
+     "mol": 2.0
+    },
+    {
+     "name": "PbO_2",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 2.0
+    }
+   ],
+   "note": "Pb3O4 + 4H+ -> 2Pb2+ + PbO2 + 2H2O"
+  }
+ },
+ {
+  "id": "hgs_aqua_regia",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "HgS",
+    "HNO_3",
+    "HCl"
+   ],
+   "conc": "concentrated"
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "HgS",
+     "mol": 3.0
+    },
+    {
+     "name": "NO_3^-",
+     "mol": 2.0
+    },
+    {
+     "name": "H^+",
+     "mol": 8.0
+    },
+    {
+     "name": "Cl^-",
+     "mol": 12.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "[HgCl_4]^{2-}",
+     "mol": 3.0
+    },
+    {
+     "name": "S",
+     "mol": 3.0
+    },
+    {
+     "name": "NO",
+     "mol": 2.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 4.0
+    }
+   ],
+   "note": "HgS 溶于王水（配位 + 氧化复合）"
+  }
+ },
+ {
+  "id": "sio2_naoh",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "SiO_2",
+    "NaOH"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "SiO_2",
+     "mol": 1.0
+    },
+    {
+     "name": "OH^-",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "SiO_3^{2-}",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 1.0
+    }
+   ],
+   "note": "SiO2 + 2NaOH -> Na2SiO3 + H2O（强碱溶蚀酸性氧化物）"
+  }
+ },
+ {
+  "id": "thiosulfate_acid",
+  "source": "round4",
+  "match": {
+   "species": [
+    "Na_2S_2O_3",
+    "HCl"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "S_2O_3^{2-}",
+     "mol": 1.0
+    },
+    {
+     "name": "H^+",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "S",
+     "mol": 1.0
+    },
+    {
+     "name": "SO_2",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 1.0
+    }
+   ],
+   "note": "硫代硫酸根遇强酸分解：S2O3^2- + 2H+ -> S(沉淀) + SO2 + H2O（教材结论；连四硫酸根等多硫中间体网络超出引擎枚举范围，用 OVERRIDE 人工通道）"
+  }
+ },
+ {
+  "id": "cu2_iodide",
+  "source": "round4",
+  "match": {
+   "species": [
+    "CuSO_4",
+    "KI"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Cu^{2+}",
+     "mol": 2.0
+    },
+    {
+     "name": "I^-",
+     "mol": 4.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "CuI",
+     "mol": 2.0
+    },
+    {
+     "name": "I_2",
+     "mol": 1.0
+    }
+   ],
+   "note": "碘量法测铜：2Cu2+ + 4I- -> 2CuI(沉淀) + I2。CuI 极低 Ksp 拉动 Cu2+/Cu+ 电势超过 I2/I-"
+  }
+ },
+ {
+  "id": "hbr_conc_sulfuric",
+  "source": "round4",
+  "match": {
+   "species": [
+    "HBr",
+    "H_2SO_4"
+   ],
+   "T_min": 330
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [
+    "slow"
+   ],
+   "consumed": [
+    {
+     "name": "H_2SO_4",
+     "mol": 1.0
+    },
+    {
+     "name": "Br^-",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "Br_2",
+     "mol": 1.0
+    },
+    {
+     "name": "SO_2",
+     "mol": 1.0
+    }
+   ],
+   "note": "热浓硫酸氧化 HBr：2HBr + H2SO4(浓) -> Br2 + SO2 + 2H2O（实验室事实；产物 Br2/SO2 逸出拉动正向，水溶液逆反应在缺水浓酸中不可达）"
+  }
+ },
+ {
+  "id": "ko2_water",
+  "source": "round5",
+  "match": {
+   "species": [
+    "KO_2"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "O_2^-",
+     "mol": 4.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "OH^-",
+     "mol": 4.0
+    },
+    {
+     "name": "O_2",
+     "mol": 3.0
+    }
+   ],
+   "note": "超氧化钾供氧：4KO2+2H2O->4KOH+3O2（自救呼吸器）"
+  }
+ },
+ {
+  "id": "ko2_co2",
+  "source": "round5",
+  "match": {
+   "species": [
+    "KO_2",
+    "CO_2"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "O_2^-",
+     "mol": 4.0
+    },
+    {
+     "name": "CO_2",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "CO_3^{2-}",
+     "mol": 2.0
+    },
+    {
+     "name": "O_2",
+     "mol": 3.0
+    }
+   ],
+   "note": "4KO2+2CO2->2K2CO3+3O2"
+  }
+ },
+ {
+  "id": "nah_water",
+  "source": "round5",
+  "match": {
+   "species": [
+    "NaH"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "H^-",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 1.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "OH^-",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2",
+     "mol": 1.0
+    }
+   ],
+   "note": "氢化钠遇水：NaH+H2O->NaOH+H2（H- 强还原剂/强碱）"
+  }
+ },
+ {
+  "id": "sio2_hf",
+  "source": "round5",
+  "match": {
+   "species": [
+    "SiO_2",
+    "HF"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "SiO_2",
+     "mol": 1.0
+    },
+    {
+     "name": "HF",
+     "mol": 4.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "SiF_4",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 2.0
+    }
+   ],
+   "note": "氢氟酸刻蚀玻璃：SiO2+4HF->SiF4(气体)+2H2O（SiO2 不溶于其他酸）"
+  }
+ },
+ {
+  "id": "geo2_naoh",
+  "source": "round5",
+  "match": {
+   "species": [
+    "GeO_2",
+    "NaOH"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "GeO_2",
+     "mol": 1.0
+    },
+    {
+     "name": "OH^-",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "GeO_3^{2-}",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 1.0
+    }
+   ],
+   "note": "GeO2 为酸性氧化物（略有两性）：GeO2+2NaOH->Na2GeO3+H2O，同 SiO2 通道"
+  }
+ },
+ {
+  "id": "f2_water",
+  "source": "round5",
+  "match": {
+   "species": [
+    "F_2"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "F_2",
+     "mol": 2.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "HF",
+     "mol": 4.0
+    },
+    {
+     "name": "O_2",
+     "mol": 1.0
+    }
+   ],
+   "note": "F2 与水剧烈反应：2F2+2H2O->4HF+O2（OER 过电位在此不适用，F2 为最强氧化剂）"
+  }
+ },
+ {
+  "id": "na2o2_co2",
+  "source": "round5",
+  "match": {
+   "species": [
+    "Na_2O_2",
+    "CO_2"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "O_2^{2-}",
+     "mol": 2.0
+    },
+    {
+     "name": "CO_2",
+     "mol": 2.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "CO_3^{2-}",
+     "mol": 2.0
+    },
+    {
+     "name": "O_2",
+     "mol": 1.0
+    }
+   ],
+   "note": "2Na2O2+2CO2->2Na2CO3+O2（潜艇/呼吸供氧；水溶液中过氧根被质子化不放氧，教材体系按放氧处理，用 OVERRIDE 表达）"
+  }
+ },
+ {
+  "id": "si_hf",
+  "source": "round6",
+  "match": {
+   "species": [
+    "Si",
+    "HF"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Si",
+     "mol": 1.0
+    },
+    {
+     "name": "HF",
+     "mol": 4.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "SiF_4",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2",
+     "mol": 2.0
+    }
+   ],
+   "note": "硅溶于氢氟酸：Si+4HF->SiF4+2H2（Si 不与 HCl/H2SO4/HNO3 反应）"
+  }
+ },
+ {
+  "id": "al4c3_water",
+  "source": "round6",
+  "match": {
+   "species": [
+    "Al_4C_3"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Al_4C_3",
+     "mol": 1.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 12.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "Al(OH)_3",
+     "mol": 4.0
+    },
+    {
+     "name": "CH_4",
+     "mol": 3.0
+    }
+   ],
+   "note": "碳化铝水解：Al4C3+12H2O->4Al(OH)3+3CH4（苏教版，类盐型碳化物水解）"
+  }
+ },
+ {
+  "id": "al2o3_hcl",
+  "source": "round6",
+  "match": {
+   "species": [
+    "Al_2O_3",
+    "HCl"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Al_2O_3",
+     "mol": 1
+    },
+    {
+     "name": "H^+",
+     "mol": 6
+    }
+   ],
+   "produced": [
+    {
+     "name": "Al^{3+}",
+     "mol": 2
+    },
+    {
+     "name": "H_2O",
+     "mol": 3
+    }
+   ],
+   "note": "Al2O3+6HCl=2AlCl3+3H2O（两性氧化物溶于强酸）"
+  }
+ },
+ {
+  "id": "al2o3_naoh",
+  "source": "round6",
+  "match": {
+   "species": [
+    "Al_2O_3",
+    "NaOH"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Al_2O_3",
+     "mol": 1
+    },
+    {
+     "name": "OH^-",
+     "mol": 2
+    }
+   ],
+   "produced": [
+    {
+     "name": "[Al(OH)_4]^-",
+     "mol": 2
+    }
+   ],
+   "note": "Al2O3+2NaOH+3H2O=2Na[Al(OH)4]（两性氧化物溶于强碱）"
+  }
+ },
+ {
+  "id": "fe3o4_hcl",
+  "source": "round6",
+  "match": {
+   "species": [
+    "Fe_3O_4",
+    "HCl"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Fe_3O_4",
+     "mol": 1
+    },
+    {
+     "name": "H^+",
+     "mol": 8
+    }
+   ],
+   "produced": [
+    {
+     "name": "Fe^{2+}",
+     "mol": 1
+    },
+    {
+     "name": "Fe^{3+}",
+     "mol": 2
+    },
+    {
+     "name": "H_2O",
+     "mol": 4
+    }
+   ],
+   "note": "Fe3O4+8HCl=FeCl2+2FeCl3+4H2O（混合价态氧化物，非氧化还原）"
+  }
+ },
+ {
+  "id": "si_naoh",
+  "source": "round6",
+  "match": {
+   "species": [
+    "Si",
+    "NaOH"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "Si",
+     "mol": 1
+    },
+    {
+     "name": "OH^-",
+     "mol": 2
+    },
+    {
+     "name": "H_2O",
+     "mol": 1
+    }
+   ],
+   "produced": [
+    {
+     "name": "SiO_3^{2-}",
+     "mol": 1
+    },
+    {
+     "name": "H_2",
+     "mol": 2
+    }
+   ],
+   "note": "Si+2NaOH+H2O=Na2SiO3+2H2（硅溶于强碱，非金属中仅硅有此性质）"
+  }
+ },
+ {
+  "id": "cah2_water",
+  "source": "round6",
+  "match": {
+   "species": [
+    "CaH_2"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "H^-",
+     "mol": 2
+    },
+    {
+     "name": "H_2O",
+     "mol": 2
+    }
+   ],
+   "produced": [
+    {
+     "name": "OH^-",
+     "mol": 2
+    },
+    {
+     "name": "H_2",
+     "mol": 2
+    }
+   ],
+   "note": "CaH2+2H2O=Ca(OH)2+2H2（H- 强还原剂，野外生氢剂）"
+  }
+ },
+ {
+  "id": "no2_o2_absorb",
+  "source": "round6",
+  "match": {
+   "species": [
+    "NO_2",
+    "O_2"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "NO_2",
+     "mol": 4
+    },
+    {
+     "name": "O_2",
+     "mol": 1
+    },
+    {
+     "name": "H_2O",
+     "mol": 2
+    }
+   ],
+   "produced": [
+    {
+     "name": "H^+",
+     "mol": 4.0
+    },
+    {
+     "name": "NO_3^-",
+     "mol": 4.0
+    }
+   ],
+   "note": "4NO2+O2+2H2O=4HNO3（硝酸工业尾气全吸收；气相氧化+吸收复合过程）"
+  }
+ },
+ {
+  "id": "no_o2_absorb",
+  "source": "round6",
+  "match": {
+   "species": [
+    "NO",
+    "O_2"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "NO",
+     "mol": 4
+    },
+    {
+     "name": "O_2",
+     "mol": 3
+    },
+    {
+     "name": "H_2O",
+     "mol": 2
+    }
+   ],
+   "produced": [
+    {
+     "name": "H^+",
+     "mol": 4.0
+    },
+    {
+     "name": "NO_3^-",
+     "mol": 4.0
+    }
+   ],
+   "note": "4NO+3O2+2H2O=4HNO3（2NO+O2=2NO2 气相快反应后续吸收）"
+  }
+ },
+ {
+  "id": "zno_naoh",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "ZnO",
+    "NaOH"
+   ]
+  },
+  "result": {
+   "reacted": true,
+   "degree": "complete",
+   "annotations": [],
+   "consumed": [
+    {
+     "name": "ZnO",
+     "mol": 1.0
+    },
+    {
+     "name": "OH^-",
+     "mol": 2.0
+    },
+    {
+     "name": "H_2O",
+     "mol": 1.0
+    }
+   ],
+   "produced": [
+    {
+     "name": "[Zn(OH)_4]^{2-}",
+     "mol": 1.0
+    }
+   ],
+   "note": "两性氧化物溶于强碱：ZnO + 2OH- + H2O -> [Zn(OH)4]2-"
+  }
+ },
+ {
+  "id": "iron_passivation_conc_nitric",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "Fe",
+    "HNO_3"
+   ],
+   "conc": "concentrated",
+   "T_max": 320
+  },
+  "result": {
+   "reacted": false,
+   "degree": "hardly",
+   "annotations": [
+    "blocked"
+   ],
+   "consumed": [],
+   "produced": [],
+   "note": "钝化：冷浓硝酸中铁表面生成致密氧化膜，反应受阻"
+  }
+ },
+ {
+  "id": "aluminum_passivation_conc_nitric",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "Al",
+    "HNO_3"
+   ],
+   "conc": "concentrated",
+   "T_max": 320
+  },
+  "result": {
+   "reacted": false,
+   "degree": "hardly",
+   "annotations": [
+    "blocked"
+   ],
+   "consumed": [],
+   "produced": [],
+   "note": "钝化：冷浓硝酸中铝表面生成致密氧化膜，反应受阻"
+  }
+ },
+ {
+  "id": "iron_passivation_conc_sulfuric",
+  "source": "builtin",
+  "match": {
+   "species": [
+    "Fe",
+    "H_2SO_4"
+   ],
+   "conc": "concentrated",
+   "T_max": 320
+  },
+  "result": {
+   "reacted": false,
+   "degree": "hardly",
+   "annotations": [
+    "blocked"
+   ],
+   "consumed": [],
+   "produced": [],
+   "note": "钝化：冷浓硫酸中铁表面生成致密氧化膜，反应受阻"
+  }
+ }
+]

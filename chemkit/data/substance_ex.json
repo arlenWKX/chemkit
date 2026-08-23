@@ -1,0 +1,501 @@
+{
+ "HF": {
+  "form": "molecule"
+ },
+ "HCN": {
+  "form": "molecule"
+ },
+ "HClO": {
+  "form": "molecule"
+ },
+ "HNO_2": {
+  "form": "molecule"
+ },
+ "H_3PO_4": {
+  "form": "molecule"
+ },
+ "H_2SiO_3": {
+  "form": "solid"
+ },
+ "H_2S": {
+  "form": "gas"
+ },
+ "NH_3": {
+  "form": "gas"
+ },
+ "CO_2": {
+  "form": "gas"
+ },
+ "SO_2": {
+  "form": "gas"
+ },
+ "NO": {
+  "form": "gas"
+ },
+ "NO_2": {
+  "form": "gas"
+ },
+ "PH_3": {
+  "form": "gas"
+ },
+ "C_2H_2": {
+  "form": "gas"
+ },
+ "H_2": {
+  "form": "gas"
+ },
+ "N_2": {
+  "form": "gas"
+ },
+ "O_2": {
+  "form": "gas"
+ },
+ "Cl_2": {
+  "form": "gas"
+ },
+ "H_2O_2": {
+  "form": "molecule"
+ },
+ "Na_2O_2": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "Na^+",
+   "O_2^{2-}"
+  ]
+ },
+ "SiO_2": {
+  "form": "solid"
+ },
+ "MnO_2": {
+  "form": "solid"
+ },
+ "PbO_2": {
+  "form": "solid"
+ },
+ "Pb_3O_4": {
+  "form": "solid"
+ },
+ "Fe_2O_3": {
+  "form": "solid"
+ },
+ "Na": {
+  "form": "solid"
+ },
+ "Mg": {
+  "form": "solid"
+ },
+ "Al": {
+  "form": "solid"
+ },
+ "Zn": {
+  "form": "solid"
+ },
+ "Fe": {
+  "form": "solid"
+ },
+ "Cu": {
+  "form": "solid"
+ },
+ "Pb": {
+  "form": "solid"
+ },
+ "Ag": {
+  "form": "solid"
+ },
+ "Au": {
+  "form": "solid"
+ },
+ "Hg": {
+  "form": "molecule"
+ },
+ "S": {
+  "form": "solid"
+ },
+ "P_4": {
+  "form": "solid"
+ },
+ "I_2": {
+  "form": "solid"
+ },
+ "C": {
+  "form": "solid"
+ },
+ "Si": {
+  "form": "solid"
+ },
+ "Br_2": {
+  "form": "molecule"
+ },
+ "H_2SO_4": {
+  "conc_forms": {
+   "concentrated": "molecule",
+   "dilute": "acid_rule"
+  },
+  "conc_M": 10.0,
+  "spec": {
+   "c_half": 12.0,
+   "p": 4
+  }
+ },
+ "HNO_3": {
+  "conc_forms": {
+   "concentrated": "molecule",
+   "dilute": "acid_rule"
+  },
+  "conc_M": 8.0,
+  "spec": {
+   "c_half": 12.0,
+   "p": 3
+  }
+ },
+ "KAl(SO_4)_2": {
+  "form": "ions",
+  "ions": [
+   "K^+",
+   "Al^{3+}",
+   "SO_4^{2-}",
+   "SO_4^{2-}"
+  ]
+ },
+ "CaC_2": {
+  "form": "ions",
+  "ions": [
+   "Ca^{2+}",
+   "C_2^{2-}"
+  ]
+ },
+ "Mg_3N_2": {
+  "form": "ions",
+  "ions": [
+   "Mg^{2+}",
+   "Mg^{2+}",
+   "Mg^{2+}",
+   "N^{3-}",
+   "N^{3-}"
+  ]
+ },
+ "Ca": {
+  "form": "solid"
+ },
+ "Mn": {
+  "form": "solid"
+ },
+ "Na[Al(OH)_4]": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "[Al(OH)_4]^-"
+  ]
+ },
+ "Na_2[Zn(OH)_4]": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "Na^+",
+   "[Zn(OH)_4]^{2-}"
+  ]
+ },
+ "NaAc": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "Ac^-"
+  ]
+ },
+ "Sn": {
+  "form": "solid"
+ },
+ "K": {
+  "form": "solid"
+ },
+ "Li": {
+  "form": "solid"
+ },
+ "Rb": {
+  "form": "solid"
+ },
+ "Cs": {
+  "form": "solid"
+ },
+ "Be": {
+  "form": "solid"
+ },
+ "Sr": {
+  "form": "solid"
+ },
+ "Ba": {
+  "form": "solid"
+ },
+ "Ga": {
+  "form": "solid"
+ },
+ "Ge": {
+  "form": "solid"
+ },
+ "Se": {
+  "form": "solid"
+ },
+ "GeO_2": {
+  "form": "solid"
+ },
+ "H_2GeO_3": {
+  "form": "solid"
+ },
+ "SeO_2": {
+  "form": "molecule"
+ },
+ "H_2Se": {
+  "form": "gas"
+ },
+ "F_2": {
+  "form": "gas"
+ },
+ "SiF_4": {
+  "form": "gas"
+ },
+ "KO_2": {
+  "form": "ions",
+  "ions": [
+   "K^+",
+   "O_2^-"
+  ]
+ },
+ "NaH": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "H^-"
+  ]
+ },
+ "CaH_2": {
+  "form": "ions",
+  "ions": [
+   "Ca^{2+}",
+   "H^-",
+   "H^-"
+  ]
+ },
+ "BaO_2": {
+  "form": "ions",
+  "ions": [
+   "Ba^{2+}",
+   "O_2^{2-}"
+  ]
+ },
+ "Na[B(OH)_4]": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "[B(OH)_4]^-"
+  ]
+ },
+ "H_3BO_3": {
+  "form": "molecule"
+ },
+ "NaAlO_2": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "[Al(OH)_4]^-"
+  ],
+  "note": "偏铝酸钠水溶液实际形态为四羟基合铝(III)酸根（新教材写法 Na[Al(OH)4]）"
+ },
+ "CH_4": {
+  "form": "gas"
+ },
+ "Na_2O": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "Na^+",
+   "O^{2-}"
+  ]
+ },
+ "CH_3COOH": {
+  "form": "molecule"
+ },
+ "Al_2O_3": {
+  "form": "solid",
+  "note": "难溶两性氧化物（课本处理：溶于强酸强碱，由 OVERRIDE 表达）"
+ },
+ "Fe_3O_4": {
+  "form": "solid",
+  "note": "混合价态氧化物 FeO·Fe2O3"
+ },
+ "Al_4C_3": {
+  "form": "solid"
+ },
+ "NaHSO_4": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "H^+",
+   "SO_4^{2-}"
+  ]
+ },
+ "KHSO_4": {
+  "form": "ions",
+  "ions": [
+   "K^+",
+   "H^+",
+   "SO_4^{2-}"
+  ]
+ },
+ "HCl": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "Cl^-"
+  ],
+  "conc_M": 7.0
+ },
+ "NaOH": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "OH^-"
+  ],
+  "conc_M": 5.0
+ },
+ "N_2O": {
+  "form": "gas"
+ },
+ "ScCl_3": {
+  "form": "ions",
+  "ions": [
+   "Sc^{3+}",
+   "Cl^-"
+  ]
+ },
+ "TiCl_3": {
+  "form": "ions",
+  "ions": [
+   "Ti^{3+}",
+   "Cl^-"
+  ]
+ },
+ "TiOSO_4": {
+  "form": "ions",
+  "ions": [
+   "TiO^{2+}",
+   "SO_4^{2-}"
+  ]
+ },
+ "NH_4VO_3": {
+  "form": "ions",
+  "ions": [
+   "NH_4^+",
+   "VO_3^-"
+  ]
+ },
+ "VOSO_4": {
+  "form": "ions",
+  "ions": [
+   "VO^{2+}",
+   "SO_4^{2-}"
+  ]
+ },
+ "VCl_3": {
+  "form": "ions",
+  "ions": [
+   "V^{3+}",
+   "Cl^-"
+  ]
+ },
+ "VCl_2": {
+  "form": "ions",
+  "ions": [
+   "V^{2+}",
+   "Cl^-"
+  ]
+ },
+ "HAuCl_4": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "[AuCl_4]^-"
+  ]
+ },
+ "AuCl_3": {
+  "form": "ions",
+  "ions": [
+   "Au^{3+}",
+   "Cl^-"
+  ]
+ },
+ "H_2PtCl_6": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "[PtCl_6]^{2-}"
+  ]
+ },
+ "Sc": {
+  "form": "solid"
+ },
+ "Ti": {
+  "form": "solid"
+ },
+ "V": {
+  "form": "solid"
+ },
+ "Cr": {
+  "form": "solid"
+ },
+ "Co": {
+  "form": "solid"
+ },
+ "Ni": {
+  "form": "solid"
+ },
+ "Cd": {
+  "form": "solid"
+ },
+ "Pt": {
+  "form": "solid"
+ },
+ "CuO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "ZnO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "MgO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "FeO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "NiO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "CoO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "CdO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "PbO": {
+  "form": "solid",
+  "note": "难溶碱性氧化物：不按盐拆分为 M^n+ + O^2-（避免与水/碱假反应）；酸溶解由引擎 4.3b 氧化物候选表达"
+ },
+ "SO_3": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "HSO_4^-"
+  ],
+  "note": "SO3+H2O→H2SO4 瞬时剧烈；入水即按稀硫酸一级全电离、二级部分电离入账"
+ },
+ "MnOOH": {
+  "form": "solid"
+ }
+}

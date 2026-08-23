@@ -1,0 +1,279 @@
+[
+ {
+  "complex": "[Ag(NH_3)_2]^+",
+  "center": "Ag^+",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 7.2
+ },
+ {
+  "complex": "[Ag(CN)_2]^-",
+  "center": "Ag^+",
+  "ligand": "CN^-",
+  "nu": 2,
+  "logb": 21.1
+ },
+ {
+  "complex": "[Ag(S_2O_3)_2]^{3-}",
+  "center": "Ag^+",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 2,
+  "logb": 13.5
+ },
+ {
+  "complex": "[Cu(NH_3)_4]^{2+}",
+  "center": "Cu^{2+}",
+  "ligand": "NH_3",
+  "nu": 4,
+  "logb": 13.3
+ },
+ {
+  "complex": "[Zn(NH_3)_4]^{2+}",
+  "center": "Zn^{2+}",
+  "ligand": "NH_3",
+  "nu": 4,
+  "logb": 9.5
+ },
+ {
+  "complex": "[Zn(OH)_4]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 17.7
+ },
+ {
+  "complex": "[Al(OH)_4]^-",
+  "center": "Al^{3+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 34.5,
+  "calibrated": "与 pKsp(Al(OH)3)=33 配合，使 Al(OH)3 + OH- -> [Al(OH)4]- 整体 logK ≈ +1.5"
+ },
+ {
+  "complex": "[FeF_6]^{3-}",
+  "center": "Fe^{3+}",
+  "ligand": "F^-",
+  "nu": 6,
+  "logb": 15.8
+ },
+ {
+  "complex": "[AuCl_4]^-",
+  "center": "Au^{3+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 26.0
+ },
+ {
+  "complex": "[HgCl_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 15.0
+ },
+ {
+  "complex": "[HgI_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "I^-",
+  "nu": 4,
+  "logb": 30.0
+ },
+ {
+  "complex": "[Cr(OH)_4]^-",
+  "center": "Cr^{3+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 29.8,
+  "calibrated": "Cr(OH)3+OH- -> [Cr(OH)4]- 整体 logK≈-0.4（两性，溶于强碱）"
+ },
+ {
+  "complex": "[Fe(SCN)]^{2+}",
+  "center": "Fe^{3+}",
+  "ligand": "SCN^-",
+  "nu": 1,
+  "logb": 2.95,
+  "note": "血红色配合物（Fe3+ 检验）；逐级只取第一级"
+ },
+ {
+  "complex": "[Ni(NH_3)_6]^{2+}",
+  "center": "Ni^{2+}",
+  "ligand": "NH_3",
+  "nu": 6,
+  "logb": 8.7
+ },
+ {
+  "complex": "[Cd(NH_3)_4]^{2+}",
+  "center": "Cd^{2+}",
+  "ligand": "NH_3",
+  "nu": 4,
+  "logb": 7.1
+ },
+ {
+  "complex": "[Co(NH_3)_6]^{2+}",
+  "center": "Co^{2+}",
+  "ligand": "NH_3",
+  "nu": 6,
+  "logb": 5.1
+ },
+ {
+  "complex": "[AlF_6]^{3-}",
+  "center": "Al^{3+}",
+  "ligand": "F^-",
+  "nu": 6,
+  "logb": 19.8
+ },
+ {
+  "complex": "[Pb(OH)_3]^-",
+  "center": "Pb^{2+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 14.0,
+  "note": "Pb(OH)2 两性溶于强碱"
+ },
+ {
+  "complex": "[Be(OH)_4]^{2-}",
+  "center": "Be^{2+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 18.9,
+  "note": "calibrated：Be(OH)2+2OH-->[Be(OH)4]2- 整体 logK 约 -2.3（浓碱部分溶解）"
+ },
+ {
+  "complex": "[Ga(OH)_4]^-",
+  "center": "Ga^{3+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 37.6,
+  "note": "logβ4([Ga(OH)4]-)=37.6（文献累积稳定常数）；Ga(OH)3+OH-→[Ga(OH)4]- logK≈+2.5，镓两性显著强于铝"
+ },
+ {
+  "complex": "[PtCl_6]^{2-}",
+  "center": "Pt^{4+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 16.0,
+  "note": "氯铂酸根 logβ4≈16（供配体配平与配合平衡）"
+ },
+ {
+  "complex": "[Fe(C_2O_4)_3]^{3-}",
+  "center": "Fe^{3+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 3,
+  "logb": 20.2,
+  "note": "三草酸合铁(III) logβ3≈20.2"
+ },
+ {
+  "complex": "[Fe(C_2O_4)_2]^{2-}",
+  "center": "Fe^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 2,
+  "logb": 4.5,
+  "note": "草酸合铁(II) logβ2≈4.5"
+ },
+ {
+  "complex": "[Cu(C_2O_4)_2]^{2-}",
+  "center": "Cu^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 2,
+  "logb": 8.5,
+  "note": "二草酸合铜(II) logβ2≈8.5"
+ },
+ {
+  "complex": "[Cu(C_2O_4)_3]^{4-}",
+  "center": "Cu^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 3,
+  "logb": 10.8,
+  "note": "三草酸合铜(II) logβ3≈10.8"
+ },
+ {
+  "complex": "[Zn(C_2O_4)_2]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 2,
+  "logb": 7.4,
+  "note": "草酸合锌(II) logβ2≈7.4"
+ },
+ {
+  "complex": "[Al(C_2O_4)_3]^{3-}",
+  "center": "Al^{3+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 3,
+  "logb": 16.3,
+  "note": "三草酸合铝(III) logβ3≈16.3"
+ },
+ {
+  "complex": "[Ni(C_2O_4)_3]^{4-}",
+  "center": "Ni^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 3,
+  "logb": 11.0,
+  "note": "三草酸合镍(II) logβ3≈11.0"
+ },
+ {
+  "complex": "[Co(C_2O_4)_3]^{4-}",
+  "center": "Co^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 3,
+  "logb": 9.7,
+  "note": "三草酸合钴(II) logβ3≈9.7"
+ },
+ {
+  "complex": "[Cr(C_2O_4)_3]^{3-}",
+  "center": "Cr^{3+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 3,
+  "logb": 19.5,
+  "note": "三草酸合铬(III) logβ3≈19.5"
+ },
+ {
+  "complex": "[Mg(C_2O_4)_2]^{2-}",
+  "center": "Mg^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 2,
+  "logb": 3.4,
+  "note": "草酸合镁(II) logβ2≈3.4"
+ },
+ {
+  "complex": "[Ca(C_2O_4)]",
+  "center": "Ca^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 1,
+  "logb": 3.0,
+  "note": "草酸合钙(II) logβ1≈3.0"
+ },
+ {
+  "center": "Fe^{2+}",
+  "ligand": "CN^-",
+  "complex": "[Fe(CN)_6]^{4-}",
+  "nu": 6,
+  "logb": 35.0
+ },
+ {
+  "center": "Fe^{3+}",
+  "ligand": "CN^-",
+  "complex": "[Fe(CN)_6]^{3-}",
+  "nu": 6,
+  "logb": 42.0
+ },
+ {
+  "center": "Zn^{2+}",
+  "ligand": "CN^-",
+  "complex": "[Zn(CN)_4]^{2-}",
+  "nu": 4,
+  "logb": 16.9
+ },
+ {
+  "center": "Cd^{2+}",
+  "ligand": "CN^-",
+  "complex": "[Cd(CN)_4]^{2-}",
+  "nu": 4,
+  "logb": 18.8
+ },
+ {
+  "center": "Ni^{2+}",
+  "ligand": "CN^-",
+  "complex": "[Ni(CN)_4]^{2-}",
+  "nu": 4,
+  "logb": 31.3
+ }
+]

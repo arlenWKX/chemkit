@@ -1,0 +1,330 @@
+[
+ {
+  "acid": "HF",
+  "base": "F^-",
+  "pka": 3.2,
+  "n": 1
+ },
+ {
+  "acid": "HAc",
+  "base": "Ac^-",
+  "pka": 4.76,
+  "n": 1,
+  "note": "醋酸，文献值"
+ },
+ {
+  "acid": "HCN",
+  "base": "CN^-",
+  "pka": 9.2,
+  "n": 1
+ },
+ {
+  "acid": "HClO",
+  "base": "ClO^-",
+  "pka": 7.5,
+  "n": 1
+ },
+ {
+  "acid": "HNO_2",
+  "base": "NO_2^-",
+  "pka": 3.3,
+  "n": 1
+ },
+ {
+  "acid": "H_2S",
+  "base": "HS^-",
+  "pka": 7.0,
+  "n": 1
+ },
+ {
+  "acid": "HS^-",
+  "base": "S^{2-}",
+  "pka": 14.0,
+  "n": 1,
+  "consistency": "pKa1+pKa2 = 7+19 = 26 = 合并条目；pKa2 取现代公认值 19（旧教材 ~13 系测量假象）",
+  "note": "pKa2 教材值 ~14（Ka2~1e-14）；现代文献有 17-19 争议高值，"
+ },
+ {
+  "acid": "H_2S",
+  "base": "S^{2-}",
+  "pka": 21.0,
+  "n": 2,
+  "note": "pKa1+pKa2 合并条目，与 7.0/14.0 一致"
+ },
+ {
+  "acid": "CO_2",
+  "base": "HCO_3^-",
+  "pka": 6.4,
+  "n": 1
+ },
+ {
+  "acid": "HCO_3^-",
+  "base": "CO_3^{2-}",
+  "pka": 10.3,
+  "n": 1
+ },
+ {
+  "acid": "CO_2",
+  "base": "CO_3^{2-}",
+  "pka": 16.7,
+  "n": 2,
+  "consistency": "6.4+10.3 = 16.7"
+ },
+ {
+  "acid": "SO_2",
+  "base": "HSO_3^-",
+  "pka": 1.8,
+  "n": 1
+ },
+ {
+  "acid": "HSO_3^-",
+  "base": "SO_3^{2-}",
+  "pka": 7.2,
+  "n": 1
+ },
+ {
+  "acid": "SO_2",
+  "base": "SO_3^{2-}",
+  "pka": 9.0,
+  "n": 2,
+  "consistency": "1.8+7.2 = 9.0"
+ },
+ {
+  "acid": "NH_4^+",
+  "base": "NH_3",
+  "pka": 9.25,
+  "n": 1
+ },
+ {
+  "acid": "H_2SiO_3",
+  "base": "HSiO_3^-",
+  "pka": 9.8,
+  "n": 1
+ },
+ {
+  "acid": "H_3PO_4",
+  "base": "H_2PO_4^-",
+  "pka": 2.1,
+  "n": 1
+ },
+ {
+  "acid": "H_2PO_4^-",
+  "base": "HPO_4^{2-}",
+  "pka": 7.2,
+  "n": 1
+ },
+ {
+  "acid": "HPO_4^{2-}",
+  "base": "PO_4^{3-}",
+  "pka": 12.3,
+  "n": 1
+ },
+ {
+  "acid": "C_2H_2",
+  "base": "C_2^{2-}",
+  "pka": 50.0,
+  "n": 2,
+  "consistency": "乙炔 pKa≈25，两级合并取 50：电石遇水水解完全"
+ },
+ {
+  "acid": "NH_3",
+  "base": "N^{3-}",
+  "pka": 105.0,
+  "n": 3,
+  "consistency": "NH3 作酸 pKa≈38，三级合并估算：氮化镁遇水水解完全"
+ },
+ {
+  "acid": "HBrO",
+  "base": "BrO^-",
+  "pka": 8.7,
+  "n": 1
+ },
+ {
+  "acid": "HSiO_3^-",
+  "base": "SiO_3^{2-}",
+  "pka": 12.0,
+  "n": 1,
+  "consistency": "H2SiO3 pKa2 文献 11.8-13，取 12.0"
+ },
+ {
+  "acid": "H_2O_2",
+  "base": "HO_2^-",
+  "pka": 11.6,
+  "n": 1
+ },
+ {
+  "acid": "HO_2^-",
+  "base": "O_2^{2-}",
+  "pka": 20.0,
+  "n": 1,
+  "consistency": "H2O2 pKa2 估算 ≥19：Na2O2 遇水完全水解"
+ },
+ {
+  "acid": "HCrO_4^-",
+  "base": "CrO_4^{2-}",
+  "pka": 6.5,
+  "n": 1
+ },
+ {
+  "acid": "H_2C_2O_4",
+  "base": "HC_2O_4^-",
+  "pka": 1.25,
+  "n": 1,
+  "note": "草酸 pKa1"
+ },
+ {
+  "acid": "HC_2O_4^-",
+  "base": "C_2O_4^{2-}",
+  "pka": 4.27,
+  "n": 1,
+  "note": "草酸 pKa2"
+ },
+ {
+  "acid": "H_3AsO_4",
+  "base": "H_2AsO_4^-",
+  "pka": 2.2,
+  "n": 1
+ },
+ {
+  "acid": "H_2AsO_4^-",
+  "base": "HAsO_4^{2-}",
+  "pka": 6.9,
+  "n": 1
+ },
+ {
+  "acid": "H_3AsO_3",
+  "base": "H_2AsO_3^-",
+  "pka": 9.2,
+  "n": 1,
+  "note": "亚砷酸，极弱酸"
+ },
+ {
+  "acid": "H_3BO_3",
+  "base": "[B(OH)_4]^-",
+  "pka": 9.24,
+  "n": 1,
+  "note": "硼酸为 Lewis 一元酸：B(OH)3+OH-<->[B(OH)4]-"
+ },
+ {
+  "acid": "HO_2",
+  "base": "O_2^-",
+  "pka": 4.8,
+  "n": 1,
+  "note": "超氧酸"
+ },
+ {
+  "acid": "H_2Se",
+  "base": "HSe^-",
+  "pka": 3.9,
+  "n": 1
+ },
+ {
+  "acid": "HSe^-",
+  "base": "Se^{2-}",
+  "pka": 11.0,
+  "n": 1
+ },
+ {
+  "acid": "H_2Se",
+  "base": "Se^{2-}",
+  "pka": 14.9,
+  "n": 2,
+  "note": "合并条目"
+ },
+ {
+  "acid": "SeO_2",
+  "base": "HSeO_3^-",
+  "pka": 2.6,
+  "n": 1,
+  "note": "亚硒酸（水合 SeO2）pKa1"
+ },
+ {
+  "acid": "HSeO_3^-",
+  "base": "SeO_3^{2-}",
+  "pka": 8.3,
+  "n": 1
+ },
+ {
+  "acid": "SeO_2",
+  "base": "SeO_3^{2-}",
+  "pka": 10.9,
+  "n": 2,
+  "note": "合并条目"
+ },
+ {
+  "acid": "H_2GeO_3",
+  "base": "HGeO_3^-",
+  "pka": 9.0,
+  "n": 1,
+  "consistency": "锗酸 pKa1 文献约 9.0"
+ },
+ {
+  "acid": "HGeO_3^-",
+  "base": "GeO_3^{2-}",
+  "pka": 12.4,
+  "n": 1,
+  "consistency": "锗酸 pKa2 文献约 12.4"
+ },
+ {
+  "acid": "HAsO_4^{2-}",
+  "base": "AsO_4^{3-}",
+  "pka": 11.5,
+  "n": 1,
+  "note": "砷酸 pKa3，补全三级"
+ },
+ {
+  "acid": "OH^-",
+  "base": "O^{2-}",
+  "pka": 26.0,
+  "n": 1,
+  "consistency": "O2- 在水中定量水解为 2OH-（pKa(OH-)≫14，文献估计 ~22-26）"
+ },
+ {
+  "acid": "CH_3COOH",
+  "base": "CH_3COO^-",
+  "pka": 4.76,
+  "n": 1
+ },
+ {
+  "acid": "VO_2^+",
+  "base": "HVO_3",
+  "pka": 1.5,
+  "n": 1,
+  "note": "钒(V) 一级：VO2+ + H2O = HVO3 + H+（多聚钒酸根简化处理）"
+ },
+ {
+  "acid": "HVO_3",
+  "base": "VO_3^-",
+  "pka": 3.8,
+  "n": 1,
+  "note": "钒(V) 二级：HVO3 = H+ + VO3-"
+ },
+ {
+  "acid": "HCOOH",
+  "base": "HCOO^-",
+  "pka": 3.75,
+  "note": "甲酸",
+  "n": 1
+ },
+ {
+  "acid": "C_6H_5OH",
+  "base": "C_6H_5O^-",
+  "pka": 9.95,
+  "note": "苯酚（石炭酸）：比碳酸弱、比 HCO3- 强",
+  "n": 1
+ },
+ {
+  "acid": "HN_3",
+  "base": "N_3^-",
+  "pka": 4.65,
+  "note": "叠氮酸",
+  "n": 1
+ },
+ {
+  "acid": "HIO",
+  "base": "IO^-",
+  "pka": 10.64,
+  "note": "次碘酸",
+  "n": 1
+ }
+]

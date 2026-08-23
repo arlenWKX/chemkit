@@ -1,0 +1,580 @@
+[
+ {
+  "solid": "CuS",
+  "pair": [
+   "Cu^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 36.0
+ },
+ {
+  "solid": "ZnS",
+  "pair": [
+   "Zn^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 20.0,
+  "consistency": "新鲜沉淀（无定形）有效 Ksp，与 H2S pKa2=14 配对复现阳离子分组：0.3M 强酸不沉、中性部分沉、氨性全沉"
+ },
+ {
+  "solid": "FeS",
+  "pair": [
+   "Fe^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 19.3,
+  "note": "稳定晶型（陨硫铁 troilite）pKsp≈19.25（Davison 评注 pKs 5.25 + pKa2(H2S)≈14 换算）；新生 mackinawite ≈17.6。与 CoS/NiS 同取陈化晶型约定。试剂瓶 FeS 不溶于 NaOH（K=10^(16.3-19.3)≈1e-3）"
+ },
+ {
+  "solid": "MnS",
+  "pair": [
+   "Mn^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 13.5
+ },
+ {
+  "solid": "PbS",
+  "pair": [
+   "Pb^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 28.0
+ },
+ {
+  "solid": "Ag_2S",
+  "pair": [
+   "Ag^+",
+   "S^{2-}"
+  ],
+  "pKsp": 49.0
+ },
+ {
+  "solid": "HgS",
+  "pair": [
+   "Hg^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 52.0
+ },
+ {
+  "solid": "AgCl",
+  "pair": [
+   "Ag^+",
+   "Cl^-"
+  ],
+  "pKsp": 9.7
+ },
+ {
+  "solid": "AgBr",
+  "pair": [
+   "Ag^+",
+   "Br^-"
+  ],
+  "pKsp": 12.3
+ },
+ {
+  "solid": "AgI",
+  "pair": [
+   "Ag^+",
+   "I^-"
+  ],
+  "pKsp": 16.1
+ },
+ {
+  "solid": "BaSO_4",
+  "pair": [
+   "Ba^{2+}",
+   "SO_4^{2-}"
+  ],
+  "pKsp": 10.0
+ },
+ {
+  "solid": "CaSO_4",
+  "pair": [
+   "Ca^{2+}",
+   "SO_4^{2-}"
+  ],
+  "pKsp": 4.6,
+  "slight": true,
+  "film": true
+ },
+ {
+  "solid": "PbSO_4",
+  "pair": [
+   "Pb^{2+}",
+   "SO_4^{2-}"
+  ],
+  "pKsp": 7.8,
+  "film": true
+ },
+ {
+  "solid": "BaCO_3",
+  "pair": [
+   "Ba^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 8.3
+ },
+ {
+  "solid": "CaCO_3",
+  "pair": [
+   "Ca^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 8.3
+ },
+ {
+  "solid": "Cu(OH)_2",
+  "pair": [
+   "Cu^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 19.7
+ },
+ {
+  "solid": "Fe(OH)_2",
+  "pair": [
+   "Fe^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 16.3
+ },
+ {
+  "solid": "Fe(OH)_3",
+  "pair": [
+   "Fe^{3+}",
+   "OH^-"
+  ],
+  "pKsp": 38.0
+ },
+ {
+  "solid": "Al(OH)_3",
+  "pair": [
+   "Al^{3+}",
+   "OH^-"
+  ],
+  "pKsp": 33.0,
+  "film": true
+ },
+ {
+  "solid": "Mg(OH)_2",
+  "pair": [
+   "Mg^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 11.2,
+  "film": true,
+  "unlock_T": 330
+ },
+ {
+  "solid": "Zn(OH)_2",
+  "pair": [
+   "Zn^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 16.9,
+  "film": true
+ },
+ {
+  "solid": "Ca(OH)_2",
+  "pair": [
+   "Ca^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 5.3,
+  "slight": true
+ },
+ {
+  "solid": "Cr(OH)_3",
+  "pair": [
+   "Cr^{3+}",
+   "OH^-"
+  ],
+  "pKsp": 30.2
+ },
+ {
+  "solid": "Ca_3(PO_4)_2",
+  "pair": [
+   "Ca^{2+}",
+   "PO_4^{3-}"
+  ],
+  "pKsp": 28.7
+ },
+ {
+  "solid": "Ag_2CrO_4",
+  "pair": [
+   "Ag^+",
+   "CrO_4^{2-}"
+  ],
+  "pKsp": 11.7
+ },
+ {
+  "solid": "BaCrO_4",
+  "pair": [
+   "Ba^{2+}",
+   "CrO_4^{2-}"
+  ],
+  "pKsp": 9.9
+ },
+ {
+  "solid": "PbCrO_4",
+  "pair": [
+   "Pb^{2+}",
+   "CrO_4^{2-}"
+  ],
+  "pKsp": 12.6
+ },
+ {
+  "solid": "PbCl_2",
+  "pair": [
+   "Pb^{2+}",
+   "Cl^-"
+  ],
+  "pKsp": 4.8
+ },
+ {
+  "solid": "CaC_2O_4",
+  "pair": [
+   "Ca^{2+}",
+   "C_2O_4^{2-}"
+  ],
+  "pKsp": 8.6
+ },
+ {
+  "solid": "CaF_2",
+  "pair": [
+   "Ca^{2+}",
+   "F^-"
+  ],
+  "pKsp": 10.5
+ },
+ {
+  "solid": "SrSO_4",
+  "pair": [
+   "Sr^{2+}",
+   "SO_4^{2-}"
+  ],
+  "pKsp": 6.5
+ },
+ {
+  "solid": "CdS",
+  "pair": [
+   "Cd^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 26.1
+ },
+ {
+  "solid": "Ni(OH)_2",
+  "pair": [
+   "Ni^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 15.3
+ },
+ {
+  "solid": "Co(OH)_2",
+  "pair": [
+   "Co^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 14.8
+ },
+ {
+  "solid": "Cd(OH)_2",
+  "pair": [
+   "Cd^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 13.6
+ },
+ {
+  "solid": "Pb(OH)_2",
+  "pair": [
+   "Pb^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 15.7
+ },
+ {
+  "solid": "PbCO_3",
+  "pair": [
+   "Pb^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 13.1
+ },
+ {
+  "solid": "CuI",
+  "pair": [
+   "Cu^+",
+   "I^-"
+  ],
+  "pKsp": 12.0
+ },
+ {
+  "solid": "Li_2CO_3",
+  "pair": [
+   "Li^+",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 2.77,
+  "note": "碱金属中唯一难溶碳酸盐"
+ },
+ {
+  "solid": "MgCO_3",
+  "pair": [
+   "Mg^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 5.0
+ },
+ {
+  "solid": "SrCO_3",
+  "pair": [
+   "Sr^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 9.26
+ },
+ {
+  "solid": "Be(OH)_2",
+  "pair": [
+   "Be^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 21.2
+ },
+ {
+  "solid": "Ga(OH)_3",
+  "pair": [
+   "Ga^{3+}",
+   "OH^-"
+  ],
+  "pKsp": 35.1
+ },
+ {
+  "solid": "KClO_4",
+  "pair": [
+   "K^+",
+   "ClO_4^-"
+  ],
+  "pKsp": 2.0,
+  "note": "高氯酸钾微溶（重量法测钾）"
+ },
+ {
+  "solid": "NaHCO_3",
+  "pair": [
+   "Na^+",
+   "HCO_3^-"
+  ],
+  "pKsp": -0.08,
+  "note": "NaHCO3 溶解度 ~9.6 g/100g水(20°C)≈1.1 mol/L → Ksp≈1.2；浓溶液+同离子效应析出（侯氏制碱原理）"
+ },
+ {
+  "solid": "PbI_2",
+  "pair": [
+   "Pb^{2+}",
+   "I^-"
+  ],
+  "pKsp": 8.15
+ },
+ {
+  "solid": "Sc(OH)_3",
+  "pair": [
+   "Sc^{3+}",
+   "OH^-"
+  ],
+  "pKsp": 30.65
+ },
+ {
+  "solid": "Mn(OH)_2",
+  "pair": [
+   "Mn^{2+}",
+   "OH^-"
+  ],
+  "pKsp": 12.7
+ },
+ {
+  "solid": "FeCO_3",
+  "pair": [
+   "Fe^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 10.5
+ },
+ {
+  "solid": "ZnCO_3",
+  "pair": [
+   "Zn^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 10.8
+ },
+ {
+  "solid": "CuCO_3",
+  "pair": [
+   "Cu^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 9.6
+ },
+ {
+  "solid": "MnCO_3",
+  "pair": [
+   "Mn^{2+}",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 10.7
+ },
+ {
+  "solid": "MgF_2",
+  "pair": [
+   "Mg^{2+}",
+   "F^-"
+  ],
+  "pKsp": 8.2
+ },
+ {
+  "solid": "BaSO_3",
+  "pair": [
+   "Ba^{2+}",
+   "SO_3^{2-}"
+  ],
+  "pKsp": 9.3
+ },
+ {
+  "solid": "CaSO_3",
+  "pair": [
+   "Ca^{2+}",
+   "SO_3^{2-}"
+  ],
+  "pKsp": 7.2,
+  "slight": true
+ },
+ {
+  "solid": "Ag_2CO_3",
+  "pair": [
+   "Ag^+",
+   "CO_3^{2-}"
+  ],
+  "pKsp": 11.1
+ },
+ {
+  "solid": "Ag_2SO_4",
+  "pair": [
+   "Ag^+",
+   "SO_4^{2-}"
+  ],
+  "pKsp": 4.8,
+  "slight": true
+ },
+ {
+  "solid": "Ag_3PO_4",
+  "pair": [
+   "Ag^+",
+   "PO_4^{3-}"
+  ],
+  "pKsp": 16.0
+ },
+ {
+  "solid": "AgCN",
+  "pair": [
+   "Ag^+",
+   "CN^-"
+  ],
+  "pKsp": 15.9
+ },
+ {
+  "solid": "Ag_2C_2O_4",
+  "pair": [
+   "Ag^+",
+   "C_2O_4^{2-}"
+  ],
+  "pKsp": 10.5
+ },
+ {
+  "solid": "BaC_2O_4",
+  "pair": [
+   "Ba^{2+}",
+   "C_2O_4^{2-}"
+  ],
+  "pKsp": 6.8
+ },
+ {
+  "solid": "PbBr_2",
+  "pair": [
+   "Pb^{2+}",
+   "Br^-"
+  ],
+  "pKsp": 4.4
+ },
+ {
+  "solid": "PbF_2",
+  "pair": [
+   "Pb^{2+}",
+   "F^-"
+  ],
+  "pKsp": 7.6
+ },
+ {
+  "solid": "SnS",
+  "pair": [
+   "Sn^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 26.0
+ },
+ {
+  "solid": "Cu_2S",
+  "pair": [
+   "Cu^+",
+   "S^{2-}"
+  ],
+  "pKsp": 47.7
+ },
+ {
+  "solid": "NiS",
+  "pair": [
+   "Ni^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 18.5
+ },
+ {
+  "solid": "CoS",
+  "pair": [
+   "Co^{2+}",
+   "S^{2-}"
+  ],
+  "pKsp": 24.8,
+  "note": "陈化 β-CoS；新生态 α-CoS(pKsp≈20.4) 可溶于稀酸，放置转化为 β 后不溶（实验事实）"
+ },
+ {
+  "solid": "HgI_2",
+  "pair": [
+   "Hg^{2+}",
+   "I^-"
+  ],
+  "pKsp": 28.7
+ },
+ {
+  "solid": "H_2SiO_3",
+  "pair": [
+   "H^+",
+   "SiO_3^{2-}"
+  ],
+  "pKsp": 24.5,
+  "note": "无定形硅酸溶度：H2SiO3(s) ⇌ 2H+ + SiO3^2-，pKsp = pKa1(9.8) + pKa2(12.0) + 分子溶解度(log[H2SiO3]sat = -2.7，25°C 无定形 SiO2 ~2 mmol/L) = 24.5"
+ },
+ {
+  "solid": "Ag_2O",
+  "pair": [
+   "Ag^+",
+   "OH^-"
+  ],
+  "pKsp": 15.4,
+  "note": "AgOH→Ag2O 水合氧化物；文献 pKsp≈7.7 按 Ag+ + OH- 单元，本表按分子式反应 Ag2O + H2O ⇌ 2Ag+ + 2OH- 记 2×7.7=15.4（少量氨水/碱入 Ag+ 得褐色 Ag2O）"
+ }
+]
