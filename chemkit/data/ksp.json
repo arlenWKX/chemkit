@@ -1,580 +1,2022 @@
 [
- {
-  "solid": "CuS",
-  "pair": [
-   "Cu^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 36.0
- },
- {
-  "solid": "ZnS",
-  "pair": [
-   "Zn^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 20.0,
-  "consistency": "新鲜沉淀（无定形）有效 Ksp，与 H2S pKa2=14 配对复现阳离子分组：0.3M 强酸不沉、中性部分沉、氨性全沉"
- },
- {
-  "solid": "FeS",
-  "pair": [
-   "Fe^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 19.3,
-  "note": "稳定晶型（陨硫铁 troilite）pKsp≈19.25（Davison 评注 pKs 5.25 + pKa2(H2S)≈14 换算）；新生 mackinawite ≈17.6。与 CoS/NiS 同取陈化晶型约定。试剂瓶 FeS 不溶于 NaOH（K=10^(16.3-19.3)≈1e-3）"
- },
- {
-  "solid": "MnS",
-  "pair": [
-   "Mn^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 13.5
- },
- {
-  "solid": "PbS",
-  "pair": [
-   "Pb^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 28.0
- },
- {
-  "solid": "Ag_2S",
-  "pair": [
-   "Ag^+",
-   "S^{2-}"
-  ],
-  "pKsp": 49.0
- },
- {
-  "solid": "HgS",
-  "pair": [
-   "Hg^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 52.0
- },
- {
-  "solid": "AgCl",
-  "pair": [
-   "Ag^+",
-   "Cl^-"
-  ],
-  "pKsp": 9.7
- },
- {
-  "solid": "AgBr",
-  "pair": [
-   "Ag^+",
-   "Br^-"
-  ],
-  "pKsp": 12.3
- },
- {
-  "solid": "AgI",
-  "pair": [
-   "Ag^+",
-   "I^-"
-  ],
-  "pKsp": 16.1
- },
- {
-  "solid": "BaSO_4",
-  "pair": [
-   "Ba^{2+}",
-   "SO_4^{2-}"
-  ],
-  "pKsp": 10.0
- },
- {
-  "solid": "CaSO_4",
-  "pair": [
-   "Ca^{2+}",
-   "SO_4^{2-}"
-  ],
-  "pKsp": 4.6,
-  "slight": true,
-  "film": true
- },
- {
-  "solid": "PbSO_4",
-  "pair": [
-   "Pb^{2+}",
-   "SO_4^{2-}"
-  ],
-  "pKsp": 7.8,
-  "film": true
- },
- {
-  "solid": "BaCO_3",
-  "pair": [
-   "Ba^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 8.3
- },
- {
-  "solid": "CaCO_3",
-  "pair": [
-   "Ca^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 8.3
- },
- {
-  "solid": "Cu(OH)_2",
-  "pair": [
-   "Cu^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 19.7
- },
- {
-  "solid": "Fe(OH)_2",
-  "pair": [
-   "Fe^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 16.3
- },
- {
-  "solid": "Fe(OH)_3",
-  "pair": [
-   "Fe^{3+}",
-   "OH^-"
-  ],
-  "pKsp": 38.0
- },
- {
-  "solid": "Al(OH)_3",
-  "pair": [
-   "Al^{3+}",
-   "OH^-"
-  ],
-  "pKsp": 33.0,
-  "film": true
- },
- {
-  "solid": "Mg(OH)_2",
-  "pair": [
-   "Mg^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 11.2,
-  "film": true,
-  "unlock_T": 330
- },
- {
-  "solid": "Zn(OH)_2",
-  "pair": [
-   "Zn^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 16.9,
-  "film": true
- },
- {
-  "solid": "Ca(OH)_2",
-  "pair": [
-   "Ca^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 5.3,
-  "slight": true
- },
- {
-  "solid": "Cr(OH)_3",
-  "pair": [
-   "Cr^{3+}",
-   "OH^-"
-  ],
-  "pKsp": 30.2
- },
- {
-  "solid": "Ca_3(PO_4)_2",
-  "pair": [
-   "Ca^{2+}",
-   "PO_4^{3-}"
-  ],
-  "pKsp": 28.7
- },
- {
-  "solid": "Ag_2CrO_4",
-  "pair": [
-   "Ag^+",
-   "CrO_4^{2-}"
-  ],
-  "pKsp": 11.7
- },
- {
-  "solid": "BaCrO_4",
-  "pair": [
-   "Ba^{2+}",
-   "CrO_4^{2-}"
-  ],
-  "pKsp": 9.9
- },
- {
-  "solid": "PbCrO_4",
-  "pair": [
-   "Pb^{2+}",
-   "CrO_4^{2-}"
-  ],
-  "pKsp": 12.6
- },
- {
-  "solid": "PbCl_2",
-  "pair": [
-   "Pb^{2+}",
-   "Cl^-"
-  ],
-  "pKsp": 4.8
- },
- {
-  "solid": "CaC_2O_4",
-  "pair": [
-   "Ca^{2+}",
-   "C_2O_4^{2-}"
-  ],
-  "pKsp": 8.6
- },
- {
-  "solid": "CaF_2",
-  "pair": [
-   "Ca^{2+}",
-   "F^-"
-  ],
-  "pKsp": 10.5
- },
- {
-  "solid": "SrSO_4",
-  "pair": [
-   "Sr^{2+}",
-   "SO_4^{2-}"
-  ],
-  "pKsp": 6.5
- },
- {
-  "solid": "CdS",
-  "pair": [
-   "Cd^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 26.1
- },
- {
-  "solid": "Ni(OH)_2",
-  "pair": [
-   "Ni^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 15.3
- },
- {
-  "solid": "Co(OH)_2",
-  "pair": [
-   "Co^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 14.8
- },
- {
-  "solid": "Cd(OH)_2",
-  "pair": [
-   "Cd^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 13.6
- },
- {
-  "solid": "Pb(OH)_2",
-  "pair": [
-   "Pb^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 15.7
- },
- {
-  "solid": "PbCO_3",
-  "pair": [
-   "Pb^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 13.1
- },
- {
-  "solid": "CuI",
-  "pair": [
-   "Cu^+",
-   "I^-"
-  ],
-  "pKsp": 12.0
- },
- {
-  "solid": "Li_2CO_3",
-  "pair": [
-   "Li^+",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 2.77,
-  "note": "碱金属中唯一难溶碳酸盐"
- },
- {
-  "solid": "MgCO_3",
-  "pair": [
-   "Mg^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 5.0
- },
- {
-  "solid": "SrCO_3",
-  "pair": [
-   "Sr^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 9.26
- },
- {
-  "solid": "Be(OH)_2",
-  "pair": [
-   "Be^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 21.2
- },
- {
-  "solid": "Ga(OH)_3",
-  "pair": [
-   "Ga^{3+}",
-   "OH^-"
-  ],
-  "pKsp": 35.1
- },
- {
-  "solid": "KClO_4",
-  "pair": [
-   "K^+",
-   "ClO_4^-"
-  ],
-  "pKsp": 2.0,
-  "note": "高氯酸钾微溶（重量法测钾）"
- },
- {
-  "solid": "NaHCO_3",
-  "pair": [
-   "Na^+",
-   "HCO_3^-"
-  ],
-  "pKsp": -0.08,
-  "note": "NaHCO3 溶解度 ~9.6 g/100g水(20°C)≈1.1 mol/L → Ksp≈1.2；浓溶液+同离子效应析出（侯氏制碱原理）"
- },
- {
-  "solid": "PbI_2",
-  "pair": [
-   "Pb^{2+}",
-   "I^-"
-  ],
-  "pKsp": 8.15
- },
- {
-  "solid": "Sc(OH)_3",
-  "pair": [
-   "Sc^{3+}",
-   "OH^-"
-  ],
-  "pKsp": 30.65
- },
- {
-  "solid": "Mn(OH)_2",
-  "pair": [
-   "Mn^{2+}",
-   "OH^-"
-  ],
-  "pKsp": 12.7
- },
- {
-  "solid": "FeCO_3",
-  "pair": [
-   "Fe^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 10.5
- },
- {
-  "solid": "ZnCO_3",
-  "pair": [
-   "Zn^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 10.8
- },
- {
-  "solid": "CuCO_3",
-  "pair": [
-   "Cu^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 9.6
- },
- {
-  "solid": "MnCO_3",
-  "pair": [
-   "Mn^{2+}",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 10.7
- },
- {
-  "solid": "MgF_2",
-  "pair": [
-   "Mg^{2+}",
-   "F^-"
-  ],
-  "pKsp": 8.2
- },
- {
-  "solid": "BaSO_3",
-  "pair": [
-   "Ba^{2+}",
-   "SO_3^{2-}"
-  ],
-  "pKsp": 9.3
- },
- {
-  "solid": "CaSO_3",
-  "pair": [
-   "Ca^{2+}",
-   "SO_3^{2-}"
-  ],
-  "pKsp": 7.2,
-  "slight": true
- },
- {
-  "solid": "Ag_2CO_3",
-  "pair": [
-   "Ag^+",
-   "CO_3^{2-}"
-  ],
-  "pKsp": 11.1
- },
- {
-  "solid": "Ag_2SO_4",
-  "pair": [
-   "Ag^+",
-   "SO_4^{2-}"
-  ],
-  "pKsp": 4.8,
-  "slight": true
- },
- {
-  "solid": "Ag_3PO_4",
-  "pair": [
-   "Ag^+",
-   "PO_4^{3-}"
-  ],
-  "pKsp": 16.0
- },
- {
-  "solid": "AgCN",
-  "pair": [
-   "Ag^+",
-   "CN^-"
-  ],
-  "pKsp": 15.9
- },
- {
-  "solid": "Ag_2C_2O_4",
-  "pair": [
-   "Ag^+",
-   "C_2O_4^{2-}"
-  ],
-  "pKsp": 10.5
- },
- {
-  "solid": "BaC_2O_4",
-  "pair": [
-   "Ba^{2+}",
-   "C_2O_4^{2-}"
-  ],
-  "pKsp": 6.8
- },
- {
-  "solid": "PbBr_2",
-  "pair": [
-   "Pb^{2+}",
-   "Br^-"
-  ],
-  "pKsp": 4.4
- },
- {
-  "solid": "PbF_2",
-  "pair": [
-   "Pb^{2+}",
-   "F^-"
-  ],
-  "pKsp": 7.6
- },
- {
-  "solid": "SnS",
-  "pair": [
-   "Sn^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 26.0
- },
- {
-  "solid": "Cu_2S",
-  "pair": [
-   "Cu^+",
-   "S^{2-}"
-  ],
-  "pKsp": 47.7
- },
- {
-  "solid": "NiS",
-  "pair": [
-   "Ni^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 18.5
- },
- {
-  "solid": "CoS",
-  "pair": [
-   "Co^{2+}",
-   "S^{2-}"
-  ],
-  "pKsp": 24.8,
-  "note": "陈化 β-CoS；新生态 α-CoS(pKsp≈20.4) 可溶于稀酸，放置转化为 β 后不溶（实验事实）"
- },
- {
-  "solid": "HgI_2",
-  "pair": [
-   "Hg^{2+}",
-   "I^-"
-  ],
-  "pKsp": 28.7
- },
- {
-  "solid": "H_2SiO_3",
-  "pair": [
-   "H^+",
-   "SiO_3^{2-}"
-  ],
-  "pKsp": 24.5,
-  "note": "无定形硅酸溶度：H2SiO3(s) ⇌ 2H+ + SiO3^2-，pKsp = pKa1(9.8) + pKa2(12.0) + 分子溶解度(log[H2SiO3]sat = -2.7，25°C 无定形 SiO2 ~2 mmol/L) = 24.5"
- },
- {
-  "solid": "Ag_2O",
-  "pair": [
-   "Ag^+",
-   "OH^-"
-  ],
-  "pKsp": 15.4,
-  "note": "AgOH→Ag2O 水合氧化物；文献 pKsp≈7.7 按 Ag+ + OH- 单元，本表按分子式反应 Ag2O + H2O ⇌ 2Ag+ + 2OH- 记 2×7.7=15.4（少量氨水/碱入 Ag+ 得褐色 Ag2O）"
- }
+  {
+    "solid": "CuS",
+    "pair": [
+      "Cu^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 36.0
+  },
+  {
+    "solid": "ZnS",
+    "pair": [
+      "Zn^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 20.0,
+    "consistency": "新鲜沉淀（无定形）有效 Ksp，与 H2S pKa2=14 配对复现阳离子分组：0.3M 强酸不沉、中性部分沉、氨性全沉"
+  },
+  {
+    "solid": "FeS",
+    "pair": [
+      "Fe^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 19.3,
+    "note": "稳定晶型（陨硫铁 troilite）pKsp≈19.25（Davison 评注 pKs 5.25 + pKa2(H2S)≈14 换算）；新生 mackinawite ≈17.6。与 CoS/NiS 同取陈化晶型约定。试剂瓶 FeS 不溶于 NaOH（K=10^(16.3-19.3)≈1e-3）"
+  },
+  {
+    "solid": "MnS",
+    "pair": [
+      "Mn^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 13.5
+  },
+  {
+    "solid": "PbS",
+    "pair": [
+      "Pb^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 28.0
+  },
+  {
+    "solid": "Ag_2S",
+    "pair": [
+      "Ag^+",
+      "S^{2-}"
+    ],
+    "pKsp": 49.0
+  },
+  {
+    "solid": "HgS",
+    "pair": [
+      "Hg^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 52.0
+  },
+  {
+    "solid": "AgCl",
+    "pair": [
+      "Ag^+",
+      "Cl^-"
+    ],
+    "pKsp": 9.7
+  },
+  {
+    "solid": "AgBr",
+    "pair": [
+      "Ag^+",
+      "Br^-"
+    ],
+    "pKsp": 12.3
+  },
+  {
+    "solid": "AgI",
+    "pair": [
+      "Ag^+",
+      "I^-"
+    ],
+    "pKsp": 16.1
+  },
+  {
+    "solid": "BaSO_4",
+    "pair": [
+      "Ba^{2+}",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 10.0
+  },
+  {
+    "solid": "CaSO_4",
+    "pair": [
+      "Ca^{2+}",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 4.6,
+    "slight": true,
+    "film": true
+  },
+  {
+    "solid": "PbSO_4",
+    "pair": [
+      "Pb^{2+}",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 7.8,
+    "film": true
+  },
+  {
+    "solid": "BaCO_3",
+    "pair": [
+      "Ba^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 8.3
+  },
+  {
+    "solid": "CaCO_3",
+    "pair": [
+      "Ca^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 8.3
+  },
+  {
+    "solid": "Cu(OH)_2",
+    "pair": [
+      "Cu^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 19.7
+  },
+  {
+    "solid": "Fe(OH)_2",
+    "pair": [
+      "Fe^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 16.3
+  },
+  {
+    "solid": "Fe(OH)_3",
+    "pair": [
+      "Fe^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 38.0
+  },
+  {
+    "solid": "Al(OH)_3",
+    "pair": [
+      "Al^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 33.0,
+    "film": true
+  },
+  {
+    "solid": "Mg(OH)_2",
+    "pair": [
+      "Mg^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 11.2,
+    "film": true,
+    "unlock_T": 330
+  },
+  {
+    "solid": "Zn(OH)_2",
+    "pair": [
+      "Zn^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 16.9,
+    "film": true
+  },
+  {
+    "solid": "Ca(OH)_2",
+    "pair": [
+      "Ca^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 5.3,
+    "slight": true
+  },
+  {
+    "solid": "Cr(OH)_3",
+    "pair": [
+      "Cr^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 30.2
+  },
+  {
+    "solid": "Ca_3(PO_4)_2",
+    "pair": [
+      "Ca^{2+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 28.7
+  },
+  {
+    "solid": "Ag_2CrO_4",
+    "pair": [
+      "Ag^+",
+      "CrO_4^{2-}"
+    ],
+    "pKsp": 11.7
+  },
+  {
+    "solid": "BaCrO_4",
+    "pair": [
+      "Ba^{2+}",
+      "CrO_4^{2-}"
+    ],
+    "pKsp": 9.9
+  },
+  {
+    "solid": "PbCrO_4",
+    "pair": [
+      "Pb^{2+}",
+      "CrO_4^{2-}"
+    ],
+    "pKsp": 12.6
+  },
+  {
+    "solid": "PbCl_2",
+    "pair": [
+      "Pb^{2+}",
+      "Cl^-"
+    ],
+    "pKsp": 4.8
+  },
+  {
+    "solid": "CaC_2O_4",
+    "pair": [
+      "Ca^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 8.6
+  },
+  {
+    "solid": "CaF_2",
+    "pair": [
+      "Ca^{2+}",
+      "F^-"
+    ],
+    "pKsp": 10.5
+  },
+  {
+    "solid": "SrSO_4",
+    "pair": [
+      "Sr^{2+}",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 6.5
+  },
+  {
+    "solid": "CdS",
+    "pair": [
+      "Cd^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 26.1
+  },
+  {
+    "solid": "Ni(OH)_2",
+    "pair": [
+      "Ni^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 15.3
+  },
+  {
+    "solid": "Co(OH)_2",
+    "pair": [
+      "Co^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 14.8
+  },
+  {
+    "solid": "Cd(OH)_2",
+    "pair": [
+      "Cd^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 14.3
+  },
+  {
+    "solid": "Pb(OH)_2",
+    "pair": [
+      "Pb^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 15.7
+  },
+  {
+    "solid": "PbCO_3",
+    "pair": [
+      "Pb^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 13.1
+  },
+  {
+    "solid": "CuI",
+    "pair": [
+      "Cu^+",
+      "I^-"
+    ],
+    "pKsp": 12.0
+  },
+  {
+    "solid": "Li_2CO_3",
+    "pair": [
+      "Li^+",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 2.77,
+    "note": "碱金属中唯一难溶碳酸盐"
+  },
+  {
+    "solid": "MgCO_3",
+    "pair": [
+      "Mg^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 5.0
+  },
+  {
+    "solid": "SrCO_3",
+    "pair": [
+      "Sr^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 9.26
+  },
+  {
+    "solid": "Be(OH)_2",
+    "pair": [
+      "Be^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 21.2
+  },
+  {
+    "solid": "Ga(OH)_3",
+    "pair": [
+      "Ga^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 35.1
+  },
+  {
+    "solid": "KClO_4",
+    "pair": [
+      "K^+",
+      "ClO_4^-"
+    ],
+    "pKsp": 2.0,
+    "note": "高氯酸钾微溶（重量法测钾）"
+  },
+  {
+    "solid": "NaHCO_3",
+    "pair": [
+      "Na^+",
+      "HCO_3^-"
+    ],
+    "pKsp": -0.08,
+    "note": "NaHCO3 溶解度 ~9.6 g/100g水(20°C)≈1.1 mol/L → Ksp≈1.2；浓溶液+同离子效应析出（侯氏制碱原理）"
+  },
+  {
+    "solid": "PbI_2",
+    "pair": [
+      "Pb^{2+}",
+      "I^-"
+    ],
+    "pKsp": 8.15
+  },
+  {
+    "solid": "Sc(OH)_3",
+    "pair": [
+      "Sc^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 30.65
+  },
+  {
+    "solid": "Mn(OH)_2",
+    "pair": [
+      "Mn^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 12.7
+  },
+  {
+    "solid": "FeCO_3",
+    "pair": [
+      "Fe^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 10.5
+  },
+  {
+    "solid": "ZnCO_3",
+    "pair": [
+      "Zn^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 9.8
+  },
+  {
+    "solid": "CuCO_3",
+    "pair": [
+      "Cu^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 9.6
+  },
+  {
+    "solid": "MnCO_3",
+    "pair": [
+      "Mn^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 10.7
+  },
+  {
+    "solid": "MgF_2",
+    "pair": [
+      "Mg^{2+}",
+      "F^-"
+    ],
+    "pKsp": 8.2
+  },
+  {
+    "solid": "BaSO_3",
+    "pair": [
+      "Ba^{2+}",
+      "SO_3^{2-}"
+    ],
+    "pKsp": 9.3
+  },
+  {
+    "solid": "CaSO_3",
+    "pair": [
+      "Ca^{2+}",
+      "SO_3^{2-}"
+    ],
+    "pKsp": 7.2,
+    "slight": true
+  },
+  {
+    "solid": "Ag_2CO_3",
+    "pair": [
+      "Ag^+",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 11.1
+  },
+  {
+    "solid": "Ag_2SO_4",
+    "pair": [
+      "Ag^+",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 4.8,
+    "slight": true
+  },
+  {
+    "solid": "Ag_3PO_4",
+    "pair": [
+      "Ag^+",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 16.0
+  },
+  {
+    "solid": "AgCN",
+    "pair": [
+      "Ag^+",
+      "CN^-"
+    ],
+    "pKsp": 15.9
+  },
+  {
+    "solid": "Ag_2C_2O_4",
+    "pair": [
+      "Ag^+",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 10.5
+  },
+  {
+    "solid": "BaC_2O_4",
+    "pair": [
+      "Ba^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 6.8
+  },
+  {
+    "solid": "PbBr_2",
+    "pair": [
+      "Pb^{2+}",
+      "Br^-"
+    ],
+    "pKsp": 4.4
+  },
+  {
+    "solid": "PbF_2",
+    "pair": [
+      "Pb^{2+}",
+      "F^-"
+    ],
+    "pKsp": 7.6
+  },
+  {
+    "solid": "SnS",
+    "pair": [
+      "Sn^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 26.0
+  },
+  {
+    "solid": "Cu_2S",
+    "pair": [
+      "Cu^+",
+      "S^{2-}"
+    ],
+    "pKsp": 47.7
+  },
+  {
+    "solid": "NiS",
+    "pair": [
+      "Ni^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 18.5
+  },
+  {
+    "solid": "CoS",
+    "pair": [
+      "Co^{2+}",
+      "S^{2-}"
+    ],
+    "pKsp": 24.8,
+    "note": "陈化 β-CoS；新生态 α-CoS(pKsp≈20.4) 可溶于稀酸，放置转化为 β 后不溶（实验事实）"
+  },
+  {
+    "solid": "HgI_2",
+    "pair": [
+      "Hg^{2+}",
+      "I^-"
+    ],
+    "pKsp": 28.7
+  },
+  {
+    "solid": "H_2SiO_3",
+    "pair": [
+      "H^+",
+      "SiO_3^{2-}"
+    ],
+    "pKsp": 24.5,
+    "note": "无定形硅酸溶度：H2SiO3(s) ⇌ 2H+ + SiO3^2-，pKsp = pKa1(9.8) + pKa2(12.0) + 分子溶解度(log[H2SiO3]sat = -2.7，25°C 无定形 SiO2 ~2 mmol/L) = 24.5"
+  },
+  {
+    "solid": "Ag_2O",
+    "pair": [
+      "Ag^+",
+      "OH^-"
+    ],
+    "pKsp": 15.4,
+    "note": "AgOH→Ag2O 水合氧化物；文献 pKsp≈7.7 按 Ag+ + OH- 单元，本表按分子式反应 Ag2O + H2O ⇌ 2Ag+ + 2OH- 记 2×7.7=15.4（少量氨水/碱入 Ag+ 得褐色 Ag2O）"
+  },
+  {
+    "solid": "TlCl",
+    "pair": [
+      "Tl^+",
+      "Cl^-"
+    ],
+    "pKsp": 3.74,
+    "note": "Tl(I) 类似 Ag+ 但更易溶；CRC pKsp=3.74"
+  },
+  {
+    "solid": "TlBr",
+    "pair": [
+      "Tl^+",
+      "Br^-"
+    ],
+    "pKsp": 5.47,
+    "note": "CRC pKsp=5.47"
+  },
+  {
+    "solid": "TlI",
+    "pair": [
+      "Tl^+",
+      "I^-"
+    ],
+    "pKsp": 7.85,
+    "note": "CRC pKsp=8.55 黄色变体；文献 7.85 至 8.55 区间"
+  },
+  {
+    "solid": "Tl_2S",
+    "pair": [
+      "Tl^+",
+      "S^{2-}"
+    ],
+    "pKsp": 19.0,
+    "note": "Tl(I) 硫化物，CRC pKsp≈19"
+  },
+  {
+    "solid": "Tl_2CrO_4",
+    "pair": [
+      "Tl^+",
+      "CrO_4^{2-}"
+    ],
+    "pKsp": 11.3,
+    "note": "Tl(I) 铬酸盐，黄色沉淀"
+  },
+  {
+    "solid": "CuCl",
+    "pair": [
+      "Cu^+",
+      "Cl^-"
+    ],
+    "pKsp": 6.7,
+    "note": "CuCl 白色沉淀；还原 Cu2+ 含 Cl- 体系生成；CRC pKsp≈6.7"
+  },
+  {
+    "solid": "CuBr",
+    "pair": [
+      "Cu^+",
+      "Br^-"
+    ],
+    "pKsp": 8.0,
+    "note": "CuBr 白色沉淀；CRC pKsp≈8.0"
+  },
+  {
+    "solid": "CuCN",
+    "pair": [
+      "Cu^+",
+      "CN^-"
+    ],
+    "pKsp": 19.5,
+    "note": "CuCN 白色沉淀；氰化物镀铜；CRC pKsp≈19.5"
+  },
+  {
+    "solid": "CuSCN",
+    "pair": [
+      "Cu^+",
+      "SCN^-"
+    ],
+    "pKsp": 14.3,
+    "note": "CuSCN 白色沉淀；硫氰酸盐法测铜；CRC pKsp≈14.3"
+  },
+  {
+    "solid": "Hg_2Cl_2",
+    "pair": [
+      "Hg_2^{2+}",
+      "Cl^-"
+    ],
+    "pKsp": 17.88,
+    "note": "Calomel 甘汞；Hg2^2+ + 2Cl- ⇌ Hg2Cl2，pKsp=17.88（CRC）"
+  },
+  {
+    "solid": "Hg_2Br_2",
+    "pair": [
+      "Hg_2^{2+}",
+      "Br^-"
+    ],
+    "pKsp": 21.6,
+    "note": "Hg2Br2；CRC pKsp≈21.6"
+  },
+  {
+    "solid": "Hg_2I_2",
+    "pair": [
+      "Hg_2^{2+}",
+      "I^-"
+    ],
+    "pKsp": 23.4,
+    "note": "Hg2I2 黄绿色沉淀；CRC pKsp≈23.4"
+  },
+  {
+    "solid": "Hg_2SO_4",
+    "pair": [
+      "Hg_2^{2+}",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 6.13,
+    "note": "Hg2SO4；CRC pKsp≈6.13"
+  },
+  {
+    "solid": "Bi_2S_3",
+    "pair": [
+      "Bi^{3+}",
+      "S^{2-}"
+    ],
+    "pKsp": 100.0,
+    "note": "Bi2S3 棕黑色沉淀；H2S 组阳离子；CRC pKsp≈100"
+  },
+  {
+    "solid": "Sb_2S_3",
+    "pair": [
+      "Sb^{3+}",
+      "S^{2-}"
+    ],
+    "pKsp": 92.0,
+    "note": "Sb2S3 橙红色沉淀；H2S 组阳离子；CRC pKsp≈92"
+  },
+  {
+    "solid": "CoCO_3",
+    "pair": [
+      "Co^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 12.84,
+    "note": "CoCO3 粉红色沉淀；spherocobaltite；CRC pKsp≈12.84"
+  },
+  {
+    "solid": "NiCO_3",
+    "pair": [
+      "Ni^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 8.0,
+    "note": "NiCO3 绿色沉淀；CRC pKsp≈8.0"
+  },
+  {
+    "solid": "CdCO_3",
+    "pair": [
+      "Cd^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 11.3,
+    "note": "CdCO3 otavite；CRC pKsp≈11.3"
+  },
+  {
+    "solid": "Zn(CN)_2",
+    "pair": [
+      "Zn^{2+}",
+      "CN^-"
+    ],
+    "pKsp": 12.0,
+    "note": "Zn(CN)2 白色沉淀；氰化物镀锌；pKsp≈12"
+  },
+  {
+    "solid": "Cd(CN)_2",
+    "pair": [
+      "Cd^{2+}",
+      "CN^-"
+    ],
+    "pKsp": 8.0,
+    "note": "Cd(CN)2 白色沉淀；pKsp≈8"
+  },
+  {
+    "solid": "Ni(CN)_2",
+    "pair": [
+      "Ni^{2+}",
+      "CN^-"
+    ],
+    "pKsp": 22.0,
+    "note": "Ni(CN)2 绿色沉淀；pKsp≈22"
+  },
+  {
+    "solid": "Mg_3(PO_4)_2",
+    "pair": [
+      "Mg^{2+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.0,
+    "note": "Mg3(PO4)2；pKsp≈23"
+  },
+  {
+    "solid": "Pb_3(PO_4)_2",
+    "pair": [
+      "Pb^{2+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 42.0,
+    "note": "Pb3(PO4)2 白色沉淀；pKsp≈42"
+  },
+  {
+    "solid": "MgSO_3",
+    "pair": [
+      "Mg^{2+}",
+      "SO_3^{2-}"
+    ],
+    "pKsp": 2.5,
+    "note": "MgSO3；亚硫酸镁；易溶；pKsp≈2.5"
+  },
+  {
+    "solid": "CuF_2",
+    "pair": [
+      "Cu^{2+}",
+      "F^-"
+    ],
+    "pKsp": 2.7,
+    "note": "CuF2；易溶；pKsp≈2.7"
+  },
+  {
+    "solid": "SrC_2O_4",
+    "pair": [
+      "Sr^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 4.96,
+    "note": "SrC2O4；pKsp≈4.96"
+  },
+  {
+    "solid": "MgC_2O_4",
+    "pair": [
+      "Mg^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 4.1,
+    "note": "MgC2O4；pKsp≈4.1"
+  },
+  {
+    "solid": "MnC_2O_4",
+    "pair": [
+      "Mn^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 8.5,
+    "note": "MnC2O4；pKsp≈8.5"
+  },
+  {
+    "solid": "ZnC_2O_4",
+    "pair": [
+      "Zn^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 7.6,
+    "note": "ZnC2O4；pKsp≈7.6"
+  },
+  {
+    "solid": "CdC_2O_4",
+    "pair": [
+      "Cd^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 7.8,
+    "note": "CdC2O4；pKsp≈7.8"
+  },
+  {
+    "solid": "K_2Na_2[Fe(CN)_6]",
+    "pair": [
+      "K^+",
+      "[Fe(CN)_6]^{4-}"
+    ],
+    "pKsp": 4.0,
+    "note": "K2Na2[Fe(CN)6]；亚铁氰化物鉴定"
+  },
+  {
+    "solid": "K_3[Fe(CN)_6]",
+    "pair": [
+      "K^+",
+      "[Fe(CN)_6]^{3-}"
+    ],
+    "pKsp": 1.5,
+    "note": "K3[Fe(CN)6] 铁氰化钾；易溶；pKsp≈1.5"
+  },
+  {
+    "solid": "Ag_4[Fe(CN)_6]",
+    "pair": [
+      "Ag^+",
+      "[Fe(CN)_6]^{4-}"
+    ],
+    "pKsp": 41.0,
+    "note": "Ag4[Fe(CN)6]；鉴定 Fe(CN)6^4-；pKsp≈41"
+  },
+  {
+    "solid": "Ag_3[Fe(CN)_6]",
+    "pair": [
+      "Ag^+",
+      "[Fe(CN)_6]^{3-}"
+    ],
+    "pKsp": 31.0,
+    "note": "Ag3[Fe(CN)6]；鉴定 Fe(CN)6^3-；pKsp≈31"
+  },
+  {
+    "solid": "Zn_2[Fe(CN)_6]",
+    "pair": [
+      "Zn^{2+}",
+      "[Fe(CN)_6]^{4-}"
+    ],
+    "pKsp": 24.0,
+    "note": "Zn2[Fe(CN)6] 白色沉淀；鉴定 Zn2+；pKsp≈24"
+  },
+  {
+    "solid": "Cu_2[Fe(CN)_6]",
+    "pair": [
+      "Cu^{2+}",
+      "[Fe(CN)_6]^{4-}"
+    ],
+    "pKsp": 24.0,
+    "note": "Cu2[Fe(CN)6] 棕红色沉淀；pKsp≈24"
+  },
+  {
+    "solid": "Fe_3[Fe(CN)_6]_2",
+    "pair": [
+      "Fe^{3+}",
+      "[Fe(CN)_6]^{3-}"
+    ],
+    "pKsp": 35.0,
+    "note": "Fe3[Fe(CN)6]2 = 普鲁士蓝（ Turnbull's blue）；pKsp≈35"
+  },
+  {
+    "solid": "K_2PtCl_6",
+    "pair": [
+      "K^+",
+      "[PtCl_6]^{2-}"
+    ],
+    "pKsp": 5.0,
+    "note": "K2PtCl6 黄色沉淀；氯铂酸钾法鉴定 K+；pKsp≈5"
+  },
+  {
+    "solid": "K_2PtCl_4",
+    "pair": [
+      "K^+",
+      "[PtCl_4]^{2-}"
+    ],
+    "pKsp": 4.0,
+    "note": "K2PtCl4；pKsp≈4；slight=true：投料超过溶解度时保持固相入账，由 dissolve 候选求部分溶解平衡",
+    "slight": true
+  },
+  {
+    "solid": "(NH_4)_2PtCl_6",
+    "pair": [
+      "[PtCl_6]^{2-}",
+      "[PtCl_6]^{2-}"
+    ],
+    "pKsp": 4.5,
+    "note": "(NH4)2PtCl6；pKsp≈4.5"
+  },
+  {
+    "solid": "In(OH)_3",
+    "pair": [
+      "In^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 33.0,
+    "note": "In(OH)3 白色沉淀；两性；CRC pKsp≈33"
+  },
+  {
+    "solid": "Pd(OH)_2",
+    "pair": [
+      "Pd^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 28.0,
+    "note": "Pd(OH)2 黄色沉淀；pKsp≈28"
+  },
+  {
+    "solid": "Ce(OH)_3",
+    "pair": [
+      "Ce^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.0,
+    "note": "Ce(OH)3 白色沉淀；镧系；pKsp≈22"
+  },
+  {
+    "solid": "La(OH)_3",
+    "pair": [
+      "La^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 20.0,
+    "note": "La(OH)3 白色沉淀；pKsp≈20；镧系典型"
+  },
+  {
+    "solid": "Zr(OH)_4",
+    "pair": [
+      "Zr^{4+}",
+      "OH^-"
+    ],
+    "pKsp": 50.0,
+    "note": "Zr(OH)4 白色沉淀；pKsp≈50；Zr4+ 强水解"
+  },
+  {
+    "solid": "Bi(OH)_3",
+    "pair": [
+      "Bi^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 32.5,
+    "note": "Bi(OH)3 白色沉淀；pKsp≈32.5"
+  },
+  {
+    "solid": "PdCl_2",
+    "pair": [
+      "Pd^{2+}",
+      "Cl^-"
+    ],
+    "pKsp": 12.0,
+    "note": "PdCl2 固态；Ksp≈1e-12"
+  },
+  {
+    "solid": "LaF_3",
+    "pair": [
+      "La^{3+}",
+      "F^-"
+    ],
+    "pKsp": 17.0,
+    "note": "LaF3；镧系氟化物难溶；pKsp≈17"
+  },
+  {
+    "solid": "CeF_3",
+    "pair": [
+      "Ce^{3+}",
+      "F^-"
+    ],
+    "pKsp": 16.0,
+    "note": "CeF3；pKsp≈16"
+  },
+  {
+    "solid": "BaMoO_4",
+    "pair": [
+      "Ba^{2+}",
+      "MoO_4^{2-}"
+    ],
+    "pKsp": 7.0,
+    "note": "BaMoO4 白色沉淀；pKsp≈7"
+  },
+  {
+    "solid": "BaWO_4",
+    "pair": [
+      "Ba^{2+}",
+      "WO_4^{2-}"
+    ],
+    "pKsp": 5.0,
+    "note": "BaWO4 白色沉淀；pKsp≈5"
+  },
+  {
+    "solid": "PbMoO_4",
+    "pair": [
+      "Pb^{2+}",
+      "MoO_4^{2-}"
+    ],
+    "pKsp": 6.5,
+    "note": "PbMoO4 黄色沉淀；pKsp≈6.5"
+  },
+  {
+    "solid": "Na_3AsO_4",
+    "pair": [
+      "Na^+",
+      "AsO_4^{3-}"
+    ],
+    "pKsp": -2.0,
+    "note": "Na3AsO4 易溶（无沉淀）；Ksp>1 仅表示存在形态"
+  },
+  {
+    "solid": "As_2S_3",
+    "pair": [
+      "As^{3+}",
+      "S^{2-}"
+    ],
+    "pKsp": 99.0,
+    "note": "As2S3 黄色沉淀；H2S 组阳离子；CRC pKsp≈99"
+  },
+  {
+    "solid": "Ag_2Se",
+    "pair": [
+      "Ag^+",
+      "Se^{2-}"
+    ],
+    "pKsp": 63.0,
+    "note": "Ag2Se 黑色沉淀；NIST pKsp≈63（极难溶，类比 Ag2S）"
+  },
+  {
+    "solid": "Ag_2SeO_3",
+    "pair": [
+      "Ag^+",
+      "SeO_3^{2-}"
+    ],
+    "pKsp": 15.0,
+    "note": "Ag2SeO3 白色沉淀；NIST pKsp≈15"
+  },
+  {
+    "solid": "Ag_2SeO_4",
+    "pair": [
+      "Ag^+",
+      "SeO_4^{2-}"
+    ],
+    "pKsp": 8.0,
+    "note": "Ag2SeO4 白色沉淀；NIST pKsp≈8"
+  },
+  {
+    "solid": "AgBrO_3",
+    "pair": [
+      "Ag^+",
+      "BrO_3^-"
+    ],
+    "pKsp": 4.97,
+    "note": "AgBrO3 白色沉淀；NIST pKsp=4.97"
+  },
+  {
+    "solid": "AgIO_3",
+    "pair": [
+      "Ag^+",
+      "IO_3^-"
+    ],
+    "pKsp": 7.5,
+    "note": "AgIO3 白色沉淀；NIST pKsp≈7.5（碘量法滴定基础）"
+  },
+  {
+    "solid": "Ag_2MoO_4",
+    "pair": [
+      "Ag^+",
+      "MoO_4^{2-}"
+    ],
+    "pKsp": 11.5,
+    "note": "Ag2MoO4 黄色沉淀；NIST pKsp≈11.5"
+  },
+  {
+    "solid": "Ag_2WO_4",
+    "pair": [
+      "Ag^+",
+      "WO_4^{2-}"
+    ],
+    "pKsp": 11.3,
+    "note": "Ag2WO4 浅黄色沉淀；NIST pKsp≈11.3"
+  },
+  {
+    "solid": "Ba_3(PO_4)_2",
+    "pair": [
+      "Ba^{2+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 22.6,
+    "note": "Ba3(PO4)2 白色沉淀；NIST pKsp≈22.6"
+  },
+  {
+    "solid": "BaF_2",
+    "pair": [
+      "Ba^{2+}",
+      "F^-"
+    ],
+    "pKsp": 6.0,
+    "note": "BaF2 白色沉淀；NIST pKsp≈6.0（碱土氟化物中较难溶）"
+  },
+  {
+    "solid": "BaSeO_4",
+    "pair": [
+      "Ba^{2+}",
+      "SeO_4^{2-}"
+    ],
+    "pKsp": 7.3,
+    "note": "BaSeO4 白色沉淀；NIST pKsp≈7.3（类比 BaSO4）"
+  },
+  {
+    "solid": "CaMoO_4",
+    "pair": [
+      "Ca^{2+}",
+      "MoO_4^{2-}"
+    ],
+    "pKsp": 7.9,
+    "note": "CaMoO4 白色沉淀；NIST pKsp≈7.9"
+  },
+  {
+    "solid": "CaWO_4",
+    "pair": [
+      "Ca^{2+}",
+      "WO_4^{2-}"
+    ],
+    "pKsp": 8.5,
+    "note": "CaWO4 白色沉淀（白钨矿 scheelite）；NIST pKsp≈8.5"
+  },
+  {
+    "solid": "Ca(IO_3)_2",
+    "pair": [
+      "Ca^{2+}",
+      "IO_3^-"
+    ],
+    "pKsp": 5.0,
+    "note": "Ca(IO3)2 白色沉淀；NIST pKsp≈5.0"
+  },
+  {
+    "solid": "SrCrO_4",
+    "pair": [
+      "Sr^{2+}",
+      "CrO_4^{2-}"
+    ],
+    "pKsp": 4.4,
+    "note": "SrCrO4 黄色沉淀；NIST pKsp≈4.4（同族 Sr 比 Ba 易溶）"
+  },
+  {
+    "solid": "SrF_2",
+    "pair": [
+      "Sr^{2+}",
+      "F^-"
+    ],
+    "pKsp": 8.7,
+    "note": "SrF2 白色沉淀；NIST pKsp≈8.7"
+  },
+  {
+    "solid": "Sr_3(PO_4)_2",
+    "pair": [
+      "Sr^{2+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.0,
+    "note": "Sr3(PO4)2 白色沉淀；NIST pKsp≈23"
+  },
+  {
+    "solid": "PbC_2O_4",
+    "pair": [
+      "Pb^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 9.3,
+    "note": "PbC2O4 白色沉淀；NIST pKsp≈9.3"
+  },
+  {
+    "solid": "PbSe",
+    "pair": [
+      "Pb^{2+}",
+      "Se^{2-}"
+    ],
+    "pKsp": 38.0,
+    "note": "PbSe 黑色沉淀；NIST pKsp≈38（clausthalite；类比 PbS）"
+  },
+  {
+    "solid": "PbWO_4",
+    "pair": [
+      "Pb^{2+}",
+      "WO_4^{2-}"
+    ],
+    "pKsp": 6.4,
+    "note": "PbWO4 白色沉淀；NIST pKsp≈6.4（stolzite）"
+  },
+  {
+    "solid": "Hg_2CO_3",
+    "pair": [
+      "Hg_2^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 16.4,
+    "note": "Hg2CO3 黄色沉淀；Hg(I) 碳酸盐；NIST pKsp≈16.4"
+  },
+  {
+    "solid": "Hg_2CrO_4",
+    "pair": [
+      "Hg_2^{2+}",
+      "CrO_4^{2-}"
+    ],
+    "pKsp": 8.7,
+    "note": "Hg2CrO4 红色沉淀；Hg(I) 铬酸盐；NIST pKsp≈8.7"
+  },
+  {
+    "solid": "CuC_2O_4",
+    "pair": [
+      "Cu^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 7.5,
+    "note": "CuC2O4 蓝绿色沉淀；NIST pKsp≈7.5"
+  },
+  {
+    "solid": "Fe_2S_3",
+    "pair": [
+      "Fe^{3+}",
+      "S^{2-}"
+    ],
+    "pKsp": 39.0,
+    "note": "Fe2S3 假想固相；NIST pKsp≈39（实际水溶液中水解为 FeS + S；本表仅作热力学参考）"
+  },
+  {
+    "solid": "FePO_4",
+    "pair": [
+      "Fe^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 22.5,
+    "note": "FePO4 白色沉淀（vivianite 风化产物）；NIST pKsp≈22.5（Fe3+ 与 PO4^3- 直接沉）"
+  },
+  {
+    "solid": "CoC_2O_4",
+    "pair": [
+      "Co^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 7.5,
+    "note": "CoC2O4 粉红色沉淀；NIST pKsp≈7.5"
+  },
+  {
+    "solid": "NiC_2O_4",
+    "pair": [
+      "Ni^{2+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 9.0,
+    "note": "NiC2O4 绿色沉淀；NIST pKsp≈9.0"
+  },
+  {
+    "solid": "Cu_2Se",
+    "pair": [
+      "Cu^+",
+      "Se^{2-}"
+    ],
+    "pKsp": 60.0,
+    "note": "Cu2Se 黑色沉淀；NIST pKsp≈60（类比 Cu2S）"
+  },
+  {
+    "solid": "Cu_3(PO_4)_2",
+    "pair": [
+      "Cu^{2+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 36.7,
+    "note": "Cu3(PO4)2 蓝绿色沉淀；NIST pKsp≈36.7"
+  },
+  {
+    "solid": "Cu_3(AsO_4)_2",
+    "pair": [
+      "Cu^{2+}",
+      "AsO_4^{3-}"
+    ],
+    "pKsp": 35.1,
+    "note": "Cu3(AsO4)2 绿色沉淀；NIST pKsp≈35.1（Paris green 类）"
+  },
+  {
+    "solid": "Cu(IO_3)_2",
+    "pair": [
+      "Cu^{2+}",
+      "IO_3^-"
+    ],
+    "pKsp": 7.13,
+    "note": "Cu(IO3)2 绿色沉淀；NIST pKsp≈7.13"
+  },
+  {
+    "solid": "AlPO_4",
+    "pair": [
+      "Al^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 16.0,
+    "note": "AlPO4 白色沉淀（variscite）；NIST pKsp≈16（与 FePO4 类似，M3+ + PO4^3- 直接沉）"
+  },
+  {
+    "solid": "CaCrO_4",
+    "pair": [
+      "Ca^{2+}",
+      "CrO_4^{2-}"
+    ],
+    "pKsp": 7.6,
+    "note": "CaCrO4; NIST pKsp=7.6"
+  },
+  {
+    "solid": "Y(OH)_3",
+    "pair": [
+      "Y^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.1,
+    "note": "Y(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.1；钇与重镧系类质同象"
+  },
+  {
+    "solid": "YF_3",
+    "pair": [
+      "Y^{3+}",
+      "F^-"
+    ],
+    "pKsp": 13.3,
+    "note": "YF_3 镧系氟化物（定性分组试剂）；pKsp≈13.3；钇与重镧系类质同象"
+  },
+  {
+    "solid": "Y_2(C_2O_4)_3",
+    "pair": [
+      "Y^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.5,
+    "note": "Y_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.5"
+  },
+  {
+    "solid": "YPO_4",
+    "pair": [
+      "Y^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 22.5,
+    "note": "YPO_4 稀土磷酸盐（独居石型；pKsp≈22.5"
+  },
+  {
+    "solid": "La_2(C_2O_4)_3",
+    "pair": [
+      "La^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.2,
+    "note": "La_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.2"
+  },
+  {
+    "solid": "LaPO_4",
+    "pair": [
+      "La^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 22.4,
+    "note": "LaPO_4 稀土磷酸盐（独居石型；pKsp≈22.4"
+  },
+  {
+    "solid": "Ce_2(C_2O_4)_3",
+    "pair": [
+      "Ce^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.5,
+    "note": "Ce_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.5"
+  },
+  {
+    "solid": "CePO_4",
+    "pair": [
+      "Ce^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.0,
+    "note": "CePO_4 稀土磷酸盐（独居石型；pKsp≈23.0"
+  },
+  {
+    "solid": "Pr(OH)_3",
+    "pair": [
+      "Pr^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 21.7,
+    "note": "Pr(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈21.7"
+  },
+  {
+    "solid": "PrF_3",
+    "pair": [
+      "Pr^{3+}",
+      "F^-"
+    ],
+    "pKsp": 15.1,
+    "note": "PrF_3 镧系氟化物（定性分组试剂）；pKsp≈15.1"
+  },
+  {
+    "solid": "Pr_2(C_2O_4)_3",
+    "pair": [
+      "Pr^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.5,
+    "note": "Pr_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.5"
+  },
+  {
+    "solid": "PrPO_4",
+    "pair": [
+      "Pr^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.0,
+    "note": "PrPO_4 稀土磷酸盐（独居石型；pKsp≈23.0"
+  },
+  {
+    "solid": "Nd(OH)_3",
+    "pair": [
+      "Nd^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 21.5,
+    "note": "Nd(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈21.5"
+  },
+  {
+    "solid": "NdF_3",
+    "pair": [
+      "Nd^{3+}",
+      "F^-"
+    ],
+    "pKsp": 15.0,
+    "note": "NdF_3 镧系氟化物（定性分组试剂）；pKsp≈15.0"
+  },
+  {
+    "solid": "Nd_2(C_2O_4)_3",
+    "pair": [
+      "Nd^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.5,
+    "note": "Nd_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.5"
+  },
+  {
+    "solid": "NdPO_4",
+    "pair": [
+      "Nd^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.0,
+    "note": "NdPO_4 稀土磷酸盐（独居石型；pKsp≈23.0"
+  },
+  {
+    "solid": "Pm(OH)_3",
+    "pair": [
+      "Pm^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 21.6,
+    "note": "Pm(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈21.6"
+  },
+  {
+    "solid": "PmF_3",
+    "pair": [
+      "Pm^{3+}",
+      "F^-"
+    ],
+    "pKsp": 15.1,
+    "note": "PmF_3 镧系氟化物（定性分组试剂）；pKsp≈15.1"
+  },
+  {
+    "solid": "Pm_2(C_2O_4)_3",
+    "pair": [
+      "Pm^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.6,
+    "note": "Pm_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.6"
+  },
+  {
+    "solid": "PmPO_4",
+    "pair": [
+      "Pm^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.0,
+    "note": "PmPO_4 稀土磷酸盐（独居石型；pKsp≈23.0"
+  },
+  {
+    "solid": "Sm(OH)_3",
+    "pair": [
+      "Sm^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.1,
+    "note": "Sm(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.1"
+  },
+  {
+    "solid": "SmF_3",
+    "pair": [
+      "Sm^{3+}",
+      "F^-"
+    ],
+    "pKsp": 15.0,
+    "note": "SmF_3 镧系氟化物（定性分组试剂）；pKsp≈15.0"
+  },
+  {
+    "solid": "Sm_2(C_2O_4)_3",
+    "pair": [
+      "Sm^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.7,
+    "note": "Sm_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.7"
+  },
+  {
+    "solid": "SmPO_4",
+    "pair": [
+      "Sm^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.2,
+    "note": "SmPO_4 稀土磷酸盐（独居石型；pKsp≈23.2"
+  },
+  {
+    "solid": "Eu(OH)_3",
+    "pair": [
+      "Eu^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.0,
+    "note": "Eu(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.0"
+  },
+  {
+    "solid": "EuF_3",
+    "pair": [
+      "Eu^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.9,
+    "note": "EuF_3 镧系氟化物（定性分组试剂）；pKsp≈14.9"
+  },
+  {
+    "solid": "Eu_2(C_2O_4)_3",
+    "pair": [
+      "Eu^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.7,
+    "note": "Eu_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.7"
+  },
+  {
+    "solid": "EuPO_4",
+    "pair": [
+      "Eu^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.2,
+    "note": "EuPO_4 稀土磷酸盐（独居石型；pKsp≈23.2"
+  },
+  {
+    "solid": "Gd(OH)_3",
+    "pair": [
+      "Gd^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.3,
+    "note": "Gd(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.3"
+  },
+  {
+    "solid": "GdF_3",
+    "pair": [
+      "Gd^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.9,
+    "note": "GdF_3 镧系氟化物（定性分组试剂）；pKsp≈14.9"
+  },
+  {
+    "solid": "Gd_2(C_2O_4)_3",
+    "pair": [
+      "Gd^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 26.9,
+    "note": "Gd_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈26.9"
+  },
+  {
+    "solid": "GdPO_4",
+    "pair": [
+      "Gd^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.4,
+    "note": "GdPO_4 稀土磷酸盐（独居石型；pKsp≈23.4"
+  },
+  {
+    "solid": "Tb(OH)_3",
+    "pair": [
+      "Tb^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.5,
+    "note": "Tb(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.5"
+  },
+  {
+    "solid": "TbF_3",
+    "pair": [
+      "Tb^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.8,
+    "note": "TbF_3 镧系氟化物（定性分组试剂）；pKsp≈14.8"
+  },
+  {
+    "solid": "Tb_2(C_2O_4)_3",
+    "pair": [
+      "Tb^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 27.0,
+    "note": "Tb_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈27.0"
+  },
+  {
+    "solid": "TbPO_4",
+    "pair": [
+      "Tb^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.4,
+    "note": "TbPO_4 稀土磷酸盐（独居石型；pKsp≈23.4"
+  },
+  {
+    "solid": "Dy(OH)_3",
+    "pair": [
+      "Dy^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.6,
+    "note": "Dy(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.6"
+  },
+  {
+    "solid": "DyF_3",
+    "pair": [
+      "Dy^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.8,
+    "note": "DyF_3 镧系氟化物（定性分组试剂）；pKsp≈14.8"
+  },
+  {
+    "solid": "Dy_2(C_2O_4)_3",
+    "pair": [
+      "Dy^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 27.1,
+    "note": "Dy_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈27.1"
+  },
+  {
+    "solid": "DyPO_4",
+    "pair": [
+      "Dy^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.5,
+    "note": "DyPO_4 稀土磷酸盐（独居石型；pKsp≈23.5"
+  },
+  {
+    "solid": "Ho(OH)_3",
+    "pair": [
+      "Ho^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.6,
+    "note": "Ho(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.6"
+  },
+  {
+    "solid": "HoF_3",
+    "pair": [
+      "Ho^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.7,
+    "note": "HoF_3 镧系氟化物（定性分组试剂）；pKsp≈14.7"
+  },
+  {
+    "solid": "Ho_2(C_2O_4)_3",
+    "pair": [
+      "Ho^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 27.2,
+    "note": "Ho_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈27.2"
+  },
+  {
+    "solid": "HoPO_4",
+    "pair": [
+      "Ho^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.6,
+    "note": "HoPO_4 稀土磷酸盐（独居石型；pKsp≈23.6"
+  },
+  {
+    "solid": "Er(OH)_3",
+    "pair": [
+      "Er^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.7,
+    "note": "Er(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.7"
+  },
+  {
+    "solid": "ErF_3",
+    "pair": [
+      "Er^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.7,
+    "note": "ErF_3 镧系氟化物（定性分组试剂）；pKsp≈14.7"
+  },
+  {
+    "solid": "Er_2(C_2O_4)_3",
+    "pair": [
+      "Er^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 27.3,
+    "note": "Er_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈27.3"
+  },
+  {
+    "solid": "ErPO_4",
+    "pair": [
+      "Er^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.6,
+    "note": "ErPO_4 稀土磷酸盐（独居石型；pKsp≈23.6"
+  },
+  {
+    "solid": "Tm(OH)_3",
+    "pair": [
+      "Tm^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.8,
+    "note": "Tm(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.8"
+  },
+  {
+    "solid": "TmF_3",
+    "pair": [
+      "Tm^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.6,
+    "note": "TmF_3 镧系氟化物（定性分组试剂）；pKsp≈14.6"
+  },
+  {
+    "solid": "Tm_2(C_2O_4)_3",
+    "pair": [
+      "Tm^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 27.4,
+    "note": "Tm_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈27.4"
+  },
+  {
+    "solid": "TmPO_4",
+    "pair": [
+      "Tm^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.7,
+    "note": "TmPO_4 稀土磷酸盐（独居石型；pKsp≈23.7"
+  },
+  {
+    "solid": "Yb(OH)_3",
+    "pair": [
+      "Yb^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 22.9,
+    "note": "Yb(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈22.9"
+  },
+  {
+    "solid": "YbF_3",
+    "pair": [
+      "Yb^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.6,
+    "note": "YbF_3 镧系氟化物（定性分组试剂）；pKsp≈14.6"
+  },
+  {
+    "solid": "Yb_2(C_2O_4)_3",
+    "pair": [
+      "Yb^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 27.5,
+    "note": "Yb_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈27.5"
+  },
+  {
+    "solid": "YbPO_4",
+    "pair": [
+      "Yb^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.8,
+    "note": "YbPO_4 稀土磷酸盐（独居石型；pKsp≈23.8"
+  },
+  {
+    "solid": "Lu(OH)_3",
+    "pair": [
+      "Lu^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 23.0,
+    "note": "Lu(OH)_3 镧系氢氧化物（沉淀完全）；pKsp≈23.0"
+  },
+  {
+    "solid": "LuF_3",
+    "pair": [
+      "Lu^{3+}",
+      "F^-"
+    ],
+    "pKsp": 14.6,
+    "note": "LuF_3 镧系氟化物（定性分组试剂）；pKsp≈14.6"
+  },
+  {
+    "solid": "Lu_2(C_2O_4)_3",
+    "pair": [
+      "Lu^{3+}",
+      "C_2O_4^{2-}"
+    ],
+    "pKsp": 27.6,
+    "note": "Lu_2(C_2O_4)_3 稀土草酸盐（稀土定量沉淀经典）；pKsp≈27.6"
+  },
+  {
+    "solid": "LuPO_4",
+    "pair": [
+      "Lu^{3+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 23.9,
+    "note": "LuPO_4 稀土磷酸盐（独居石型；pKsp≈23.9"
+  },
+  {
+    "solid": "RaSO_4",
+    "pair": [
+      "Ra^{2+}",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 10.3,
+    "note": "RaSO4；镭略比 BaSO4 难溶（居里法分镭）；pKsp≈10.3"
+  },
+  {
+    "solid": "RaCO_3",
+    "pair": [
+      "Ra^{2+}",
+      "CO_3^{2-}"
+    ],
+    "pKsp": 8.5,
+    "note": "RaCO3；pKsp≈8.5"
+  },
+  {
+    "solid": "EuSO_4",
+    "pair": [
+      "Eu^{2+}",
+      "SO_4^{2-}"
+    ],
+    "pKsp": 7.6,
+    "note": "EuSO4；Eu2+ 类似 Ba2+/Sr2+，硫酸盐中等难溶；pKsp≈7.6"
+  },
+  {
+    "solid": "Rh(OH)_3",
+    "pair": [
+      "Rh^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 23.5,
+    "note": "Rh(OH)3 黄色沉淀（铑盐+NaOH）；pKsp≈23.5"
+  },
+  {
+    "solid": "Ru(OH)_3",
+    "pair": [
+      "Ru^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 23.0,
+    "note": "Ru(OH)3 暗棕沉淀（钌盐+NaOH）；pKsp≈23"
+  },
+  {
+    "solid": "Ir(OH)_3",
+    "pair": [
+      "Ir^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 24.0,
+    "note": "Ir(OH)3 沉淀（铱盐+NaOH）；pKsp≈24"
+  },
+  {
+    "solid": "Hf(OH)_4",
+    "pair": [
+      "Hf^{4+}",
+      "OH^-"
+    ],
+    "pKsp": 52.0,
+    "note": "Hf(OH)4；Hf4+ 强水解（同 Zr(OH)4 pKsp 50）；pKsp≈52"
+  },
+  {
+    "solid": "AgNO_2",
+    "pair": [
+      "Ag^+",
+      "NO_2^-"
+    ],
+    "pKsp": 3.3,
+    "note": "AgNO2 亚硝酸银；溶解度 0.34g/100mL；pKsp≈3.3"
+  },
+  {
+    "solid": "Sn(OH)_2",
+    "pair": [
+      "Sn^{2+}",
+      "OH^-"
+    ],
+    "pKsp": 27.3,
+    "note": "氢氧化亚锡；白色沉淀，两性（溶于过量碱为 [Sn(OH)3]-）；CRC Ksp≈5.45e-28；SnCl2 溶液配制须加盐酸防水解的化学基础；film：锡耐中性水（镀锡板化学基础），Sn+H2O 室温动力学封闭（H2 过电位+碱式盐膜）",
+    "film": true
+  },
+  {
+    "solid": "Sb(OH)_3",
+    "pair": [
+      "Sb^{3+}",
+      "OH^-"
+    ],
+    "pKsp": 41.4,
+    "note": "氢氧化锑(III)；白色沉淀，两性（溶于过量碱为 [Sb(OH)4]-）；Sb3+ 水解极强（SbCl3+水→SbOCl 类比 Sn(OH)2 路径）；竞赛常用表 pKsp≈41.4"
+  },
+  {
+    "solid": "Ba(IO_3)_2",
+    "pair": [
+      "Ba^{2+}",
+      "IO_3^-"
+    ],
+    "pKsp": 8.8,
+    "note": "碘酸钡（CRC: 1.5e-9）；自洽校验 Ksp=4s³ → 溶解度 ~0.9e-3 mol/L（0.044 g/100mL，文献 0.02~0.04 g 区间内）"
+  },
+  {
+    "solid": "Ag_2SO_3",
+    "pair": [
+      "Ag^+",
+      "SO_3^{2-}"
+    ],
+    "pKsp": 13.82,
+    "note": "亚硫酸银（Lange: 1.5e-14）；Ag+ 与 SO_3^{2-} 的白色沉淀，溶于过量亚硫酸盐（配位 [Ag(SO_3)_2]^{3-} β=13.0 已收）"
+  },
+  {
+    "solid": "AgSCN",
+    "pair": [
+      "Ag^+",
+      "SCN^-"
+    ],
+    "pKsp": 12.0,
+    "note": "硫氰化银（CRC: 1.03e-12）；Volhard 银量法终点沉淀（Fe^{3+} 指示剂显色的基础）"
+  },
+  {
+    "solid": "Zn_3(PO_4)_2",
+    "pair": [
+      "Zn^{2+}",
+      "PO_4^{3-}"
+    ],
+    "pKsp": 32.04,
+    "note": "磷酸锌（CRC: 9.1e-33）；磷化锌钝化膜/防锈颜料族"
+  }
 ]

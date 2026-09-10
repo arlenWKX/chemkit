@@ -6,11 +6,11 @@
   "n": 1
  },
  {
-  "acid": "HAc",
-  "base": "Ac^-",
+  "acid": "CH_3COOH",
+  "base": "CH_3COO^-",
   "pka": 4.76,
   "n": 1,
-  "note": "醋酸，文献值"
+  "note": "醋酸 HAc = CH3COOH 缩写，文献值"
  },
  {
   "acid": "HCN",
@@ -41,8 +41,7 @@
   "base": "S^{2-}",
   "pka": 14.0,
   "n": 1,
-  "consistency": "pKa1+pKa2 = 7+19 = 26 = 合并条目；pKa2 取现代公认值 19（旧教材 ~13 系测量假象）",
-  "note": "pKa2 教材值 ~14（Ka2~1e-14）；现代文献有 17-19 争议高值，"
+  "note": "pKa2 取教材值 14.0（Ka2≈1e-14），整套硫化物 Ksp 校准基于此约定。现代光谱/电导法有 17-19 争议高值，但定性分析教材（H2S 分步沉淀 MnS/ZnS/CuS/SnS 等）实测分组现象与 pKa2=14 自洽，本表沿用 14"
  },
  {
   "acid": "H_2S",
@@ -280,12 +279,6 @@
   "consistency": "O2- 在水中定量水解为 2OH-（pKa(OH-)≫14，文献估计 ~22-26）"
  },
  {
-  "acid": "CH_3COOH",
-  "base": "CH_3COO^-",
-  "pka": 4.76,
-  "n": 1
- },
- {
   "acid": "VO_2^+",
   "base": "HVO_3",
   "pka": 1.5,
@@ -326,5 +319,285 @@
   "pka": 10.64,
   "note": "次碘酸",
   "n": 1
+ },
+ {
+  "acid": "H_2SeO_3",
+  "base": "HSeO_3^-",
+  "pka": 2.6,
+  "n": 1,
+  "note": "亚硒酸一级电离；CRC pKa1=2.62"
+ },
+ {
+  "acid": "H_2SeO_4",
+  "base": "HSeO_4^-",
+  "pka": -2.0,
+  "n": 1,
+  "note": "硒酸一级电离；强酸；pKa1≈-2"
+ },
+ {
+  "acid": "HSeO_4^-",
+  "base": "SeO_4^{2-}",
+  "pka": 1.9,
+  "n": 1,
+  "note": "硒酸二级电离；CRC pKa2=1.9"
+ },
+ {
+  "acid": "H_2TeO_3",
+  "base": "HTeO_3^-",
+  "pka": 2.5,
+  "n": 1,
+  "note": "亚碲酸一级；CRC pKa1≈2.5"
+ },
+ {
+  "acid": "HTeO_3^-",
+  "base": "TeO_3^{2-}",
+  "pka": 7.7,
+  "n": 1,
+  "note": "亚碲酸二级"
+ },
+ {
+  "acid": "H_6TeO_6",
+  "base": "H_5TeO_6^-",
+  "pka": 7.7,
+  "n": 1,
+  "note": "碲酸 H6TeO6；pKa≈7.7；八面体六羟碲酸"
+ },
+ {
+  "acid": "HBF_4",
+  "base": "BF_4^-",
+  "pka": -0.4,
+  "n": 1,
+  "note": "氟硼酸；强酸；pKa≈-0.4"
+ },
+ {
+  "acid": "H_2SiF_6",
+  "base": "SiF_6^{2-}",
+  "pka": -1.0,
+  "n": 1,
+  "note": "氟硅酸；强酸；pKa≈-1"
+ },
+ {
+  "acid": "H_3VO_4",
+  "base": "H_2VO_4^-",
+  "pka": 3.5,
+  "n": 1,
+  "note": "钒酸一级电离（简化；实际有 V2O5·nH2O 多聚）"
+ },
+ {
+  "acid": "H_2VO_4^-",
+  "base": "HVO_4^{2-}",
+  "pka": 7.8,
+  "n": 1,
+  "note": "钒酸二级"
+ },
+ {
+  "acid": "HVO_4^{2-}",
+  "base": "VO_4^{3-}",
+  "pka": 12.5,
+  "n": 1,
+  "note": "钒酸三级"
+ },
+ {
+  "acid": "H_4GeO_4",
+  "base": "H_3GeO_4^-",
+  "pka": 9.0,
+  "n": 1,
+  "note": "原锗酸一级；H4GeO4；pKa1≈9.0"
+ },
+ {
+  "acid": "H_3GeO_4^-",
+  "base": "H_2GeO_4^{2-}",
+  "pka": 12.4,
+  "n": 1,
+  "note": "原锗酸二级"
+ },
+ {
+  "acid": "H_5IO_6",
+  "base": "H_4IO_6^-",
+  "pka": 3.3,
+  "n": 1,
+  "note": "高碘酸（正）；H5IO6；pKa1≈3.3；八面体"
+ },
+ {
+  "acid": "HIO_4",
+  "base": "IO_4^-",
+  "pka": 1.6,
+  "n": 1,
+  "note": "偏高碘酸；强酸；pKa≈1.6"
+ },
+ {
+  "acid": "HIO_3",
+  "base": "IO_3^-",
+  "pka": 0.78,
+  "n": 1,
+  "note": "碘酸；中强酸；CRC pKa=0.78"
+ },
+ {
+  "acid": "HClO_2",
+  "base": "ClO_2^-",
+  "pka": 1.96,
+  "n": 1,
+  "note": "亚氯酸；中强酸；CRC pKa=1.96"
+ },
+ {
+  "acid": "HClO_3",
+  "base": "ClO_3^-",
+  "pka": -1.0,
+  "n": 1,
+  "note": "氯酸；强酸；pKa≈-1"
+ },
+ {
+  "acid": "HClO_4",
+  "base": "ClO_4^-",
+  "pka": -10.0,
+  "n": 1,
+  "note": "高氯酸；最强酸；pKa≈-10"
+ },
+ {
+  "acid": "HBrO_3",
+  "base": "BrO_3^-",
+  "pka": -1.0,
+  "n": 1,
+  "note": "溴酸；强酸；pKa≈-1"
+ },
+ {
+  "acid": "HBrO_4",
+  "base": "BrO_4^-",
+  "pka": -10.0,
+  "n": 1,
+  "note": "高溴酸；强酸；pKa≈-10"
+ },
+ {
+  "acid": "H_2MoO_4",
+  "base": "HMoO_4^-",
+  "pka": 2.5,
+  "n": 1,
+  "note": "钼酸一级；pKa1≈2.5"
+ },
+ {
+  "acid": "HMoO_4^-",
+  "base": "MoO_4^{2-}",
+  "pka": 4.0,
+  "n": 1,
+  "note": "钼酸二级"
+ },
+ {
+  "acid": "H_2WO_4",
+  "base": "HWO_4^-",
+  "pka": 3.5,
+  "n": 1,
+  "note": "钨酸一级；pKa1≈3.5"
+ },
+ {
+  "acid": "HWO_4^-",
+  "base": "WO_4^{2-}",
+  "pka": 4.8,
+  "n": 1,
+  "note": "钨酸二级"
+ },
+ {
+  "acid": "HTcO_4",
+  "base": "TcO_4^-",
+  "pka": -1.0,
+  "n": 1,
+  "note": "高锝酸；强酸；pKa≈-1"
+ },
+ {
+  "acid": "HReO_4",
+  "base": "ReO_4^-",
+  "pka": -1.4,
+  "n": 1,
+  "note": "高铼酸；强酸；pKa≈-1.4"
+ },
+ {
+  "acid": "Tl^+",
+  "base": "TlOH",
+  "pka": 13.2,
+  "n": 1,
+  "note": "Tl+ 水解；TlOH 弱碱性；pKa≈13.2"
+ },
+ {
+  "acid": "H_2Te",
+  "base": "HTe^-",
+  "pka": 2.64,
+  "n": 1,
+  "note": "碲化氢一级电离；CRC pKa1=2.64（比 H2Se 强酸）"
+ },
+ {
+  "acid": "HTe^-",
+  "base": "Te^{2-}",
+  "pka": 11.0,
+  "n": 1,
+  "note": "碲化氢二级电离；CRC pKa2≈11"
+ },
+ {
+  "acid": "H_2Te",
+  "base": "Te^{2-}",
+  "pka": 13.64,
+  "n": 2,
+  "consistency": "2.64 + 11.0 = 13.64；合并条目"
+ },
+ {
+  "acid": "HSCN",
+  "base": "SCN^-",
+  "pka": -1.85,
+  "n": 1,
+  "note": "硫氰酸；强酸（pKa 估 -1.85）；伪卤素，水溶液中完全电离"
+ },
+ {
+  "acid": "H_3PO_3",
+  "base": "H_2PO_3^-",
+  "pka": 1.3,
+  "n": 1,
+  "note": "亚磷酸一级电离；二质子酸（结构 HPO(OH)2，H 直连 P 不电离）；NIST pKa1=1.3"
+ },
+ {
+  "acid": "H_2PO_3^-",
+  "base": "HPO_3^{2-}",
+  "pka": 6.7,
+  "n": 1,
+  "note": "亚磷酸二级电离；NIST pKa2=6.7"
+ },
+ {
+  "acid": "H_3PO_2",
+  "base": "H_2PO_2^-",
+  "pka": 4.0,
+  "n": 1,
+  "note": "次磷酸；单质子酸（结构 H2P(O)(OH)，2 个 P-H 不电离）；NIST pKa=4.0"
+ },
+ {
+  "acid": "H_4P_2O_7",
+  "base": "H_3P_2O_7^-",
+  "pka": 0.85,
+  "n": 1,
+  "note": "焦磷酸一级；NIST pKa1=0.85"
+ },
+ {
+  "acid": "H_3P_2O_7^-",
+  "base": "H_2P_2O_7^{2-}",
+  "pka": 1.96,
+  "n": 1,
+  "note": "焦磷酸二级；NIST pKa2=1.96"
+ },
+ {
+  "acid": "H_2P_2O_7^{2-}",
+  "base": "HP_2O_7^{3-}",
+  "pka": 6.54,
+  "n": 1,
+  "note": "焦磷酸三级；NIST pKa3=6.54"
+ },
+ {
+  "acid": "HP_2O_7^{3-}",
+  "base": "P_2O_7^{4-}",
+  "pka": 8.42,
+  "n": 1,
+  "note": "焦磷酸四级；NIST pKa4=8.42"
+ },
+ {
+  "acid": "H_2CrO_4",
+  "base": "HCrO_4^-",
+  "pka": -0.98,
+  "n": 1,
+  "note": "铬酸一级电离；NIST pKa1=-0.98（强酸，水溶液中几乎完全电离为 HCrO4-）；pKa2 见 HCrO4^-/CrO4^2-"
  }
 ]

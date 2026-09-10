@@ -72,6 +72,14 @@ class Tables:
     redox_species: set[str] = field(default_factory=set)   # 所有电对的 ox/red 物种
     redox_ox_E: dict[str, float] = field(default_factory=dict)    # 作为氧化剂的最高 E0
     redox_red_E: dict[str, float] = field(default_factory=dict)   # 作为还原剂的最低 E0
+    # 弱配形态池（v0.4.0）：累积 logβ 全部 < _POOL_LOG_BETA 的 (center, ligand)
+    # 族是"部分混合"形态（NR19 盐混合 78/22 再分布——B4 判据既有认定：单源
+    # complex/decomplex = 形态变化非化学反应），区别于"完全转化"事件（银氨
+    # β2=7.2、PbCl3- 2.0）。事件口径三层（A1 changed / 净方程 / 断言量值）
+    # 池折叠到 anchor（center），物种账本层如实逐物种（DB13 原则）。
+    pools: dict[str, str] = field(default_factory=dict)           # 成员 → anchor
+    pool_members: dict[str, list[str]] = field(default_factory=dict)  # anchor → 排序成员
+    pool_ligands: dict[str, set[str]] = field(default_factory=dict)   # anchor → 弱族游离配体集合
 
 
 def _load(name: str):
@@ -80,18 +88,29 @@ def _load(name: str):
 
 
 _R_GAS = 8.314e-3   # kJ/(mol·K)
+_POOL_LOG_BETA = 1.0   # 弱配形态池阈值：族内累积 logβ 全部低于此值 ⟹ 池折叠
 
 
 def henry_of(T: "Tables", gas: str, T_K: float) -> float | None:
     """Henry 常数 H（mol/(L·kPa)）在 T_K 的值；van't Hoff 温度修正。
-    无数据的物种返回 None（调用方回退为完全逸出处理）。"""
+    无数据的物种返回 None（调用方回退为完全逸出处理）。
+    非 298.15 K 的修正含 exp 求值——按 (gas, T_K) 缓存于数据表
+    （值纯函数确定，缓存与逐次计算一致；热路径 S_of 每次求值都经过这里）。"""
     H298 = T.henry.get(gas)
     if H298 is None:
         return None
     dH = T.henry_dH.get(gas)
     if dH is None or T_K == 298.15:
         return H298
-    return H298 * math.exp(-dH / _R_GAS * (1.0 / T_K - 1.0 / 298.15))
+    cache = T.__dict__.get("_henry_c")
+    if cache is None:
+        cache = T._henry_c = {}
+    k = (gas, T_K)
+    v = cache.get(k)
+    if v is None:
+        v = H298 * math.exp(-dH / _R_GAS * (1.0 / T_K - 1.0 / 298.15))
+        cache[k] = v
+    return v
 
 
 def _expand_kinetics(e: dict) -> dict:
@@ -180,6 +199,31 @@ def load_tables(data_dir: str | None = None) -> Tables:
         (t.cations if charge_of(e["center"]) > 0 else t.anions).add(e["center"])
         (t.cations if charge_of(e["ligand"]) > 0 else t.anions).add(e["ligand"])
         (t.cations if charge_of(e["complex"]) > 0 else t.anions).add(e["complex"])
+    # ---- 弱配形态池派生（v0.4.0）----
+    # 折叠条件（两要件同时满足）：
+    #   ① 族内累积 logβ 全部 < 1.0（弱配 = 部分混合形态）；
+    #   ② 族条目数 ≥ 2（逐级 β 谱 = 形态分布族，"同一份溶解盐"语义成立）。
+    #   单条目族（Cu-Cl/Cu-Br 的 β4-only、PbCl₃⁻、[AgI₂]⁻）是条件性事件
+    #   配合物（浓介质生成/稀介质分解），教学口径锁定为事件呈现
+    #   （FeCl₃+Cu 刻蚀 → [CuCl₄]²⁻ 族六例），不折叠。
+    # 以 center 为锚（中心金属守恒），池成员 = center + 该 center 全部
+    # 弱族的 complexes。排序固定序（跨进程确定性纪律，v0.3.9 教训）。
+    # 边界例：Ni-SCN/Zn-Br/Zn-SCN 的 logβ4=1.0 恰在阈值上不折叠。
+    fam: dict[tuple[str, str], list[dict]] = {}
+    for e in t.beta:
+        fam.setdefault((e["center"], e["ligand"]), []).append(e)
+    for (center, ligand), members in sorted(fam.items()):
+        if (len(members) >= 2
+                and all(float(m["logb"]) < _POOL_LOG_BETA for m in members)):
+            t.pool_members.setdefault(center, [center])
+            t.pool_ligands.setdefault(center, set()).add(ligand)
+            for m in members:
+                if m["complex"] not in t.pool_members[center]:
+                    t.pool_members[center].append(m["complex"])
+    for anchor, members in t.pool_members.items():
+        t.pool_members[anchor] = sorted(set(members))
+        for sp in t.pool_members[anchor]:
+            t.pools[sp] = anchor
     for e in t.pka:
         t.pka_acid.setdefault(e["acid"], []).append(e)
         t.pka_base.setdefault(e["base"], []).append(e)
@@ -244,14 +288,19 @@ def load_tables(data_dir: str | None = None) -> Tables:
                      "HSO_3^-", "HS^-", "NO_2^-", "CN^-", "F^-", "Br^-", "I^-", "OH^-",
                      "BrO^-",
                      "CO_3^{2-}", "S^{2-}", "PO_4^{3-}", "HPO_4^{2-}", "H_2PO_4^-",
-                     "SiO_3^{2-}", "H_2PO_2^-", "MnO_4^{2-}", "C_2^{2-}", "N^{3-}"])
+                     "SiO_3^{2-}", "H_2PO_2^-", "MnO_4^{2-}", "C_2^{2-}", "N^{3-}",
+                     "CH_3COO^-", "H^-"])
     t.cations.update(["Na^+", "K^+", "NH_4^+", "H^+", "Li^+", "Sr^{2+}", "Ni^{2+}",
-                      "Mn^{2+}", "Cr^{3+}", "Sn^{2+}"])
+                      "Mn^{2+}", "Cr^{3+}", "Sn^{2+}", "Sc^{3+}", "Ti^{3+}", "V^{3+}",
+                      "Au^{3+}"])
     for name, e in t.ex.items():
         if e.get("form") == "solid":
             t.solids.add(name)
         if e.get("form") == "gas":
             t.gases.add(name)
+    # 数据源目录快照（DATA_DIR 全局可被后续 load_tables(data_dir=...)
+    # 改写，表实例须记住自己的来源）
+    t.src_dir = os.path.abspath(DATA_DIR)
     _compute_dH(t)
     _TABLES_CACHE[cache_key] = t
     return t
@@ -262,7 +311,9 @@ def load_tables(data_dir: str | None = None) -> Tables:
 def _half_balance(ox: str, red: str):
     """通用还原半反应配平：k·ox + h·H+ + ne·e- -> m·red + w·H2O。
     骨架元素依次尝试非 H/O 元素、O、H（O2/H2O 等全 H/O 体系靠后两者）。
-    返回 (k, h, m, w, ne) 或 None（元素单边出现的非标准形，走配体释放路径）。"""
+    返回 (k, h, m, w, ne) 或 None（元素单边出现的非标准形，走配体释放路径）。
+    w < 0 表示 H2O 在反应物侧（如 Fe3O4 + 2H2O + 2H+ + 2e- -> 3Fe(OH)2），
+    化学上仍为有效半反应，正常返回。"""
     eo, er = elements_of(ox), elements_of(red)
     others = [X for X in set(eo) | set(er) if X not in ("H", "O")]
     for sk in others + ["O", "H"]:
@@ -278,7 +329,7 @@ def _half_balance(ox: str, red: str):
             w = k * eo.get("O", 0) - m * er.get("O", 0)
             h = m * er.get("H", 0) + 2 * w - k * eo.get("H", 0)
             ne = k * charge_of(ox) + h - m * charge_of(red)
-            if h < 0 or w < 0 or ne <= 0:
+            if h < 0 or ne <= 0:
                 break
             return k, h, m, w, ne
     return None
@@ -315,8 +366,20 @@ def _couple_dH(t, e):
 
 
 def _dhf(t, sp):
-    if sp in t.thermo:
-        return t.thermo[sp]
+    return dhf_of(t, sp)
+
+
+def dhf_of(t, sp: str) -> float | None:
+    """物种标准生成焓 ΔHf°（kJ/mol）——**单一事实源**入口。
+
+    数据面：thermo.json（裸名 = 引擎账本态：水溶/凝聚/永久气体；
+    "X(g)" 后缀键 = 逸出气相态，仅供热模块的气体计账）。
+    单质标准态（_ELEMENTS 集合）恒为 0；缺数据返回 None（调用方
+    各自回退：van't Hoff 缺 dH 时用 Nernst ΔS≈0，热分析报
+    宁缺毋假）。thermo 模块与本函数共用同一份数据，不再自带副本。"""
+    v = t.thermo.get(sp)
+    if v is not None:
+        return v
     return 0.0 if sp in _ELEMENTS else None
 
 

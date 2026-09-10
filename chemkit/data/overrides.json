@@ -10,10 +10,11 @@
    "T_min": 333
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "白磷歧化：P4 + 3OH- + 3H2O -> PH3 + 3H2PO2-（热浓碱）",
+   "changed": true,
+   "consumption": [
     {
      "name": "P_4",
      "mol": 1.0
@@ -27,7 +28,7 @@
      "mol": 3.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "PH_3",
      "mol": 1.0
@@ -36,8 +37,7 @@
      "name": "H_2PO_2^-",
      "mol": 3.0
     }
-   ],
-   "note": "白磷歧化：P4 + 3OH- + 3H2O -> PH3 + 3H2PO2-（热浓碱）"
+   ]
   }
  },
  {
@@ -50,10 +50,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "Pb3O4 + 4H+ -> 2Pb2+ + PbO2 + 2H2O",
+   "changed": true,
+   "consumption": [
     {
      "name": "Pb_3O_4",
      "mol": 1.0
@@ -63,7 +64,7 @@
      "mol": 4.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "Pb^{2+}",
      "mol": 2.0
@@ -76,8 +77,7 @@
      "name": "H_2O",
      "mol": 2.0
     }
-   ],
-   "note": "Pb3O4 + 4H+ -> 2Pb2+ + PbO2 + 2H2O"
+   ]
   }
  },
  {
@@ -92,10 +92,11 @@
    "conc": "concentrated"
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "HgS 溶于王水（配位 + 氧化复合）",
+   "changed": true,
+   "consumption": [
     {
      "name": "HgS",
      "mol": 3.0
@@ -113,7 +114,7 @@
      "mol": 12.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "[HgCl_4]^{2-}",
      "mol": 3.0
@@ -130,8 +131,7 @@
      "name": "H_2O",
      "mol": 4.0
     }
-   ],
-   "note": "HgS 溶于王水（配位 + 氧化复合）"
+   ]
   }
  },
  {
@@ -144,10 +144,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "SiO2 + 2NaOH -> Na2SiO3 + H2O（强碱溶蚀酸性氧化物）",
+   "changed": true,
+   "consumption": [
     {
      "name": "SiO_2",
      "mol": 1.0
@@ -157,7 +158,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "SiO_3^{2-}",
      "mol": 1.0
@@ -166,8 +167,7 @@
      "name": "H_2O",
      "mol": 1.0
     }
-   ],
-   "note": "SiO2 + 2NaOH -> Na2SiO3 + H2O（强碱溶蚀酸性氧化物）"
+   ]
   }
  },
  {
@@ -180,10 +180,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "硫代硫酸根遇强酸分解：S2O3^2- + 2H+ -> S(沉淀) + SO2 + H2O（教材结论；连四硫酸根等多硫中间体网络超出引擎枚举范围，用 OVERRIDE 人工通道）",
+   "changed": true,
+   "consumption": [
     {
      "name": "S_2O_3^{2-}",
      "mol": 1.0
@@ -193,7 +194,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "S",
      "mol": 1.0
@@ -206,8 +207,7 @@
      "name": "H_2O",
      "mol": 1.0
     }
-   ],
-   "note": "硫代硫酸根遇强酸分解：S2O3^2- + 2H+ -> S(沉淀) + SO2 + H2O（教材结论；连四硫酸根等多硫中间体网络超出引擎枚举范围，用 OVERRIDE 人工通道）"
+   ]
   }
  },
  {
@@ -220,10 +220,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "碘量法测铜：2Cu2+ + 4I- -> 2CuI(沉淀) + I2。CuI 极低 Ksp 拉动 Cu2+/Cu+ 电势超过 I2/I-",
+   "changed": true,
+   "consumption": [
     {
      "name": "Cu^{2+}",
      "mol": 2.0
@@ -233,7 +234,7 @@
      "mol": 4.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "CuI",
      "mol": 2.0
@@ -242,8 +243,7 @@
      "name": "I_2",
      "mol": 1.0
     }
-   ],
-   "note": "碘量法测铜：2Cu2+ + 4I- -> 2CuI(沉淀) + I2。CuI 极低 Ksp 拉动 Cu2+/Cu+ 电势超过 I2/I-"
+   ]
   }
  },
  {
@@ -257,12 +257,13 @@
    "T_min": 330
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [
     "slow"
    ],
-   "consumed": [
+   "note": "热浓硫酸氧化 HBr：2HBr + H2SO4(浓) -> Br2 + SO2 + 2H2O（实验室事实；产物 Br2/SO2 逸出拉动正向，水溶液逆反应在缺水浓酸中不可达）",
+   "changed": true,
+   "consumption": [
     {
      "name": "H_2SO_4",
      "mol": 1.0
@@ -272,7 +273,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "Br_2",
      "mol": 1.0
@@ -281,8 +282,7 @@
      "name": "SO_2",
      "mol": 1.0
     }
-   ],
-   "note": "热浓硫酸氧化 HBr：2HBr + H2SO4(浓) -> Br2 + SO2 + 2H2O（实验室事实；产物 Br2/SO2 逸出拉动正向，水溶液逆反应在缺水浓酸中不可达）"
+   ]
   }
  },
  {
@@ -294,10 +294,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "超氧化钾供氧：4KO2+2H2O->4KOH+3O2（自救呼吸器）",
+   "changed": true,
+   "consumption": [
     {
      "name": "O_2^-",
      "mol": 4.0
@@ -307,7 +308,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "OH^-",
      "mol": 4.0
@@ -316,8 +317,7 @@
      "name": "O_2",
      "mol": 3.0
     }
-   ],
-   "note": "超氧化钾供氧：4KO2+2H2O->4KOH+3O2（自救呼吸器）"
+   ]
   }
  },
  {
@@ -330,10 +330,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "4KO2+2CO2->2K2CO3+3O2",
+   "changed": true,
+   "consumption": [
     {
      "name": "O_2^-",
      "mol": 4.0
@@ -343,7 +344,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "CO_3^{2-}",
      "mol": 2.0
@@ -352,8 +353,7 @@
      "name": "O_2",
      "mol": 3.0
     }
-   ],
-   "note": "4KO2+2CO2->2K2CO3+3O2"
+   ]
   }
  },
  {
@@ -365,10 +365,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "氢化钠遇水：NaH+H2O->NaOH+H2（H- 强还原剂/强碱）",
+   "changed": true,
+   "consumption": [
     {
      "name": "H^-",
      "mol": 1.0
@@ -378,7 +379,7 @@
      "mol": 1.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "OH^-",
      "mol": 1.0
@@ -387,8 +388,7 @@
      "name": "H_2",
      "mol": 1.0
     }
-   ],
-   "note": "氢化钠遇水：NaH+H2O->NaOH+H2（H- 强还原剂/强碱）"
+   ]
   }
  },
  {
@@ -401,10 +401,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "氢氟酸刻蚀玻璃：SiO2+4HF->SiF4(气体)+2H2O（SiO2 不溶于其他酸）",
+   "changed": true,
+   "consumption": [
     {
      "name": "SiO_2",
      "mol": 1.0
@@ -414,7 +415,7 @@
      "mol": 4.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "SiF_4",
      "mol": 1.0
@@ -423,8 +424,7 @@
      "name": "H_2O",
      "mol": 2.0
     }
-   ],
-   "note": "氢氟酸刻蚀玻璃：SiO2+4HF->SiF4(气体)+2H2O（SiO2 不溶于其他酸）"
+   ]
   }
  },
  {
@@ -437,10 +437,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "GeO2 为酸性氧化物（略有两性）：GeO2+2NaOH->Na2GeO3+H2O，同 SiO2 通道",
+   "changed": true,
+   "consumption": [
     {
      "name": "GeO_2",
      "mol": 1.0
@@ -450,7 +451,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "GeO_3^{2-}",
      "mol": 1.0
@@ -459,8 +460,7 @@
      "name": "H_2O",
      "mol": 1.0
     }
-   ],
-   "note": "GeO2 为酸性氧化物（略有两性）：GeO2+2NaOH->Na2GeO3+H2O，同 SiO2 通道"
+   ]
   }
  },
  {
@@ -472,10 +472,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "F2 与水剧烈反应：2F2+2H2O->4HF+O2（OER 过电位在此不适用，F2 为最强氧化剂）",
+   "changed": true,
+   "consumption": [
     {
      "name": "F_2",
      "mol": 2.0
@@ -485,7 +486,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "HF",
      "mol": 4.0
@@ -494,8 +495,7 @@
      "name": "O_2",
      "mol": 1.0
     }
-   ],
-   "note": "F2 与水剧烈反应：2F2+2H2O->4HF+O2（OER 过电位在此不适用，F2 为最强氧化剂）"
+   ]
   }
  },
  {
@@ -508,10 +508,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "2Na2O2+2CO2->2Na2CO3+O2（潜艇/呼吸供氧；水溶液中过氧根被质子化不放氧，教材体系按放氧处理，用 OVERRIDE 表达）",
+   "changed": true,
+   "consumption": [
     {
      "name": "O_2^{2-}",
      "mol": 2.0
@@ -521,7 +522,7 @@
      "mol": 2.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "CO_3^{2-}",
      "mol": 2.0
@@ -530,8 +531,7 @@
      "name": "O_2",
      "mol": 1.0
     }
-   ],
-   "note": "2Na2O2+2CO2->2Na2CO3+O2（潜艇/呼吸供氧；水溶液中过氧根被质子化不放氧，教材体系按放氧处理，用 OVERRIDE 表达）"
+   ]
   }
  },
  {
@@ -544,10 +544,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "硅溶于氢氟酸：Si+4HF->SiF4+2H2（Si 不与 HCl/H2SO4/HNO3 反应）",
+   "changed": true,
+   "consumption": [
     {
      "name": "Si",
      "mol": 1.0
@@ -557,7 +558,7 @@
      "mol": 4.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "SiF_4",
      "mol": 1.0
@@ -566,8 +567,7 @@
      "name": "H_2",
      "mol": 2.0
     }
-   ],
-   "note": "硅溶于氢氟酸：Si+4HF->SiF4+2H2（Si 不与 HCl/H2SO4/HNO3 反应）"
+   ]
   }
  },
  {
@@ -579,10 +579,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "碳化铝水解：Al4C3+12H2O->4Al(OH)3+3CH4（苏教版，类盐型碳化物水解）",
+   "changed": true,
+   "consumption": [
     {
      "name": "Al_4C_3",
      "mol": 1.0
@@ -592,7 +593,7 @@
      "mol": 12.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "Al(OH)_3",
      "mol": 4.0
@@ -601,8 +602,7 @@
      "name": "CH_4",
      "mol": 3.0
     }
-   ],
-   "note": "碳化铝水解：Al4C3+12H2O->4Al(OH)3+3CH4（苏教版，类盐型碳化物水解）"
+   ]
   }
  },
  {
@@ -615,10 +615,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "Al2O3+6HCl=2AlCl3+3H2O（两性氧化物溶于强酸）",
+   "changed": true,
+   "consumption": [
     {
      "name": "Al_2O_3",
      "mol": 1
@@ -628,7 +629,7 @@
      "mol": 6
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "Al^{3+}",
      "mol": 2
@@ -637,8 +638,7 @@
      "name": "H_2O",
      "mol": 3
     }
-   ],
-   "note": "Al2O3+6HCl=2AlCl3+3H2O（两性氧化物溶于强酸）"
+   ]
   }
  },
  {
@@ -651,10 +651,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "Al2O3+2NaOH+3H2O=2Na[Al(OH)4]（两性氧化物溶于强碱）",
+   "changed": true,
+   "consumption": [
     {
      "name": "Al_2O_3",
      "mol": 1
@@ -664,13 +665,12 @@
      "mol": 2
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "[Al(OH)_4]^-",
      "mol": 2
     }
-   ],
-   "note": "Al2O3+2NaOH+3H2O=2Na[Al(OH)4]（两性氧化物溶于强碱）"
+   ]
   }
  },
  {
@@ -683,10 +683,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "Fe3O4+8HCl=FeCl2+2FeCl3+4H2O（混合价态氧化物，非氧化还原）",
+   "changed": true,
+   "consumption": [
     {
      "name": "Fe_3O_4",
      "mol": 1
@@ -696,7 +697,7 @@
      "mol": 8
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "Fe^{2+}",
      "mol": 1
@@ -709,8 +710,7 @@
      "name": "H_2O",
      "mol": 4
     }
-   ],
-   "note": "Fe3O4+8HCl=FeCl2+2FeCl3+4H2O（混合价态氧化物，非氧化还原）"
+   ]
   }
  },
  {
@@ -723,10 +723,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "Si+2NaOH+H2O=Na2SiO3+2H2（硅溶于强碱，非金属中仅硅有此性质）",
+   "changed": true,
+   "consumption": [
     {
      "name": "Si",
      "mol": 1
@@ -740,7 +741,7 @@
      "mol": 1
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "SiO_3^{2-}",
      "mol": 1
@@ -749,8 +750,7 @@
      "name": "H_2",
      "mol": 2
     }
-   ],
-   "note": "Si+2NaOH+H2O=Na2SiO3+2H2（硅溶于强碱，非金属中仅硅有此性质）"
+   ]
   }
  },
  {
@@ -762,10 +762,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "CaH2+2H2O=Ca(OH)2+2H2（H- 强还原剂，野外生氢剂）",
+   "changed": true,
+   "consumption": [
     {
      "name": "H^-",
      "mol": 2
@@ -775,7 +776,7 @@
      "mol": 2
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "OH^-",
      "mol": 2
@@ -784,8 +785,7 @@
      "name": "H_2",
      "mol": 2
     }
-   ],
-   "note": "CaH2+2H2O=Ca(OH)2+2H2（H- 强还原剂，野外生氢剂）"
+   ]
   }
  },
  {
@@ -798,10 +798,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "4NO2+O2+2H2O=4HNO3（硝酸工业尾气全吸收；气相氧化+吸收复合过程）",
+   "changed": true,
+   "consumption": [
     {
      "name": "NO_2",
      "mol": 4
@@ -815,7 +816,7 @@
      "mol": 2
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "H^+",
      "mol": 4.0
@@ -824,8 +825,7 @@
      "name": "NO_3^-",
      "mol": 4.0
     }
-   ],
-   "note": "4NO2+O2+2H2O=4HNO3（硝酸工业尾气全吸收；气相氧化+吸收复合过程）"
+   ]
   }
  },
  {
@@ -838,10 +838,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "4NO+3O2+2H2O=4HNO3（2NO+O2=2NO2 气相快反应后续吸收）",
+   "changed": true,
+   "consumption": [
     {
      "name": "NO",
      "mol": 4
@@ -855,7 +856,7 @@
      "mol": 2
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "H^+",
      "mol": 4.0
@@ -864,8 +865,7 @@
      "name": "NO_3^-",
      "mol": 4.0
     }
-   ],
-   "note": "4NO+3O2+2H2O=4HNO3（2NO+O2=2NO2 气相快反应后续吸收）"
+   ]
   }
  },
  {
@@ -878,10 +878,11 @@
    ]
   },
   "result": {
-   "reacted": true,
-   "degree": "complete",
+   "degree": 2,
    "annotations": [],
-   "consumed": [
+   "note": "两性氧化物溶于强碱：ZnO + 2OH- + H2O -> [Zn(OH)4]2-",
+   "changed": true,
+   "consumption": [
     {
      "name": "ZnO",
      "mol": 1.0
@@ -895,13 +896,12 @@
      "mol": 1.0
     }
    ],
-   "produced": [
+   "production": [
     {
      "name": "[Zn(OH)_4]^{2-}",
      "mol": 1.0
     }
-   ],
-   "note": "两性氧化物溶于强碱：ZnO + 2OH- + H2O -> [Zn(OH)4]2-"
+   ]
   }
  },
  {
@@ -916,14 +916,14 @@
    "T_max": 320
   },
   "result": {
-   "reacted": false,
-   "degree": "hardly",
+   "degree": 0,
    "annotations": [
     "blocked"
    ],
-   "consumed": [],
-   "produced": [],
-   "note": "钝化：冷浓硝酸中铁表面生成致密氧化膜，反应受阻"
+   "note": "钝化：冷浓硝酸中铁表面生成致密氧化膜，反应受阻",
+   "changed": false,
+   "consumption": [],
+   "production": []
   }
  },
  {
@@ -938,14 +938,14 @@
    "T_max": 320
   },
   "result": {
-   "reacted": false,
-   "degree": "hardly",
+   "degree": 0,
    "annotations": [
     "blocked"
    ],
-   "consumed": [],
-   "produced": [],
-   "note": "钝化：冷浓硝酸中铝表面生成致密氧化膜，反应受阻"
+   "note": "钝化：冷浓硝酸中铝表面生成致密氧化膜，反应受阻",
+   "changed": false,
+   "consumption": [],
+   "production": []
   }
  },
  {
@@ -960,14 +960,14 @@
    "T_max": 320
   },
   "result": {
-   "reacted": false,
-   "degree": "hardly",
+   "degree": 0,
    "annotations": [
     "blocked"
    ],
-   "consumed": [],
-   "produced": [],
-   "note": "钝化：冷浓硫酸中铁表面生成致密氧化膜，反应受阻"
+   "note": "钝化：冷浓硫酸中铁表面生成致密氧化膜，反应受阻",
+   "changed": false,
+   "consumption": [],
+   "production": []
   }
  }
 ]

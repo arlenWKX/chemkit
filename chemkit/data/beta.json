@@ -86,14 +86,6 @@
   "calibrated": "Cr(OH)3+OH- -> [Cr(OH)4]- 整体 logK≈-0.4（两性，溶于强碱）"
  },
  {
-  "complex": "[Fe(SCN)]^{2+}",
-  "center": "Fe^{3+}",
-  "ligand": "SCN^-",
-  "nu": 1,
-  "logb": 2.95,
-  "note": "血红色配合物（Fe3+ 检验）；逐级只取第一级"
- },
- {
   "complex": "[Ni(NH_3)_6]^{2+}",
   "center": "Ni^{2+}",
   "ligand": "NH_3",
@@ -149,9 +141,9 @@
   "complex": "[PtCl_6]^{2-}",
   "center": "Pt^{4+}",
   "ligand": "Cl^-",
-  "nu": 4,
+  "nu": 6,
   "logb": 16.0,
-  "note": "氯铂酸根 logβ4≈16（供配体配平与配合平衡）"
+  "note": "六氯合铂(IV)酸根；nu 修正为 6（Pt4+ + 6Cl- -> [PtCl6]2- 电荷/原子守恒）；王水溶铂的产物形态；logb 为形式值（Pt4+ 水合离子本身动力学惰性）"
  },
  {
   "complex": "[Fe(C_2O_4)_3]^{3-}",
@@ -275,5 +267,1029 @@
   "complex": "[Ni(CN)_4]^{2-}",
   "nu": 4,
   "logb": 31.3
+ },
+ {
+  "complex": "[HgBr_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": 21.5,
+  "note": "四溴合汞(II)酸根；NIST logβ4≈21.5"
+ },
+ {
+  "complex": "[Hg(CN)_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "CN^-",
+  "nu": 4,
+  "logb": 41.4,
+  "note": "四氰合汞(II)酸根；NIST/S&M logβ4≈41.4（极稳定，仅次于 [HgI4]2-）"
+ },
+ {
+  "complex": "[Hg(SCN)_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "SCN^-",
+  "nu": 4,
+  "logb": 21.0,
+  "note": "四硫氰合汞(II)酸根；NIST logβ4≈21.0；Fe3+ 检 SCN- 须先除 Hg2+"
+ },
+ {
+  "complex": "[BiCl_4]^-",
+  "center": "Bi^{3+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 5.5,
+  "note": "四氯合铋(III)酸根；NIST logβ4≈5.5"
+ },
+ {
+  "complex": "[BiI_4]^-",
+  "center": "Bi^{3+}",
+  "ligand": "I^-",
+  "nu": 4,
+  "logb": 14.5,
+  "note": "四碘合铋(III)酸根（铋(III) 与 I- 的特征黄色/橙色配合物）；NIST logβ4≈14.5"
+ },
+ {
+  "complex": "[SbCl_6]^-",
+  "center": "Sb^{5+}",
+  "ligand": "Cl^-",
+  "nu": 6,
+  "logb": 6.0,
+  "note": "六氯合锑(V)酸根（Sb(V) 形态，浓盐酸中存在）；NIST logβ6≈6.0"
+ },
+ {
+  "complex": "[CdI_3]^-",
+  "center": "Cd^{2+}",
+  "ligand": "I^-",
+  "nu": 3,
+  "logb": 4.0,
+  "note": "三碘合镉(II)酸根；NIST logβ3≈4.0"
+ },
+ {
+  "complex": "[CdI_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "I^-",
+  "nu": 4,
+  "logb": 6.0,
+  "note": "四碘合镉(II)酸根；NIST logβ4≈6.0"
+ },
+ {
+  "complex": "[PbI_3]^-",
+  "center": "Pb^{2+}",
+  "ligand": "I^-",
+  "nu": 3,
+  "logb": 3.6,
+  "note": "三碘合铅(II)酸根；NIST logβ3≈3.6（弱稳定，仅在浓 I- 中形成）"
+ },
+ {
+  "complex": "[HgI_3]^-",
+  "center": "Hg^{2+}",
+  "ligand": "I^-",
+  "nu": 3,
+  "logb": 25.0,
+  "note": "三碘合汞(II)酸根；NIST/S&M logβ3≈25.0；[HgI4]2- 在稀 I- 中分级解离的中间形态"
+ },
+ {
+  "complex": "[AlF]^{2+}",
+  "center": "Al^{3+}",
+  "ligand": "F^-",
+  "nu": 1,
+  "logb": 7.0,
+  "note": "一级氟合铝(III)；NIST logβ1≈7.0"
+ },
+ {
+  "complex": "[AlF_2]^+",
+  "center": "Al^{3+}",
+  "ligand": "F^-",
+  "nu": 2,
+  "logb": 12.6,
+  "note": "二级氟合铝；NIST logβ2≈12.6"
+ },
+ {
+  "complex": "[AlF_3]",
+  "center": "Al^{3+}",
+  "ligand": "F^-",
+  "nu": 3,
+  "logb": 16.5,
+  "note": "三级氟合铝（分子态）；NIST logβ3≈16.5"
+ },
+ {
+  "complex": "[AgBr_2]^-",
+  "center": "Ag^+",
+  "ligand": "Br^-",
+  "nu": 2,
+  "logb": 7.8,
+  "note": "二溴合银酸根；NIST/S&M logβ2≈7.8"
+ },
+ {
+  "complex": "[HgBr_3]^-",
+  "center": "Hg^{2+}",
+  "ligand": "Br^-",
+  "nu": 3,
+  "logb": 18.5,
+  "note": "三溴合汞(II)酸根；NIST logβ3≈18.5；[HgBr4]2- 在稀 Br- 中分级解离的中间形态"
+ },
+ {
+  "complex": "[Hg(CN)_3]^-",
+  "center": "Hg^{2+}",
+  "ligand": "CN^-",
+  "nu": 3,
+  "logb": 35.0,
+  "note": "三氰合汞(II)酸根；NIST logβ3≈35.0；[Hg(CN)4]2- 在稀 CN- 中分级解离的中间形态"
+ },
+ {
+  "complex": "[Hg(SCN)_3]^-",
+  "center": "Hg^{2+}",
+  "ligand": "SCN^-",
+  "nu": 3,
+  "logb": 17.0,
+  "note": "三硫氰合汞(II)酸根；NIST logβ3≈17.0；[Hg(SCN)4]2- 在稀 SCN- 中分级解离的中间形态"
+ },
+ {
+  "complex": "[Cu(CN)_4]^{3-}",
+  "center": "Cu^+",
+  "ligand": "CN^-",
+  "nu": 4,
+  "logb": 30.3,
+  "note": "四氰合铜(I)酸根；NIST logβ4≈30.3（Cu(I) 在 CN- 中极稳定；Cu+ + 4CN- → [Cu(CN)4]3-）"
+ },
+ {
+  "complex": "[Cu(S_2O_3)_2]^{3-}",
+  "center": "Cu^+",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 2,
+  "logb": 11.0,
+  "note": "二硫代硫酸合铜(I)酸根；NIST logβ2≈11.0（与 [Ag(S2O3)2]3- 同系列）"
+ },
+ {
+  "complex": "[Hg(S_2O_3)_4]^{6-}",
+  "center": "Hg^{2+}",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 4,
+  "logb": 30.0,
+  "note": "四硫代硫酸合汞(II)酸根；电荷修正为 6-（Hg2+ + 4S2O3^2-）；logβ4≈30（与 [HgI4]2- 同量级）"
+ },
+ {
+  "complex": "[Zn(S_2O_3)_2]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 2,
+  "logb": 4.5,
+  "note": "二硫代硫酸合锌(II)；NIST logβ2≈4.5（弱稳定）"
+ },
+ {
+  "complex": "[Cd(CN)_3]^-",
+  "center": "Cd^{2+}",
+  "ligand": "CN^-",
+  "nu": 3,
+  "logb": 14.5,
+  "note": "三氰合镉(II)酸根；NIST logβ3≈14.5；[Cd(CN)4]2- 在稀 CN- 中分级解离的中间形态"
+ },
+ {
+  "complex": "[Ni(CN)_3]^-",
+  "center": "Ni^{2+}",
+  "ligand": "CN^-",
+  "nu": 3,
+  "logb": 23.0,
+  "note": "三氰合镍(II)酸根；NIST logβ3≈23.0；[Ni(CN)4]2- 在稀 CN- 中分级解离的中间形态"
+ },
+ {
+  "complex": "[Au(CN)_2]^-",
+  "center": "Au^+",
+  "ligand": "CN^-",
+  "nu": 2,
+  "logb": 38.0,
+  "note": "二氰合金(I)酸根；NIST logβ2≈38.0（极稳定，氰化提金法的核心配合物）"
+ },
+ {
+  "complex": "[AuCl_2]^-",
+  "center": "Au^+",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 9.1,
+  "note": "二氯合金(I)酸根；NIST logβ2≈9.1"
+ },
+ {
+  "complex": "[PtCl_4]^{2-}",
+  "center": "Pt^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 16.0,
+  "note": "四氯合铂(II)酸根；NIST logβ4≈16.0；顺铂 [Pt(NH3)2Cl2] 的水合前体"
+ },
+ {
+  "complex": "[PdCl_4]^{2-}",
+  "center": "Pd^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 11.0,
+  "note": "四氯合钯(II)酸根；NIST logβ4≈11.0（钯王水溶钯的核心配合物）"
+ },
+ {
+  "complex": "[PdCl_6]^{2-}",
+  "center": "Pd^{4+}",
+  "ligand": "Cl^-",
+  "nu": 6,
+  "logb": 16.0,
+  "note": "六氯合钯(IV)酸根；NIST logβ6≈16.0"
+ },
+ {
+  "complex": "[Pd(NH_3)_4]^{2+}",
+  "center": "Pd^{2+}",
+  "ligand": "NH_3",
+  "nu": 4,
+  "logb": 25.0,
+  "note": "四氨合钯(II)；NIST logβ4≈25.0（平面四边形配合物）"
+ },
+ {
+  "complex": "[Pt(NH_3)_4]^{2+}",
+  "center": "Pt^{2+}",
+  "ligand": "NH_3",
+  "nu": 4,
+  "logb": 35.3,
+  "note": "四氨合铂(II)；NIST logβ4≈35.3"
+ },
+ {
+  "complex": "[Pt(NH_3)_6]^{4+}",
+  "center": "Pt^{4+}",
+  "ligand": "NH_3",
+  "nu": 6,
+  "logb": 35.3,
+  "note": "六氨合铂(IV)；NIST logβ6≈35.3"
+ },
+ {
+  "complex": "[AuBr_4]^-",
+  "center": "Au^{3+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": 32.0,
+  "note": "四溴合金(III)酸根；NIST logβ4≈32.0"
+ },
+ {
+  "complex": "[Au(CN)_4]^-",
+  "center": "Au^{3+}",
+  "ligand": "CN^-",
+  "nu": 4,
+  "logb": 56.0,
+  "note": "四氰合金(III)酸根；NIST logβ4≈56.0（极稳定）"
+ },
+ {
+  "complex": "[Fe(S_2O_3)]^+",
+  "center": "Fe^{3+}",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 1,
+  "logb": 2.0,
+  "note": "一级硫代硫酸合铁(III)；NIST logβ1≈2.0（弱稳定）"
+ },
+ {
+  "complex": "[Fe(S_2O_3)_2]^-",
+  "center": "Fe^{3+}",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 2,
+  "logb": 4.0,
+  "note": "二级硫代硫酸合铁(III)；电荷修正为 -（Fe3+ + 2S2O3^2-）；瞬态紫色配合物的平衡形态，终态被 Fe3+->Fe2+ 氧化还原消耗"
+ },
+ {
+  "complex": "[Hg(S_2O_3)_3]^{4-}",
+  "center": "Hg^{2+}",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 3,
+  "logb": 20.0,
+  "note": "三硫代硫酸合汞(II)酸根；NIST logβ3≈20.0；[Hg(S2O3)4]2- 在稀 S2O3 中分级解离的中间形态"
+ },
+ {
+  "complex": "[PbBr_3]^-",
+  "center": "Pb^{2+}",
+  "ligand": "Br^-",
+  "nu": 3,
+  "logb": 4.0,
+  "note": "三溴合铅(II)酸根；NIST logβ3≈4.0"
+ },
+ {
+  "complex": "[AgI_2]^-",
+  "center": "Ag^+",
+  "ligand": "I^-",
+  "nu": 2,
+  "logb": 11.7,
+  "note": "二碘合银酸根；NIST/S&M logβ2≈11.7；AgI 在浓 I- 中溶解形成"
+ },
+ {
+  "complex": "[AgCl_2]^-",
+  "center": "Ag^+",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 5.25,
+  "note": "二氯合银酸根；NIST logβ2≈5.25"
+ },
+ {
+  "complex": "[HgI_3]^-",
+  "center": "Hg^{2+}",
+  "ligand": "I^-",
+  "nu": 3,
+  "logb": 25.0,
+  "note": "三碘合汞酸根；NIST logβ3≈25.0"
+ },
+ {
+  "complex": "[HgBr_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": 21.5,
+  "note": "四溴合汞酸根；NIST logβ4≈21.5"
+ },
+ {
+  "complex": "[Hg(SCN)_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "SCN^-",
+  "nu": 4,
+  "logb": 21.0,
+  "note": "四硫氰合汞酸根；NIST logβ4≈21.0；利比锡测 Cl- 经典指示剂"
+ },
+ {
+  "complex": "[BiCl_4]^-",
+  "center": "Bi^{3+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 5.5,
+  "note": "四氯合铋酸根；NIST logβ4≈5.5"
+ },
+ {
+  "complex": "[PbI_3]^-",
+  "center": "Pb^{2+}",
+  "ligand": "I^-",
+  "nu": 3,
+  "logb": 3.6,
+  "note": "三碘合铅酸根；NIST logβ3≈3.6"
+ },
+ {
+  "complex": "[CdI_3]^-",
+  "center": "Cd^{2+}",
+  "ligand": "I^-",
+  "nu": 3,
+  "logb": 4.0,
+  "note": "三碘合镉酸根；NIST logβ3≈4.0"
+ },
+ {
+  "complex": "[CdI_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "I^-",
+  "nu": 4,
+  "logb": 6.0,
+  "note": "四碘合镉酸根；NIST logβ4≈6.0"
+ },
+ {
+  "complex": "[Ag(SCN)_2]^-",
+  "center": "Ag^+",
+  "ligand": "SCN^-",
+  "nu": 2,
+  "logb": 9.0,
+  "note": "NIST logβ2≈9.0；AgSCN + SCN- ⇌ [Ag(SCN)2]-"
+ },
+ {
+  "complex": "[Ag(SO_3)_2]^{3-}",
+  "center": "Ag^+",
+  "ligand": "SO_3^{2-}",
+  "nu": 2,
+  "logb": 13.0,
+  "note": "亚硫酸根配合物"
+ },
+ {
+  "complex": "[Au(S_2O_3)_2]^{3-}",
+  "center": "Au^+",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 2,
+  "logb": 27.0,
+  "note": "金与硫代硫酸根配合，氰化物提金替代方案；NIST logβ2≈27"
+ },
+ {
+  "complex": "[Au(SCN)_2]^-",
+  "center": "Au^+",
+  "ligand": "SCN^-",
+  "nu": 2,
+  "logb": 19.0,
+  "note": "Au(I) 与 SCN- 配合"
+ },
+ {
+  "complex": "[CuCl_2]^-",
+  "center": "Cu^+",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 5.5,
+  "note": "Cu(I) 二氯配合"
+ },
+ {
+  "complex": "[CuCl_3]^{2-}",
+  "center": "Cu^+",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": 6.0,
+  "note": "Cu(I) 三氯配合"
+ },
+ {
+  "complex": "[CuBr_2]^-",
+  "center": "Cu^+",
+  "ligand": "Br^-",
+  "nu": 2,
+  "logb": 6.0,
+  "note": "Cu(I) 二溴配合"
+ },
+ {
+  "complex": "[Cu(SCN)_2]^-",
+  "center": "Cu^+",
+  "ligand": "SCN^-",
+  "nu": 2,
+  "logb": 11.0,
+  "note": "CuSCN + SCN- 形成"
+ },
+ {
+  "complex": "[Cu(CN)_3]^{2-}",
+  "center": "Cu^+",
+  "ligand": "CN^-",
+  "nu": 3,
+  "logb": 28.0,
+  "note": "Cu(I) 三氰配合；NIST logβ3≈28"
+ },
+ {
+  "complex": "[Cu(S_2O_3)_3]^{5-}",
+  "center": "Cu^+",
+  "ligand": "S_2O_3^{2-}",
+  "nu": 3,
+  "logb": 12.7,
+  "note": "三级硫代硫酸合铜(I)酸根；NIST logβ3≈12.7（β2=11.0 之上逐级 +1.7）；过量硫代硫酸盐中 Cu(I) 的主要形态（摄影定影/显色实验的无色终态）"
+ },
+ {
+  "complex": "[Hg(NH_3)_4]^{2+}",
+  "center": "Hg^{2+}",
+  "ligand": "NH_3",
+  "nu": 4,
+  "logb": 19.5,
+  "note": "Hg(II) 四氨配合；NIST logβ4≈19.5"
+ },
+ {
+  "complex": "[Zn(NH_3)]^{2+}",
+  "center": "Zn^{2+}",
+  "ligand": "NH_3",
+  "nu": 1,
+  "logb": 2.6,
+  "note": "第一级氨配合"
+ },
+ {
+  "complex": "[Zn(NH_3)_2]^{2+}",
+  "center": "Zn^{2+}",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 4.9,
+  "note": "二级氨配合"
+ },
+ {
+  "complex": "[Zn(NH_3)_3]^{2+}",
+  "center": "Zn^{2+}",
+  "ligand": "NH_3",
+  "nu": 3,
+  "logb": 7.0,
+  "note": "三级氨配合"
+ },
+ {
+  "complex": "[Zn(SCN)_4]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "SCN^-",
+  "nu": 4,
+  "logb": 1.0,
+  "note": "弱配合"
+ },
+ {
+  "complex": "[Cd(NH_3)]^{2+}",
+  "center": "Cd^{2+}",
+  "ligand": "NH_3",
+  "nu": 1,
+  "logb": 2.6,
+  "note": "第一级氨配合"
+ },
+ {
+  "complex": "[Cd(NH_3)_2]^{2+}",
+  "center": "Cd^{2+}",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 4.5,
+  "note": "二级氨配合"
+ },
+ {
+  "complex": "[Cd(NH_3)_3]^{2+}",
+  "center": "Cd^{2+}",
+  "ligand": "NH_3",
+  "nu": 3,
+  "logb": 6.0,
+  "note": "三级氨配合"
+ },
+ {
+  "complex": "[Ni(NH_3)]^{2+}",
+  "center": "Ni^{2+}",
+  "ligand": "NH_3",
+  "nu": 1,
+  "logb": 2.7,
+  "note": "Ni(II) 单氨配合"
+ },
+ {
+  "complex": "[Ni(NH_3)_2]^{2+}",
+  "center": "Ni^{2+}",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 4.9,
+  "note": "二级氨配合"
+ },
+ {
+  "complex": "[Ni(NH_3)_3]^{2+}",
+  "center": "Ni^{2+}",
+  "ligand": "NH_3",
+  "nu": 3,
+  "logb": 6.6,
+  "note": "三级氨配合"
+ },
+ {
+  "complex": "[Ni(CN)_2]",
+  "center": "Ni^{2+}",
+  "ligand": "CN^-",
+  "nu": 2,
+  "logb": 14.0,
+  "note": "Ni(CN)2 中性配合物"
+ },
+ {
+  "complex": "[Ni(SCN)_4]^{2-}",
+  "center": "Ni^{2+}",
+  "ligand": "SCN^-",
+  "nu": 4,
+  "logb": 1.0,
+  "note": "弱配合"
+ },
+ {
+  "complex": "[Co(NH_3)]^{2+}",
+  "center": "Co^{2+}",
+  "ligand": "NH_3",
+  "nu": 1,
+  "logb": 2.1,
+  "note": "第一级"
+ },
+ {
+  "complex": "[Co(NH_3)_2]^{2+}",
+  "center": "Co^{2+}",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 3.5,
+  "note": "第二级"
+ },
+ {
+  "complex": "[Co(NH_3)_4]^{2+}",
+  "center": "Co^{2+}",
+  "ligand": "NH_3",
+  "nu": 4,
+  "logb": 5.0,
+  "note": "四级"
+ },
+ {
+  "complex": "[Co(NH_3)_5]^{2+}",
+  "center": "Co^{2+}",
+  "ligand": "NH_3",
+  "nu": 5,
+  "logb": 5.8,
+  "note": "五级"
+ },
+ {
+  "complex": "[Co(CN)_6]^{3-}",
+  "center": "Co^{3+}",
+  "ligand": "CN^-",
+  "nu": 6,
+  "logb": 64.0,
+  "note": "Co(III) 六氰配合；NIST logβ6≈64；超强配合"
+ },
+ {
+  "complex": "[Co(CN)_5]^{3-}",
+  "center": "Co^{2+}",
+  "ligand": "CN^-",
+  "nu": 5,
+  "logb": 16.0,
+  "note": "五氰合钴(II)酸根；电荷修正为 3-（Co2+ + 5CN-）"
+ },
+ {
+  "complex": "[Cr(NH_3)_6]^{3+}",
+  "center": "Cr^{3+}",
+  "ligand": "NH_3",
+  "nu": 6,
+  "logb": 13.0,
+  "note": "Cr(III) 六氨配合；NIST logβ6≈13"
+ },
+ {
+  "complex": "[Pb(NH_3)_2]^{2+}",
+  "center": "Pb^{2+}",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 2.0,
+  "note": "Pb(II) 双氨配合；弱"
+ },
+ {
+  "complex": "[PbI_4]^{2-}",
+  "center": "Pb^{2+}",
+  "ligand": "I^-",
+  "nu": 4,
+  "logb": 4.5,
+  "note": "Pb(II) 四碘配合"
+ },
+ {
+  "complex": "[Pt(NH_3)_2]^{2+}",
+  "center": "Pt^{2+}",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 13.0,
+  "note": "Pt(II) 二氨配合"
+ },
+ {
+  "complex": "[Pd(CN)_4]^{2-}",
+  "center": "Pd^{2+}",
+  "ligand": "CN^-",
+  "nu": 4,
+  "logb": 42.0,
+  "note": "Pd(II) 四氰配合；极强"
+ },
+ {
+  "complex": "[PdCl_2]",
+  "center": "Pd^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 12.0,
+  "note": "Pd(II) 双氯配合"
+ },
+ {
+  "complex": "[Mo(CN)_8]^{3-}",
+  "center": "Mo^{5+}",
+  "ligand": "CN^-",
+  "nu": 8,
+  "logb": 17.5,
+  "note": "八氰合钼(V)酸根；中心修正为 Mo5+（5-8=-3）；NIST logβ8≈17.5"
+ },
+ {
+  "complex": "[Mo(CN)_8]^{4-}",
+  "center": "Mo^{4+}",
+  "ligand": "CN^-",
+  "nu": 8,
+  "logb": 17.5,
+  "note": "八氰合钼(IV)酸根；中心修正为 Mo4+（4-8=-4）"
+ },
+ {
+  "complex": "[W(CN)_8]^{3-}",
+  "center": "W^{5+}",
+  "ligand": "CN^-",
+  "nu": 8,
+  "logb": 17.0,
+  "note": "八氰合钨(V)酸根；中心修正为 W5+（5-8=-3）"
+ },
+ {
+  "complex": "[CdBr_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": 4.0,
+  "note": "Cd(II) 四溴配合"
+ },
+ {
+  "complex": "[ZnBr_4]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": 1.0,
+  "note": "弱"
+ },
+ {
+  "complex": "[HgCl_2]",
+  "center": "Hg^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 13.0,
+  "note": "HgCl2 中性配合物"
+ },
+ {
+  "complex": "[Mn(CN)_6]^{4-}",
+  "center": "Mn^{2+}",
+  "ligand": "CN^-",
+  "nu": 6,
+  "logb": 9.5,
+  "note": "Mn(II) 六氰配合；NIST logβ6≈9.5"
+ },
+ {
+  "complex": "[Mn(CN)_6]^{3-}",
+  "center": "Mn^{3+}",
+  "ligand": "CN^-",
+  "nu": 6,
+  "logb": 18.0,
+  "note": "Mn(III) 六氰配合"
+ },
+ {
+  "complex": "[Fe(SCN)]^{2+}",
+  "center": "Fe^{3+}",
+  "ligand": "SCN^-",
+  "nu": 1,
+  "logb": 2.95,
+  "note": "Fe3+ 单硫氰配合；血红色（Fe3+ 检验）"
+ },
+ {
+  "complex": "[In(OH)_4]^-",
+  "center": "In^{3+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 35.0,
+  "note": "In(III) 四羟配合；两性溶解；NIST logβ4≈35"
+ },
+ {
+  "complex": "[Fe(SCN)_2]^+",
+  "center": "Fe^{3+}",
+  "ligand": "SCN^-",
+  "nu": 2,
+  "logb": 4.5,
+  "note": "二级硫氰合铁(III)；NIST logβ2≈4.5；Fe3+ 检 SCN- 的红色系列"
+ },
+ {
+  "complex": "[Fe(SCN)_3]",
+  "center": "Fe^{3+}",
+  "ligand": "SCN^-",
+  "nu": 3,
+  "logb": 5.7,
+  "note": "三级硫氰合铁(III)；分子态；NIST logβ3≈5.7"
+ },
+ {
+  "complex": "[Co(NH_3)_6]^{3+}",
+  "center": "Co^{3+}",
+  "ligand": "NH_3",
+  "nu": 6,
+  "logb": 35.2,
+  "note": "六氨合钴(III)；NIST logβ6≈35.2（经典 Werner 配合物，Co(III) 极稳定，惰性）"
+ },
+ {
+  "complex": "[CuCl_4]^{2-}",
+  "center": "Cu^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": -0.5,
+  "note": "四氯合铜(II)酸根；四面体；稀释 Cl- 介质中弱形成（NIST 低离子强度 logβ4≈-0.5；高离子强度 4M+ Cl- 时表观 logβ4 可达 +5.6，但因依赖离子强度本表保守取低值以避免在稀溶液中误形成）"
+ },
+ {
+  "complex": "[CuBr_4]^{2-}",
+  "center": "Cu^{2+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": -1.0,
+  "note": "四溴合铜(II)酸根；四面体；稀 Br- 介质中弱形成（同 [CuCl_4]^{2-}，离子强度依赖，本表保守取低值）"
+ },
+ {
+  "complex": "[PbCl_4]^{2-}",
+  "center": "Pb^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 1.6,
+  "note": "四氯合铅(II)酸根；NIST logβ4≈1.6（弱稳定，浓 Cl- 中形成；稀 Cl- 中不显著）"
+ },
+ {
+  "complex": "[PbBr_4]^{2-}",
+  "center": "Pb^{2+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": 3.0,
+  "note": "四溴合铅(II)酸根；NIST logβ4≈3.0（弱稳定，浓 Br- 中形成）"
+ },
+ {
+  "complex": "[SnCl_6]^{2-}",
+  "center": "Sn^{4+}",
+  "ligand": "Cl^-",
+  "nu": 6,
+  "logb": 1.5,
+  "note": "六氯合锡(IV)酸根；NIST logβ6≈1.5（弱稳定；Sn4+ 强水解，需浓 HCl 稳定）"
+ },
+ {
+  "complex": "[TlCl_4]^-",
+  "center": "Tl^{3+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 5.0,
+  "note": "四氯合铊(III)酸根；NIST logβ4≈5.0（Tl(III) 在浓 HCl 中存在）"
+ },
+ {
+  "complex": "[TlBr_4]^-",
+  "center": "Tl^{3+}",
+  "ligand": "Br^-",
+  "nu": 4,
+  "logb": 9.0,
+  "note": "四溴合铊(III)酸根；NIST logβ4≈9.0"
+ },
+ {
+  "complex": "[TlI_4]^-",
+  "center": "Tl^{3+}",
+  "ligand": "I^-",
+  "nu": 4,
+  "logb": 16.0,
+  "note": "四碘合铊(III)酸根；NIST logβ4≈16.0（稳定，Tl(III) 在 I- 介质中）"
+ },
+ {
+  "complex": "[Co(CN)_6]^{4-}",
+  "center": "Co^{2+}",
+  "ligand": "CN^-",
+  "nu": 6,
+  "logb": 19.5,
+  "note": "六氰合钴(II)酸根；NIST logβ6≈19.5（Co(II) 形态，空气中迅速氧化为 Co(III) [Co(CN)6]3-）"
+ },
+ {
+  "complex": "[Cr(SCN)_6]^{3-}",
+  "center": "Cr^{3+}",
+  "ligand": "SCN^-",
+  "nu": 6,
+  "logb": 4.0,
+  "note": "六硫氰合铬(III)酸根；NIST logβ6≈4.0（弱稳定；Cr3+ 与 SCN- 反应慢）"
+ },
+ {
+  "complex": "[SiF_6]^{2-}",
+  "center": "Si^{4+}",
+  "ligand": "F^-",
+  "nu": 6,
+  "logb": 25.0,
+  "note": "六氟合硅酸根；NIST logβ6≈25（Si4+ 在水中以 SiO2/H4SiO4 形态存在，logβ 为形式上的累积常数）"
+ },
+ {
+  "complex": "[TiF_6]^{2-}",
+  "center": "Ti^{4+}",
+  "ligand": "F^-",
+  "nu": 6,
+  "logb": 18.0,
+  "note": "六氟合钛(IV)酸根；NIST logβ6≈18（Ti4+ 在水中以 TiO2+ 形态存在，logβ 为形式上的累积常数）"
+ },
+ {
+  "complex": "[ZrF_6]^{2-}",
+  "center": "Zr^{4+}",
+  "ligand": "F^-",
+  "nu": 6,
+  "logb": 22.0,
+  "note": "六氟合锆(IV)酸根；NIST logβ6≈22（Zr4+ 在水中强水解，logβ 为形式上的累积常数）"
+ },
+ {
+  "complex": "[Pb(OH)_4]^{2-}",
+  "center": "Pb^{2+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 12.0,
+  "note": "四羟合铅(II)酸根（亚铅酸盐）；NIST logβ4 文献值范围 14-16（强碱介质），但与现有 [Pb(OH)3]- (logβ3=14) 联合时若取高值会过度掩蔽 [Pb(OH)3]- 通道；本表保守取 12.0 让 [Pb(OH)3]- 仍为中等强度 OH- 下主导产物（化学事实：Pb(OH)2 溶于过量 NaOH 主要形成 [Pb(OH)3]-）"
+ },
+ {
+  "complex": "[CdCl_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 2.0,
+  "note": "[CdCl4]2-：Cd2+ + 4Cl- → [CdCl4]2-（NIST logβ4=2.0；弱配位）"
+ },
+ {
+  "complex": "[VO_2]^+",
+  "center": "V^{5+}",
+  "ligand": "O^{2-}",
+  "nu": 2,
+  "logb": 25.0,
+  "note": "VO2+：V(V) 二氧钒(V) 阳离子；酸性介质中 V(V) 的主要形态"
+ },
+ {
+  "complex": "[Hg_2Cl_2]",
+  "center": "Hg_2^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 8.0,
+  "note": "Hg2Cl2：甘汞；难溶盐，电对参考电极"
+ },
+ {
+  "complex": "[HfF_6]^{2-}",
+  "center": "Hf^{4+}",
+  "ligand": "F^-",
+  "nu": 6,
+  "logb": 23.5,
+  "note": "六氟合铪(IV)酸根；Hf-F 略强于 Zr-F（分离锆铪的 MSF 工艺基础）；logβ6≈23.5"
+ },
+ {
+  "complex": "[Sn(OH)_3]^-",
+  "center": "Sn^{2+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 26.4,
+  "note": "亚锡酸根（两性）：Sn(OH)2 + OH- -> [Sn(OH)3]-，溶解 logK = 26.4-27.3 = -0.9；Sn(OH)2 溶于过量 NaOH（教材两性）"
+ },
+ {
+  "complex": "[Sb(OH)_4]^-",
+  "center": "Sb^{3+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 40.0,
+  "note": "亚锑酸根（两性）：Sb(OH)3 + OH- -> [Sb(OH)4]-，溶解 logK = 40.0-41.4 = -1.4；辉锑矿碱法浸出的化学基础"
+ },
+ {
+  "complex": "[Cu(NH_3)_2]^+",
+  "center": "Cu^+",
+  "ligand": "NH_3",
+  "nu": 2,
+  "logb": 10.9,
+  "note": "Cu(I) 氨配合物：CuCl/Cu_2O 溶于氨水成无色铜氨溶液（振荡被空气中 O2 氧化为蓝色 [Cu(NH_3)_4]^{2+} 的经典实验）；Latimer 编纂值 β2≈7.2e10"
+ },
+ {
+  "complex": "[Cu(CN)_2]^-",
+  "center": "Cu^+",
+  "ligand": "CN^-",
+  "nu": 2,
+  "logb": 24.0,
+  "note": "CuCN 溶于过量氰化物（与已收 β3=28.0/β4=30.3 同族递进；Skoog 分析化学表）；氰化镀铜/提铜同族"
+ },
+ {
+  "complex": "[CuI_2]^-",
+  "center": "Cu^+",
+  "ligand": "I^-",
+  "nu": 2,
+  "logb": 9.0,
+  "note": "CuI 溶于浓 KI（碘量法中加 KI 缓解 CuI 吸附碘的误差）；自洽校验：β2·Ksp(CuI 1.1e-12)≈8e-4，1M KI 中溶解度 ~1e-3 mol/L"
+ },
+ {
+  "complex": "[Co(SCN)_4]^{2-}",
+  "center": "Co^{2+}",
+  "ligand": "SCN^-",
+  "nu": 4,
+  "logb": 3.0,
+  "note": "戊醇萃取钴蓝经典鉴定反应（水相 β4 弱、有机相稳定显蓝；Khan 1999 递进 β1=1.6/β2=2.7）"
+ },
+ {
+  "complex": "[Fe(C_2O_4)_3]^{4-}",
+  "center": "Fe^{2+}",
+  "ligand": "C_2O_4^{2-}",
+  "nu": 3,
+  "logb": 5.2,
+  "note": "Fe(II)-草酸族补全（β2=4.5 已收）；光化学还原制备亚铁的物种形态"
+ },
+ {
+  "complex": "[Cd(SCN)_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "SCN^-",
+  "nu": 4,
+  "logb": 3.6,
+  "note": "镉硫氰配合物（软酸 Cd 的 SCN 配位强于硬酸 Zn/Ni 的 1.0；文献区间 2.5~3.6 取上限）"
+ },
+ {
+  "complex": "[Cd(OH)_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "OH^-",
+  "nu": 4,
+  "logb": 9.0,
+  "note": "Cd(OH)_2 不显两性的定量刻画：K(沉淀+2OH^-)≈1e-4.6，1M NaOH 仅溶 ~3e-5 mol/L（与 Zn(OH)_4 17.7 的两性对照——教材'氢氧化镉不溶于过量碱'的热力学根源）"
+ },
+ {
+  "complex": "[ZnI_4]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "I^-",
+  "nu": 4,
+  "logb": 2.9
+ },
+ {
+  "complex": "[PbCl_3]^-",
+  "center": "Pb^{2+}",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": 2.0
+ },
+ {
+  "complex": "[ZnCl]^+",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.43
+ },
+ {
+  "complex": "[ZnCl_2]",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 0.6
+ },
+ {
+  "complex": "[ZnCl_3]^-",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": 0.5
+ },
+ {
+  "complex": "[ZnCl_4]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 0.2
+ },
+ {
+  "complex": "[NiCl]^+",
+  "center": "Ni^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.4
+ },
+ {
+  "complex": "[NiCl_2]",
+  "center": "Ni^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 0.96
  }
 ]

@@ -1,600 +1,95 @@
-"""chemkit.system：高层 API —— Reaction（一次反应）与 System（反应体系）。
+"""chemkit.system：高层 API（Engine/react/System 与 Reaction 包装）。
 
-两个对外对象：
-    Reaction  一次反应的结果。数据分两层：
-        - 非 raw（化学习惯、人类可读）：consumed / produced / final 中含
-          H+ / OH- / H2O，方程式为净离子方程式，系数配平到最简整数比。
-        - xxx_raw（引擎原始记账）：H2O 是溶剂不入账，H+/OH- 合记为单一
-          带符号账本 H_excess_raw（正 = 残余游离强酸，负 = 残余游离强碱），
-          consumed_raw / produced_raw / final_raw 不含 H+/OH-/H2O。
-    System    反应体系：固定体积/温度/气压，add() 连续投料，每次投料后
-              按累计投入量重新平衡，返回本次 Reaction。
-
-一步式便捷函数：
-    chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0) -> Reaction
-
-方程式：
-    reaction.equation   净离子方程式（全部步骤的净和），无显著反应时为 None
-    reaction.equations  多步离子方程式列表（按贡献降序）——许多反应用多步
-                        概括更贴近化学书写习惯（如多元弱酸分步中和、
-                        沉淀-解配耦合），净方程难以表达时使用。
+v0.3.6 起用户侧统一入口是 **Engine 对象**：持表一次、长期复用，
+judge / react / system 三个层级是它的**平级方法**——没有 react()→
+System()→judge() 的层层包装（一步式不再为了调 judge 而建一个带
+history 的 System；System 也不再经由 react 之类的上层函数中转）。
+依赖链：engine（judge）/equations（方程式）/thermo（绝热耦合）。
 """
 from __future__ import annotations
 
-import re
-from fractions import Fraction
-from math import gcd
-from functools import reduce
-
-from .data import Tables, load_tables
+from .data import Tables
 from .engine import judge
-from .core import elements_of, charge_of
+from . import thermo
+from .equations import (_parse_equation, _balance_h_o, _restore_oh,
+                        _fmt_term, _rationalize, _try_integer_snap,
+                        _format_equation, _step_key, _collect_steps,
+                        _collapse_transient_intermediates, _step_to_ionic,
+                        _build_equations, _balanced_quick, _filter_trace,
+                        _SPECIES_NORMALIZE, _TERM_RE, _SIDE_SEP, _ARROW,
+                        WATER, H_ION, OH_ION, _TRACE, STEP_MIN,
+                        TABLES, default_tables)
 
-# ---------- 数据表预加载（import chemkit 时执行，全程序仅一次磁盘 I/O）----------
-TABLES: Tables = load_tables()
-
-
-def default_tables() -> Tables:
-    """返回模块级默认数据表（预加载单例）。"""
-    return TABLES
-
-
-# ============================================================ 方程式解析
-# 引擎 step.equation 形如 '2NO_3^- + 3Cu + 8H^+ -> 2NO + 3Cu^{2+}'
-# neutralize 步骤用旧式 'H+ + OH- -> H2O'，需归一化到引擎标准记法。
-
-_SPECIES_NORMALIZE = {
-    "H2O": "H_2O",
-    "H+": "H^+",
-    "OH-": "OH^-",
-}
-
-# 匹配 "系数+物种"，系数为可选的整数或小数；物种以非数字开头（字母/[/(
-_TERM_RE = re.compile(r"^(\d+(?:\.\d+)?)(\D.*)$")
-_SIDE_SEP = " + "
-_ARROW = " -> "
-
-WATER = "H_2O"
-H_ION = "H^+"
-OH_ION = "OH^-"
-
-
-def _parse_side(s: str) -> dict[str, float]:
-    """解析 '2A + 3B' → {A: 2.0, B: 3.0}。"""
-    result: dict[str, float] = {}
-    for term in s.split(_SIDE_SEP):
-        term = term.strip()
-        if not term:
-            continue
-        m = _TERM_RE.match(term)
-        if m:
-            coef = float(m.group(1))
-            species = m.group(2).strip()
-        else:
-            coef = 1.0
-            species = term
-        species = _SPECIES_NORMALIZE.get(species, species)
-        result[species] = result.get(species, 0.0) + coef
-    return result
-
-
-def _parse_equation(eq: str) -> tuple[dict[str, float], dict[str, float]]:
-    """解析 '2A + 3B -> 4C + D' → ({A:2, B:3}, {C:4, D:1})。"""
-    if _ARROW not in eq:
-        return {}, {}
-    lhs, rhs = eq.split(_ARROW, 1)
-    return _parse_side(lhs), _parse_side(rhs)
-
-
-# ============================================================ H/O 原子配平
-# 引擎 step.equation 过滤了 H2O（溶剂），离子方程式需要显式 H2O。
-
-def _balance_h_o(consumed: dict[str, float], produced: dict[str, float]
-                 ) -> tuple[dict[str, float], dict[str, float]]:
-    """用 H2O（必要时 H+）配平 H、O 原子。
-
-    引擎方程已用 H+ 正则化（OH- → H2O/H+），所以 H/O 不平衡仅由 H2O 被过滤
-    导致。正常情况 h_diff = 2 × o_diff，纯加 H2O 即可；异常时退化为 H2O + H+。
-    """
-    h_lhs = sum(nu * elements_of(sp).get("H", 0) for sp, nu in consumed.items())
-    h_rhs = sum(nu * elements_of(sp).get("H", 0) for sp, nu in produced.items())
-    o_lhs = sum(nu * elements_of(sp).get("O", 0) for sp, nu in consumed.items())
-    o_rhs = sum(nu * elements_of(sp).get("O", 0) for sp, nu in produced.items())
-
-    o_diff = o_lhs - o_rhs      # 正：产物侧缺 O → 加 H2O 到产物
-    h_diff = h_lhs - h_rhs      # 正：产物侧缺 H
-
-    if abs(h_diff - 2 * o_diff) < 1e-6:
-        # 纯 H2O 配平
-        if o_diff > 1e-9:
-            produced[WATER] = produced.get(WATER, 0.0) + o_diff
-        elif o_diff < -1e-9:
-            consumed[WATER] = consumed.get(WATER, 0.0) + (-o_diff)
-    else:
-        # 先用 H2O 配 O，再用 H+ 配 H（防御性兜底）
-        if o_diff > 1e-9:
-            produced[WATER] = produced.get(WATER, 0.0) + o_diff
-            h_rhs += 2 * o_diff
-        elif o_diff < -1e-9:
-            consumed[WATER] = consumed.get(WATER, 0.0) + (-o_diff)
-            h_lhs += 2 * (-o_diff)
-        h_diff = h_lhs - h_rhs
-        if h_diff > 1e-9:
-            produced[H_ION] = produced.get(H_ION, 0.0) + h_diff
-        elif h_diff < -1e-9:
-            consumed[H_ION] = consumed.get(H_ION, 0.0) + (-h_diff)
-    return consumed, produced
-
-
-# ============================================================ H+ 正则形 → OH- 还原
-
-def _restore_oh(consumed: dict[str, float], produced: dict[str, float],
-                trace: float) -> tuple[dict[str, float], dict[str, float]]:
-    """把引擎的 H+ 正则形还原为化学习惯的 OH- 写法，并抵消跨侧 H+/OH-。
-
-    两步：
-      1. OH- 还原：引擎把 OH- 记为 H2O(反应物) − H+(即产物 H+)，
-         如 M + nH2O -> M(OH)n + nH+ 实为 M + nOH- -> M(OH)n。
-         H2O 在反应物侧且 H+ 在产物侧且量匹配时，合并为 OH- 到反应物侧。
-    只有"H2O 在反应物侧 + H+ 在产物侧"这一种挂侧可以还原为 OH-；
-    跨侧 H+/OH- 抵消（H+ 左 OH- 右，或反之）在数学上不等价于生成
-    H2O（净向量差 2H+ 或 2OH-），会破坏配平，故不做。
-    """
-    w = consumed.get(WATER, 0.0)
-    h = produced.get(H_ION, 0.0)
-    if w > trace and h > trace:
-        merge = min(w, h)
-        consumed[WATER] = w - merge
-        produced[H_ION] = h - merge
-        consumed[OH_ION] = consumed.get(OH_ION, 0.0) + merge
-        if consumed[WATER] <= trace:
-            consumed.pop(WATER, None)
-        if produced[H_ION] <= trace:
-            produced.pop(H_ION, None)
-    consumed = {sp: v for sp, v in consumed.items() if v > trace}
-    produced = {sp: v for sp, v in produced.items() if v > trace}
-    return consumed, produced
-
-
-# ============================================================ 系数有理化
-
-def _fmt_term(nu: float, species: str) -> str:
-    """格式化方程式一项：系数 1 省略，整数显示整数，浮点定点小数
-    （禁用科学计数法，保持可解析）。"""
-    if abs(nu - round(nu)) < 1e-6:
-        nu = int(round(nu))
-    if nu == 1:
-        return species
-    if isinstance(nu, int) or (isinstance(nu, float) and nu == int(nu)):
-        return f"{int(nu)}{species}"
-    return f"{nu:.3f}".rstrip("0").rstrip(".") + species
-
-
-def _rationalize(vals: list[float]) -> list[int] | None:
-    """浮点系数列表 → 最简整数比列表。
-
-    两档精度逐级尝试（按最小值归一化后）：
-      1. 细档：limit_denominator(8)（允许 1/8 级分数），相对误差 ≤2%——
-         保留 25:17 这类真实非整数化学计量（CaCO3 溶解的 HCO3-/CO3^2- 分配），
-         同时把 17.48 这类数值噪声收进 17.5；
-      2. 粗档：limit_denominator(2)（整数/半整数），相对误差 ≤5%——
-         用于噪声更大的近边界体系。
-    两档都失败返回 None（调用方退化为浮点系数）。
-    """
-    pos_vals = [v for v in vals if v > 0]
-    if not pos_vals:
-        return None
-    min_v = min(pos_vals)
-    norm = [v / min_v for v in vals]
-    for den_max, tol in ((8, 0.02), (2, 0.05)):
-        fracs = []
-        ok = True
-        for v in norm:
-            if v <= 0:
-                fracs.append(Fraction(0))
-                continue
-            f = Fraction(v).limit_denominator(den_max)
-            if abs(float(f) - v) / v > tol:
-                ok = False
-                break
-            fracs.append(f)
-        if not ok:
-            continue
-        pos = [f for f in fracs if f > 0]
-        if not pos:
-            return None
-        min_frac = min(pos)
-        normed = [f / min_frac for f in fracs]
-        common = reduce(lambda a, b: a * b // gcd(a, b),
-                        (f.denominator for f in normed), 1)
-        int_vals = [int(f * common) for f in normed]
-        g = reduce(gcd, [v for v in int_vals if v > 0], 0)
-        if g == 0:
-            return None
-        return [v // g for v in int_vals]
-    return None
-
-
-def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> str | None:
-    """将 consumed/produced 格式化为最简整数比的离子方程式字符串。
-
-    物种排序：先按系数降序，再按名称字典序（确定性输出，便于测试断言）。
-    系数比例无法整除（最大系数 >1000）时退化为浮点系数。
-    """
-    if not consumed or not produced:
-        return None
-    # 显示级痕量剔除：<0.1% 峰值的项是数值噪声（近中性点体系的 H+ 残差
-    # 会把有理化放大成巨型系数）；剔除后必须仍配平，否则保留原样
-    all_vals = list(consumed.values()) + list(produced.values())
-    mx = max(all_vals)
-    tiny = {sp for side in (consumed, produced)
-            for sp, v in side.items() if v < 1e-3 * mx}
-    if tiny:
-        c2 = {s: v for s, v in consumed.items() if s not in tiny}
-        p2 = {s: v for s, v in produced.items() if s not in tiny}
-        if c2 and p2 and _balanced_quick(c2, p2):
-            consumed, produced = c2, p2
-            all_vals = list(consumed.values()) + list(produced.values())
-    int_vals = _rationalize(all_vals)
-    if int_vals is None or max(int_vals) > 1000:
-        # 比例不整除（真实的非化学计量混合，如 Fe→Fe2+/Fe3+ 混合价态）：
-        # 退化为浮点系数（按最小值归一化）
-        scale = min(all_vals)
-        if scale <= 0:
-            return None
-        cons_items = sorted(((sp, v / scale) for sp, v in consumed.items()),
-                            key=lambda x: (-x[1], x[0]))
-        prod_items = sorted(((sp, v / scale) for sp, v in produced.items()),
-                            key=lambda x: (-x[1], x[0]))
-    else:
-        n_cons = len(consumed)
-        cons_ints = int_vals[:n_cons]
-        prod_ints = int_vals[n_cons:]
-        cons_items = sorted(zip(consumed.keys(), cons_ints),
-                            key=lambda x: (-x[1], x[0]))
-        prod_items = sorted(zip(produced.keys(), prod_ints),
-                            key=lambda x: (-x[1], x[0]))
-    lhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in cons_items)
-    rhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in prod_items)
-    return f"{lhs}{_ARROW}{rhs}"
-
-
-# ============================================================ 步骤聚合与方程式构建
-
-# 净差阈值（mol）：低于此值的物种视为数值噪声，不进入方程。
-_TRACE = 0.01
-
-# 步骤显著性阈值（mol）：extent 低于此值视为数值噪声。
-STEP_MIN = 1e-3
-
-
-def _step_key(reactants: dict, products: dict) -> tuple:
-    """步骤的规范键（忽略 H2O/H+ 挂侧差异的净反应键）。"""
-    r2 = tuple(sorted((s, round(n, 6)) for s, n in reactants.items()))
-    p2 = tuple(sorted((s, round(n, 6)) for s, n in products.items()))
-    return (r2, p2)
-
-
-def _collect_steps(steps: list[dict]) -> list[tuple[dict, dict, float]]:
-    """从原始 steps 收集显著步骤：(reactants, products, extent)。
-
-    - extent < STEP_MIN：噪声，跳过；
-    - kind == 'dissolve'：物理溶解（NaHCO3 → Na+ + HCO3-），离子方程式
-      不体现——真正参与反应的是溶解后的离子，由后续步骤表达；
-    - 同一净反应（含 H2O 挂侧差异）聚合：extent 求和；
-    - 互为逆反应的对子在聚合时自然抵消（extent 相减）。
-    """
-    agg: dict[tuple, float] = {}
-    reps: dict[tuple, tuple[dict, dict]] = {}
-    for st in steps:
-        ext = st.get("extent", 0.0)
-        if ext < STEP_MIN or st.get("kind") == "dissolve":
-            continue
-        eq = st.get("equation", "")
-        if not eq:
-            continue
-        r, p = _parse_equation(eq)
-        if not r and not p:
-            continue
-        k = _step_key(r, p)
-        rev = (k[1], k[0])
-        if rev in agg:
-            agg[rev] -= ext
-            if abs(agg[rev]) < STEP_MIN:
-                agg.pop(rev)
-                reps.pop(rev, None)
-            continue
-        agg[k] = agg.get(k, 0.0) + ext
-        reps.setdefault(k, (r, p))
-    return [(reps[k][0], reps[k][1], ext) for k, ext in agg.items() if ext >= STEP_MIN]
-
-
-def _step_to_ionic(reactants: dict, products: dict, extent: float
-                   ) -> tuple[dict, dict, str | None]:
-    """单个聚合步骤 → (consumed, produced, 方程式)。含 H2O 配平与 OH- 还原。"""
-    consumed = {sp: nu * extent for sp, nu in reactants.items()}
-    produced = {sp: nu * extent for sp, nu in products.items()}
-    consumed, produced = _balance_h_o(consumed, produced)
-    consumed, produced = _restore_oh(consumed, produced, _TRACE)
-    if not consumed or not produced:
-        return {}, {}, None
-    return consumed, produced, _format_equation(consumed, produced)
-
-
-# 净方程式中把分子态强酸改写为离子形（浓酸记账形态 → 化学习惯离子形）
-_NET_ACID_SPLIT = {
-    "HNO_3": {H_ION: 1.0, "NO_3^-": 1.0},
-    "H_2SO_4": {H_ION: 2.0, "SO_4^{2-}": 1.0},
-}
-
-
-def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict, str | None]:
-    """构建多步离子方程式列表 + 净离子方程式。
-
-    返回 (equations, consumed, produced, net_equation)：
-      equations     各显著步骤的离子方程式（聚合、对消、按 extent 降序）；
-      consumed/produced  净消耗/生成（mol，含 H+/OH-/H2O）——来自账本净差
-                    （consumed_raw/produced_raw + H_excess 变化 + 中和步），
-                    是真实摩尔量，振荡与中间体天然抵消；
-      net_equation  净离子方程式（上述净差的格式化）。
-    """
-    # ---- 多步方程式（步骤聚合路径）----
-    collected = _collect_steps(steps)
-    equations: list[str] = []
-    if collected:
-        main_ext = max(ext for _, _, ext in collected)
-        kept = [c for c in collected if c[2] >= main_ext * 0.05]
-        kept.sort(key=lambda c: -c[2])
-        seen_eq: set[str] = set()
-        for rr, p, ext in kept:
-            _, _, eq = _step_to_ionic(rr, p, ext)
-            if eq and eq not in seen_eq:
-                seen_eq.add(eq)
-                equations.append(eq)
-
-    # ---- 净方程（账本净差路径）----
-    consumed: dict[str, float] = {e["name"]: e["mol"] for e in r.get("consumed", [])}
-    produced: dict[str, float] = {e["name"]: e["mol"] for e in r.get("produced", [])}
-    # 分子态强酸 → 离子形（HNO3 ⇌ H+ + NO3- 等）
-    for acid, ions in _NET_ACID_SPLIT.items():
-        for side in (consumed, produced):
-            x = side.pop(acid, 0.0)
-            if x > 0.0:
-                for sp, nu in ions.items():
-                    side[sp] = side.get(sp, 0.0) + nu * x
-    # 质子账本净变化：He 是带符号账本（正=游离强酸），|dHe| 的离子形态
-    # 由终态 pH 决定——偏酸体系记 H+、偏碱体系记 OH-（He 微小残差是记账
-    # 幻影，终态 pH 才是真实的酸碱面貌）
-    He_i = r.get("H_excess_initial", 0.0)
-    He_f = r.get("H_excess", 0.0)
-    pH_f = r.get("final_pH")
-    basic = pH_f is not None and pH_f > 7.0
-    dHe = He_i - He_f          # >0: 体系酸性减弱；<0: 酸性增强
-    if dHe > 1e-9:
-        if basic:
-            produced[OH_ION] = produced.get(OH_ION, 0.0) + dHe
-        else:
-            consumed[H_ION] = consumed.get(H_ION, 0.0) + dHe
-    elif dHe < -1e-9:
-        if basic:
-            consumed[OH_ION] = consumed.get(OH_ION, 0.0) + (-dHe)
-        else:
-            produced[H_ION] = produced.get(H_ION, 0.0) + (-dHe)
-    # 初始中和步（H+ + OH- -> H2O，normalize 阶段记账）
-    for st in steps:
-        if st.get("kind") == "neutralize":
-            e = st.get("extent", 0.0)
-            consumed[H_ION] = consumed.get(H_ION, 0.0) + e
-            consumed[OH_ION] = consumed.get(OH_ION, 0.0) + e
-            produced[WATER] = produced.get(WATER, 0.0) + e
-    consumed = {s: v for s, v in consumed.items() if v > 1e-9}
-    produced = {s: v for s, v in produced.items() if v > 1e-9}
-    if not consumed or not produced:
-        return equations, {}, {}, None
-
-    consumed, produced = _cancel_minor_protonation(consumed, produced)
-    consumed, produced = _cancel_minor_hydrolysis(consumed, produced)
-    # 同物种跨侧抵消（浓酸分子化/再电离等记账形态转换会在两侧各留一份）
-    for sp in set(consumed) & set(produced):
-        x = min(consumed[sp], produced[sp])
-        consumed[sp] -= x
-        produced[sp] -= x
-    consumed = {s: v for s, v in consumed.items() if v > 1e-9}
-    produced = {s: v for s, v in produced.items() if v > 1e-9}
-    if not consumed or not produced:
-        return equations, {}, {}, None
-    # 痕量过滤 → 配平 → OH- 还原 → 终过滤。配平若被迫动用 H+ 兜底，
-    # 说明过滤丢了携 H 物种，退回未过滤净差重来。
-    raw_c, raw_p = dict(consumed), dict(produced)
-    fc, fp = _filter_trace(consumed, produced)
-    if not fc or not fp:
-        # 过滤把一侧清空（全小量体系，如痕量溶解）：放弃过滤
-        fc, fp = dict(consumed), dict(produced)
-    consumed, produced = fc, fp
-    c2, p2 = _balance_h_o(dict(consumed), dict(produced))
-    if (H_ION in c2 and H_ION not in consumed) or (H_ION in p2 and H_ION not in produced):
-        consumed, produced = raw_c, raw_p
-        c2, p2 = _balance_h_o(dict(consumed), dict(produced))
-    consumed, produced = c2, p2
-    consumed, produced = _restore_oh(consumed, produced, 1e-9)
-    # 配平兜底可能在对侧补出 H+：再做一次跨侧抵消
-    for sp in set(consumed) & set(produced):
-        x = min(consumed[sp], produced[sp])
-        consumed[sp] -= x
-        produced[sp] -= x
-    # 终过滤（5%）：过滤后必须仍配平，否则退回未过滤版本
-    consumed = {s: v for s, v in consumed.items() if v > 1e-9}
-    produced = {s: v for s, v in produced.items() if v > 1e-9}
-    fc, fp = _filter_trace(consumed, produced, frac=0.05)
-    if fc and fp and _balanced_quick(fc, fp):
-        consumed, produced = fc, fp
-    if not consumed or not produced:
-        return equations, {}, {}, None
-    return equations, consumed, produced, _format_equation(consumed, produced)
-
-
-def _balanced_quick(consumed: dict, produced: dict, tol: float = 0.03) -> bool:
-    """快速配平验证：元素与电荷两侧相等（相对容差 3%）。"""
-    species = list(consumed) + list(produced)
-    mx = max(list(consumed.values()) + list(produced.values()), default=1.0)
-    els = set()
-    for sp in species:
-        els |= set(elements_of(sp))
-    for el in els:
-        lhs = sum(elements_of(s).get(el, 0) * n for s, n in consumed.items())
-        rhs = sum(elements_of(s).get(el, 0) * n for s, n in produced.items())
-        if abs(lhs - rhs) > tol * mx:
-            return False
-    lhs = sum(charge_of(s) * n for s, n in consumed.items())
-    rhs = sum(charge_of(s) * n for s, n in produced.items())
-    return abs(lhs - rhs) <= tol * mx
-
-
-def _filter_trace(consumed: dict, produced: dict,
-                  frac: float = 0.02) -> tuple[dict, dict]:
-    """过滤净差中的痕量物种：< 2% × 最大物种量视为噪声（纯相对阈值，
-    稀体系（1e-4 M 级别）的小量反应不被绝对地板误杀）。"""
-    mx = max(list(consumed.values()) + list(produced.values()), default=0.0)
-    thr = max(1e-6, frac * mx)
-    return ({s: v for s, v in consumed.items() if v > thr},
-            {s: v for s, v in produced.items() if v > thr})
-
-
-def _cancel_minor_hydrolysis(consumed: dict, produced: dict,
-                             frac: float = 0.05) -> tuple[dict, dict]:
-    """消去微量水解/溶沉记账噪声：氢氧化物固体与其配比的 H+ 成对微量
-    出现时整体消去（FeCl2+Cl2 中 1% 的 Fe3+ 水解副反应不属于净方程）。
-    对消后 H/O 差额由 balance_h_o 的 H2O 补齐，恰好回到教科书形式。
-    仅当两者都相对主物种微量（<5%）时才消——纯水解体系（AlCl3 溶液）
-    的水解本身就是主反应，不动。"""
-    mx = max(list(consumed.values()) + list(produced.values()), default=0.0)
-    if mx <= 0:
-        return consumed, produced
-    limit = frac * mx
-    for e in TABLES.ksp:
-        if e["pair"][1] != OH_ION:
-            continue
-        solid = e["solid"]
-        n = charge_of(e["pair"][0])
-        for side_solid, side_ion, ion in ((produced, produced, H_ION),
-                                          (consumed, consumed, H_ION),
-                                          (produced, produced, OH_ION),
-                                          (consumed, consumed, OH_ION)):
-            x = side_solid.get(solid, 0.0)
-            if not (1e-9 < x < limit):
-                continue
-            y = side_ion.get(ion, 0.0)
-            if y < limit and abs(y - n * x) <= 0.25 * max(n * x, 1e-9):
-                side_solid.pop(solid, None)
-                rest = y - n * x
-                if rest > 1e-9:
-                    side_ion[ion] = rest
-                else:
-                    side_ion.pop(ion, None)
-                    if rest < -1e-9:      # H+ 不足配比：差额挂到对侧
-                        other = produced if side_ion is consumed else consumed
-                        other[ion] = other.get(ion, 0.0) + (-rest)
-                break
-    return consumed, produced
-
-
-def _cancel_minor_protonation(consumed: dict, produced: dict,
-                              frac: float = 0.05) -> tuple[dict, dict]:
-    """消去微量质子转移记账噪声（净离子方程式不写酸碱形态微调）。
-
-    数据表中的每个 pKa 共轭对 acid ⇌ base + H+ 给出四种噪声模式（净差中
-    三者按 1:1:1 同量出现且相对主物种微量时整体消去）：
-      base + H+ → acid：消耗 H+/base，生成 acid
-      acid → base + H+：消耗 acid，生成 base/H+
-      base + H2O → acid + OH-：消耗 base，生成 acid/OH-
-      acid + OH- → base + H2O：消耗 acid/OH-，生成 base
-    """
-    mx = max(list(consumed.values()) + list(produced.values()), default=0.0)
-    if mx <= 0:
-        return consumed, produced
-    limit = frac * mx
-
-    def _take(x, *side_sp):
-        if x <= 1e-9 or x >= limit:
-            return
-        for side, sp in side_sp:
-            side[sp] -= x
-            if side[sp] <= 1e-9:
-                side.pop(sp, None)
-
-    for e in TABLES.pka:
-        if e.get("n", 1) != 1:
-            continue
-        acid, base = e["acid"], e["base"]
-        _take(min(consumed.get(H_ION, 0.0), produced.get(acid, 0.0),
-                  consumed.get(base, 0.0)),
-              (consumed, H_ION), (produced, acid), (consumed, base))
-        _take(min(produced.get(H_ION, 0.0), consumed.get(acid, 0.0),
-                  produced.get(base, 0.0)),
-              (produced, H_ION), (consumed, acid), (produced, base))
-        _take(min(consumed.get(base, 0.0), produced.get(acid, 0.0),
-                  produced.get(OH_ION, 0.0)),
-              (consumed, base), (produced, acid), (produced, OH_ION))
-        _take(min(consumed.get(acid, 0.0), consumed.get(OH_ION, 0.0),
-                  produced.get(base, 0.0)),
-              (consumed, acid), (consumed, OH_ION), (produced, base))
-        # 共轭对直接互转（质子经第三方传递，无净 H+/OH-）：
-        # acid → base（如 NH4+ 供质子给沉淀溶解）：消耗 acid、生成 base
-        _take(min(consumed.get(acid, 0.0), produced.get(base, 0.0)),
-              (consumed, acid), (produced, base))
-        # base → acid：消耗 base、生成 acid
-        _take(min(consumed.get(base, 0.0), produced.get(acid, 0.0)),
-              (consumed, base), (produced, acid))
-    return consumed, produced
-
-
-# ============================================================ Reaction
 
 class Reaction:
     """一次反应的结果（一次投料平衡后的完整快照）。
 
-    非 raw 属性（化学习惯、人类可读，含 H+/OH-/H2O）：
-        reacted       体系是否发生显著净变化（bool，净账本判定）
-        chemical_reaction  其中是否包含狭义化学反应（bool：氧化还原/
-                      中和/跨投料的沉淀配位等；纯溶解、电离、水解等
-                      单投料形态变化为 False）
-        degree        程度：complete / incomplete / hardly / none
-        consumed      净消耗 {化学式: mol}
-        produced      净生成 {化学式: mol}
-        final         终态组成 {化学式: mol}（H2O 为溶剂不入）
-        pH            终态 pH（None 表示不适用，如 OVERRIDE 路径）
-        equation      净离子方程式字符串，无显著反应时为 None
-        equations     多步离子方程式列表（按贡献降序）
-        annotations   标注列表（slow / blocked 等）
-        override      命中的 OVERRIDE id（或 None）
-        escaped       逸出气相 {化学式: mol}（泡点扫气：超过 H(T)·p_ext
-                      溶解上限的自产气体，逸出即消失，不再参与反应；
-                      final 中同种气体只剩溶解态，produced 含逸出部分）
+    人类可读层（化学习惯，含 H+/OH-/H2O）：
+        changed        体系是否发生显著净变化（bool，净账本判定；含纯溶解/
+                       弱酸弱碱电离/水解等单投料形态变化——较宽口径）
+        reacted        是否发生狭义化学反应（bool：氧化还原/中和/跨投料的
+                       沉淀配位等；纯溶解、电离、水解等单投料形态变化为 False）
+        degree         程度整数：2=完全反应 / 1=可逆（部分）反应 /
+                       0=难反应或未反应
+        consumption    净消耗 {化学式: mol}
+        production     净生成 {化学式: mol}
+        initial        初态组成 {化学式: mol}（post-normalize：强电解质已电离、
+                       气体如 SO3 已与水反应为酸、酸碱中和已记账；H2O 为溶剂不入）
+        final          终态组成 {化学式: mol}（H2O 为溶剂不入）
+        pH             终态 pH（None 表示不适用，如 OVERRIDE 路径）
+        net_equation   总净离子反应方程式（str | None），无显著反应时为 None
+        equations      多步离子方程式列表（按贡献降序）
+        annotations    标注列表（slow / blocked 等）
+        override       命中的 OVERRIDE id（或 None）
+        escaped        逸出气相 {化学式: mol}（泡点扫气：超过 H(T)·p_ext
+                       溶解上限的自产气体，逸出即消失，不再参与反应；
+                       final 中同种气体只剩溶解态，production 含逸出部分）
 
     raw 属性（引擎原始记账，H2O 不入账、H+/OH- 合记为 H_excess）：
-        consumed_raw  消耗 {化学式: mol}
-        produced_raw  生成 {化学式: mol}
-        final_raw     终态 {化学式: mol}
-        H_excess_raw  终态带符号质子账本（正 = 残余游离强酸 mol，
-                      负 = 残余游离强碱 mol）
-        steps         逐步反应过程（kind/equation/logK/S/extent/conversion）
-        raw           judge() 原始 dict（备用，不鼓励直接读取）
+        consumption_raw  消耗 {化学式: mol}
+        production_raw   生成 {化学式: mol}
+        initial_raw      初态（post-normalize 引擎记账，H+/OH- 合为 H_excess_initial）
+        final_raw        终态 {化学式: mol}
+        H_excess_raw     终态带符号质子账本（正 = 残余游离强酸 mol，
+                          负 = 残余游离强碱 mol）
+        steps            逐步反应过程（kind/equation/logK/S/extent/conversion）
+        raw              judge() 原始 dict（备用，不鼓励直接读取）
+
+    热效应层（独立温度模块 thermo.py，与平衡求解完全解耦）：
+        heat_kJ      放热为正（= −ΔH；None = 数据不足或恒温模式）
+        dT_K         溶液温升（以水的比热容、V×1000 g 计；负 = 降温；
+                     绝热耦合口径 = T_final − T₀）
+        T_final_K    终温（绝热耦合：外层温度不动点的收敛值）
+        thermal      完整温度分析 dict（heat/dT/T_final/water_mol/mass_g/
+                     missing/flags/reason；绝热耦合模式另含 trace 逐轮
+                     记录与 converged 收敛标志，详见 thermo.py 模块文档）
+        isothermal=True（默认）单遍求解不计热效应，
+        thermal={"mode": "isothermal"}，heat/dT 为 None；
+        isothermal=False 绝热耦合：化学平衡在自洽终温下求解。
     """
     __slots__ = (
-        # 非 raw
-        "reacted", "chemical_reaction", "degree", "consumed", "produced",
-        "final", "pH", "annotations", "override", "escaped",
-        # raw
-        "consumed_raw", "produced_raw", "final_raw", "H_excess_raw", "raw",
-        # 缓存
-        "_equation", "_equations",
+        # 人类可读层
+        "changed", "reacted", "degree",
+        "consumption", "production", "initial", "final",
+        "pH", "net_equation", "equations",
+        "annotations", "override", "escaped",
+        # 热效应层（独立温度模块）
+        "heat_kJ", "dT_K", "T_final_K", "thermal",
+        # 引擎记账层（raw）
+        "consumption_raw", "production_raw", "initial_raw", "final_raw",
+        "H_excess_raw", "raw",
     )
 
-    def __init__(self, r: dict):
+    def __init__(self, r: dict, tables: "Tables | None" = None):
+        """包装 judge()/thermo.coupled() 的结果 dict。
+
+        tables：热效应回退分析用的数据表（直接包装 judge 结果且
+        isothermal=False 时，Reaction 需要数据表查 ΔHf；未提供则用
+        模块级 TABLES 单例）。经 System/react 创建时自动传入。"""
         self.raw = r
+        self.changed: bool = r["changed"]
         self.reacted: bool = r["reacted"]
-        self.chemical_reaction: bool = r.get("chemical_reaction", r["reacted"])
-        self.degree: str = r["degree"]
+        self.degree: int = r["degree"]
         self.pH: float | None = r["final_pH"]
         self.annotations: list[str] = list(r["annotations"])
         self.override: str | None = r.get("override")
@@ -602,23 +97,27 @@ class Reaction:
                                           for e in r.get("escaped", [])}
 
         # ---- raw（引擎记账）----
-        self.consumed_raw: dict[str, float] = {e["name"]: e["mol"] for e in r["consumed"]}
-        self.produced_raw: dict[str, float] = {e["name"]: e["mol"] for e in r["produced"]}
+        self.consumption_raw: dict[str, float] = {e["name"]: e["mol"]
+                                                 for e in r["consumption"]}
+        self.production_raw: dict[str, float] = {e["name"]: e["mol"]
+                                                for e in r["production"]}
+        self.initial_raw: dict[str, float] = {e["name"]: e["mol"]
+                                              for e in r.get("initial", [])}
         self.final_raw: dict[str, float] = {e["name"]: e["mol"] for e in r["final"]}
         self.H_excess_raw: float = r.get("H_excess", 0.0)
 
-        # ---- 非 raw（化学习惯）----
-        self._equations, self.consumed, self.produced, self._equation = \
+        # ---- 人类可读层（化学习惯）----
+        self.equations, self.consumption, self.production, self.net_equation = \
             _build_equations(r["steps"], r)
 
         # OVERRIDE 路径无 steps，退化为 raw 层面的化学式方程式
-        if (not self.consumed and not self.produced and self.consumed_raw
+        if (not self.consumption and not self.production and self.consumption_raw
                 and self.override):
-            self.consumed = dict(self.consumed_raw)
-            self.produced = dict(self.produced_raw)
-            self._equation = _format_equation(self.consumed, self.produced)
-            if self._equation and not self._equations:
-                self._equations = [self._equation]
+            self.consumption = dict(self.consumption_raw)
+            self.production = dict(self.production_raw)
+            self.net_equation = _format_equation(self.consumption, self.production)
+            if self.net_equation and not self.equations:
+                self.equations = [self.net_equation]
 
         # 终态组成：raw final + H+/OH-（H2O 为溶剂不入）
         self.final: dict[str, float] = dict(self.final_raw)
@@ -627,6 +126,41 @@ class Reaction:
         elif self.H_excess_raw < -1e-6:
             self.final[OH_ION] = self.final.get(OH_ION, 0.0) + (-self.H_excess_raw)
 
+        # 初态组成：raw initial + H+/OH-（H2O 为溶剂不入）。raw initial 已含
+        # post-normalize 的所有物种（强电解质电离、SO3+H2O→HSO4-+H+ 等），
+        # 仅需补出 H+/OH-（来自 H_excess_initial）
+        self.initial: dict[str, float] = dict(self.initial_raw)
+        He0 = r.get("H_excess_initial", 0.0)
+        if He0 > 1e-6:
+            self.initial[H_ION] = self.initial.get(H_ION, 0.0) + He0
+        elif He0 < -1e-6:
+            self.initial[OH_ION] = self.initial.get(OH_ION, 0.0) + (-He0)
+
+        # ---- 热效应层（独立温度模块；不参与上述任何平衡/方程逻辑）----
+        # isothermal=True（默认）恒温：不计热效应，单遍求解（判定引擎的
+        # 主用途）；False 绝热耦合：热层在外层迭代温度不动点，化学平衡在
+        # 自洽终温下求解（见 thermo.coupled）。调用隔离在 thermo 单点，
+        # 异常不拖垮 Reaction 其余属性。
+        cd = r.get("cond") or {}
+        if cd.get("isothermal"):
+            self.thermal = {"mode": "isothermal"}
+            self.heat_kJ = None
+            self.dT_K = None
+            self.T_final_K = float(cd.get("T_K", 298.15))
+        else:
+            th = r.get("thermal")
+            if th is None:
+                # 直接包装 judge() 结果（未经 thermo.coupled）时回退单遍分析；
+                # ΔHf 查表需 Tables（v0.3.5 起热层与数据表单一事实源）
+                th = thermo._safe_analyze(
+                    r, tables if tables is not None else TABLES)
+                th.setdefault("converged", None)
+            self.thermal = th
+            self.heat_kJ = th.get("heat_kJ")
+            self.dT_K = th.get("dT_K")
+            self.T_final_K = th.get("T_final_K",
+                                    float(cd.get("T_K", 298.15)))
+
     # ---- 便捷转发 ----
     @property
     def steps(self) -> list[dict]:
@@ -634,33 +168,105 @@ class Reaction:
         conversion 等字段。"""
         return self.raw["steps"]
 
-    @property
-    def equation(self) -> str | None:
-        """净离子方程式（如 'Zn + 2H^+ -> H_2 + Zn^{2+}'）。
-
-        全部显著步骤的净和：中间体自然抵消，H2O 显式配平，OH- 从引擎的
-        H+ 正则形还原，系数有理化到最简整数比。无显著反应时返回 None。
-        """
-        return self._equation
-
-    @property
-    def equations(self) -> list[str]:
-        """多步离子方程式列表（按贡献降序）。
-
-        许多反应用多步概括更自然：如 Ca(OH)2+CO2 是
-        'CO2 + 2OH^- -> CO_3^{2-} + H2O' 与 'Ca^{2+} + CO_3^{2-} -> CaCO3'
-        两步，净方程也能写但不直观。无显著反应时为空列表。
-        """
-        return list(self._equations)
-
     # ---- 魔术方法 ----
     def __bool__(self) -> bool:
-        return self.reacted
+        return self.changed
 
     def __repr__(self) -> str:
-        pro = ", ".join(f"{k}×{v:.3g}" for k, v in self.produced.items())
-        return (f"<Reaction {'反应' if self.reacted else '不反应'} "
-                f"{self.degree} [{pro}] pH={self.pH}>")
+        pro = ", ".join(f"{k}×{v:.3g}" for k, v in self.production.items())
+        tag = "反应" if self.reacted else ("变化" if self.changed else "无变化")
+        return f"<Reaction {tag} degree={self.degree} [{pro}] pH={self.pH}>"
+
+
+# ============================================================ 共用求解管线
+
+def _solve(subs: list[dict], cond: dict, tables: Tables,
+           isothermal: bool) -> dict:
+    """唯一求解入口（v0.3.6 起三条 API 层级共用）：
+    isothermal → engine.judge 单遍；False → thermo.coupled 绝热耦合
+    （外层温度不动点，温度反馈真实进入求解）。
+    react / System.add / Engine 三者都直落此处，无中间包装层。"""
+    if isothermal:
+        return judge(subs, cond, tables)
+    return thermo.coupled(subs, cond, tables)
+
+
+def _cond(V: float, T: float, T_C: float | None, p: float,
+          isothermal: bool, kinetics: bool, gas_escape: bool) -> dict:
+    """关键字参数风格 → judge conditions（三个模式开关一并写入）。"""
+    return {"V_L": float(V),
+            "T_K": float(T) if T_C is None else float(T_C) + 273.15,
+            "p_kpa": float(p),
+            "isothermal": bool(isothermal),
+            "kinetics": bool(kinetics),
+            "gas_escape": bool(gas_escape)}
+
+
+def _subs(substances: dict[str, float]) -> list[dict]:
+    """投料 dict → judge 的 list[{name, mol}]（顺序稳定，直接展开）。"""
+    return [{"name": n, "mol": float(m)} for n, m in substances.items()]
+
+
+# ============================================================ Engine
+
+class Engine:
+    """判定引擎对象：用户侧统一入口（v0.3.6 起）。
+
+    进程内建一次、长期复用：持有数据表与全部构建缓存（电对模板、
+    派生候选、枚举缓存均随 Tables 存活，同温度判定命中热路径），
+    三个 API 层级是它的平级方法，无层层包装：
+
+        eng = chemkit.Engine()                        # 默认包内数据表
+        r = eng.react({"NaOH": 0.1, "HCl": 0.1})      # 一步式
+        sys = eng.system(V=1.0, T_C=25)               # 连续投料（共享缓存）
+        raw = eng.judge(subs, {"V_L": 1.0})           # 引擎 raw dict 直通
+
+    参数：
+        tables  数据表（默认包内 TABLES 单例；自定义表经 load_tables
+                构建，同一 Engine 换表需新建）
+
+    模块级 react/System/judge 函数与此对象方法完全同语义——只是
+    隐式使用全局默认表；需要换表/隔离缓存时用 Engine 对象。
+    """
+
+    def __init__(self, tables: Tables | None = None):
+        self.tables: Tables = tables if tables is not None else TABLES
+
+    # ---- 底层直通：judge（纯函数，raw dict）----
+    def judge(self, substances: list[dict],
+              conditions: dict | None = None) -> dict:
+        """投料 + conditions → 引擎 raw dict（无包装；conditions 键
+        V_L/T_K/T_C/c_H/c_OH/pH/p_kpa/isothermal/kinetics/gas_escape）。"""
+        return judge(substances, conditions, self.tables)
+
+    # ---- 一步式：react ----
+    def react(self, substances: dict[str, float], *,
+              V: float = 1.0, T: float = 298.15, T_C: float | None = None,
+              p: float = 101.3, tables: Tables | None = None,
+              isothermal: bool = True, kinetics: bool = True,
+              gas_escape: bool = True) -> "Reaction":
+        """一步式反应：直接调求解管线并包装 Reaction（不建 System）。
+        参数与模块级 react() 一致（tables 可临时换表，默认本表）。"""
+        tb = tables if tables is not None else self.tables
+        r = _solve(_subs(substances),
+                   _cond(V, T, T_C, p, isothermal, kinetics, gas_escape),
+                   tb, isothermal)
+        return Reaction(r, tb)
+
+    # ---- 连续投料体系：system ----
+    def system(self, substances: dict[str, float] | None = None, *,
+               V: float = 1.0, T: float = 298.15, T_C: float | None = None,
+               p: float = 101.3, tables: Tables | None = None,
+               isothermal: bool = True, kinetics: bool = True,
+               gas_escape: bool = True) -> "System":
+        """建立绑在本引擎上的 System（共享数据表与缓存）。"""
+        return System(substances, V=V, T=T, T_C=T_C, p=p,
+                     tables=tables if tables is not None else self.tables,
+                     isothermal=isothermal, kinetics=kinetics,
+                     gas_escape=gas_escape)
+
+    def __repr__(self) -> str:
+        return f"<Engine tables={self.tables!r}>"
 
 
 # ============================================================ System
@@ -675,6 +281,16 @@ class System:
         T_C         温度（°C），若给定则覆盖 T
         p           外界气压（kPa），默认 101.3；影响气体逸出阈值
         tables      自定义数据表（默认用模块级 TABLES）
+        isothermal  恒温假设（bool，默认 True）。True 时单遍求解不计热
+                    效应（判定引擎主用途）；False 时绝热耦合求解：独立
+                    温度模块在平衡与能量平衡间迭代温度不动点，化学结果
+                    在自洽终温下给出（反应热按水比热容计温升，见
+                    Reaction.heat_kJ/dT_K/T_final_K/thermal.trace）
+        kinetics    动力学层开关（bool，默认 True）。False = 纯热力学基线
+                    （无限时间）：slow/gate/膜封锁等动力学标记一律不生效
+        gas_escape  自产气体逸出开关（bool，默认 True）。False = 闭口体系：
+                    反应产生的气体不逸出（保留在溶液账本参与平衡，
+                    相当于密闭容器；逸出账户 escaped 为空）
 
     建立时（若给了 substances）与每次 add() 自动触发反应——按累计投入量
     重新平衡（化学上等价于连续投料的再平衡），返回本次 Reaction。
@@ -684,7 +300,7 @@ class System:
         sys = chemkit.System(V=1.0)
         sys.add("NaOH", 0.1)              # 纯水 + 0.1 mol NaOH
         r = sys.add("HCl", 0.15)          # 再投入 HCl，体系重新平衡
-        r.equation, r.pH
+        r.net_equation, r.pH
     """
 
     def __init__(self,
@@ -694,10 +310,16 @@ class System:
                  T: float = 298.15,
                  T_C: float | None = None,
                  p: float = 101.3,
-                 tables: Tables | None = None):
+                 tables: Tables | None = None,
+                 isothermal: bool = True,
+                 kinetics: bool = True,
+                 gas_escape: bool = True):
         self.V_L: float = float(V)
         self.T_K: float = float(T) if T_C is None else float(T_C) + 273.15
         self.p_kpa: float = float(p)
+        self.isothermal: bool = bool(isothermal)
+        self.kinetics: bool = bool(kinetics)
+        self.gas_escape: bool = bool(gas_escape)
         self._tables: Tables = tables if tables is not None else TABLES
         self._feeds: dict[str, float] = {}
         self.history: list[Reaction] = []
@@ -713,10 +335,14 @@ class System:
         return self._react()
 
     def _react(self) -> Reaction:
+        # v0.3.6：System 直落共用求解管线（不经 react/System 包装链）
+        cond = {"V_L": self.V_L, "T_K": self.T_K, "p_kpa": self.p_kpa,
+                "isothermal": self.isothermal,
+                "kinetics": self.kinetics,
+                "gas_escape": self.gas_escape}
         subs = [{"name": n, "mol": m} for n, m in self._feeds.items()]
-        cond = {"V_L": self.V_L, "T_K": self.T_K, "p_kpa": self.p_kpa}
-        r = judge(subs, cond, self._tables)
-        self.result = Reaction(r)
+        r = _solve(subs, cond, self._tables, self.isothermal)
+        self.result = Reaction(r, self._tables)
         self.history.append(self.result)
         return self.result
 
@@ -738,13 +364,27 @@ def react(substances: dict[str, float],
           T: float = 298.15,
           T_C: float | None = None,
           p: float = 101.3,
-          tables: Tables | None = None) -> Reaction:
-    """一步式反应：建立体系并立即反应，返回 Reaction。
+          tables: Tables | None = None,
+          isothermal: bool = True,
+          kinetics: bool = True,
+          gas_escape: bool = True) -> Reaction:
+    """一步式反应：直接调求解管线，返回 Reaction（v0.3.6 起不再
+    经由 System 包装链——一次判定零中间对象）。
 
-    参数与 System 一致（substances 必填）。
+    参数与 System 一致（substances 必填）；isothermal/kinetics/gas_escape
+    三个模式开关的含义见 System 文档。需要换表/长期持有缓存时用
+    chemkit.Engine 对象。
 
     示例：
         r = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0)
-        print(r.equation)   # 'Zn + 2H^+ -> H_2 + Zn^{2+}'
+        print(r.net_equation)   # 'Zn + 2H^+ -> H_2 + Zn^{2+}'
+        rt = chemkit.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0,
+                           isothermal=False)
+        print(rt.heat_kJ, rt.dT_K)  # 绝热耦合：放热与温升
     """
-    return System(substances, V=V, T=T, T_C=T_C, p=p, tables=tables).result
+    tb = tables if tables is not None else TABLES
+    r = _solve(_subs(substances),
+               _cond(V, T, T_C, p, isothermal, kinetics, gas_escape),
+               tb, isothermal)
+    return Reaction(r, tb)
+

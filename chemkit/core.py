@@ -9,6 +9,8 @@ from math import gcd
 # ============================================================ formula
 import re
 from functools import lru_cache
+from types import MappingProxyType
+from typing import Mapping
 
 CHARGE_RE = re.compile(r"\^\{?(\d*)([+-])\}?$")
 
@@ -24,8 +26,19 @@ def parse_species(name: str) -> tuple:
     return (tuple(sorted(elems.items())), charge)
 
 
-def elements_of(name: str) -> dict:
-    return dict(parse_species(name)[0])
+def elements_of(name: str) -> Mapping:
+    """元素计数字典（**只读** MappingProxyType，全库共享单一实例——
+    热路径每调用的 dict 重建在构建期有 260 万次，共享消除后配平构建
+    快一个量级）。返回对象不可原地修改（对内防误写、对外防缓存投毒）；
+    需要可变副本请 dict(elements_of(x))。"""
+    d = _ELEM_DICT_CACHE.get(name)
+    if d is None:
+        d = MappingProxyType(dict(parse_species(name)[0]))
+        _ELEM_DICT_CACHE[name] = d
+    return d
+
+
+_ELEM_DICT_CACHE: dict[str, Mapping] = {}
 
 
 def charge_of(name: str) -> int:
@@ -112,26 +125,84 @@ def _parse_body(s: str) -> dict:
 # ============================================================ balance
 from fractions import Fraction
 from functools import reduce
-import sympy as sp
+
+
+def _nullspace_exact(rows: list[list[int]], ncols: int) -> list[list]:
+    """精确零空间基（标准约定，免分数）：整数 Gauss-Jordan 消元
+    （交叉乘法 m[i] = m[i]·pv − m[r]·f，行内 gcd 约减防增长），随后对
+    每个自由列 f 构造基向量：v[f]=1、v[pivot_col_j] = −RREF[j][f]
+    = Fraction(−m[j][f], m[j][pc_j])、其余 0。
+
+    与 sympy Matrix.nullspace() 的基向量逐元素一致——整数消元不改变
+    有理行空间与主元不变量，RREF 唯一 → 基唯一（这是替换 sympy 后配平
+    结果 bit 级一致的根据）。基向量整数位直接用 int：算术精确性不受
+    影响，下游 _to_ints/_try_vec 对 int/Fraction 同构处理。矩阵规模
+    ≤ ~16 列 × ~12 行，纯整数运算比 sympy 符号机器（sympify/domain
+    转换/多态分发）快两个量级。"""
+    m = [row[:] for row in rows]
+    nr = len(m)
+    pivots: list[int] = []
+    r = 0
+    for c in range(ncols):
+        pr = None
+        for i in range(r, nr):
+            if m[i][c]:
+                pr = i
+                break
+        if pr is None:
+            continue
+        if pr != r:
+            m[r], m[pr] = m[pr], m[r]
+        row_r = m[r]
+        pv = row_r[c]
+        for i in range(nr):
+            if i != r:
+                mi = m[i]
+                f = mi[c]
+                if f:
+                    m[i] = [a * pv - f * b for a, b in zip(mi, row_r)]
+                    g = reduce(gcd, m[i])
+                    if g > 1:
+                        m[i] = [x // g for x in m[i]]
+        pivots.append(c)
+        r += 1
+        if r == nr:
+            break
+    pset = set(pivots)
+    dvals = [m[j][pc] for j, pc in enumerate(pivots)]
+    basis: list[list] = []
+    for f in range(ncols):
+        if f in pset:
+            continue
+        v = [0] * ncols
+        v[f] = 1
+        for j, pc in enumerate(pivots):
+            x = m[j][f]
+            if x:
+                d = dvals[j]
+                v[pc] = Fraction(-x, d) if d != 1 else -x
+        basis.append(v)
+    return basis
 
 
 def balance(reactants: list[str], products: list[str],
             free: list[str] | None = None) -> dict | None:
     free = free or []
     species = list(dict.fromkeys(list(reactants) + list(products) + list(free)))
-    elems: list[str] = sorted({e for s in species for e in elements_of(s)})
-    rows = [[Fraction(elements_of(s).get(el, 0)) for s in species] for el in elems]
-    rows.append([Fraction(charge_of(s)) for s in species])
-    M = sp.Matrix(rows)   # Fraction 精确零空间（float 会产生不守恒伪向量）
-    ns = M.nullspace()
+    el_dicts = [elements_of(s) for s in species]
+    elems: list[str] = sorted({e for ed in el_dicts for e in ed})
+    rows = [[ed.get(el, 0) for ed in el_dicts] for el in elems]
+    rows.append([charge_of(s) for s in species])
+    ns = _nullspace_exact(rows, len(species))
     # 候选向量：基向量 + 小整数组合（零空间维数 ≥2 时，全物种参与的合法解
     # 可能是基向量的线性组合而非基向量本身，如 MnO4-/H2O2 体系）
-    vecs = list(ns)
+    vecs = [list(v) for v in ns]
     if len(ns) >= 2:
         for i in range(len(ns)):
             for j in range(i + 1, len(ns)):
+                vi, vj = ns[i], ns[j]
                 for a in (1, -1, 2, -2, 3, -3):
-                    vecs.append(ns[i] + a * ns[j])
+                    vecs.append([x + a * y for x, y in zip(vi, vj)])
     for vec in vecs:
         res = _try_vec(vec, species, reactants, products, free, elems)
         if res is not None:
@@ -194,24 +265,39 @@ def _try_vec(vec, species, reactants, products, free, elems) -> dict | None:
             res["reactants"][s] = res["reactants"].get(s, 0) + v
         elif v < 0:
             res["products"][s] = res["products"].get(s, 0) - v
-    # 守恒断言（防御数值误差）：元素与电荷两侧必须相等
-    for el in elems:
-        lhs = sum(elements_of(s).get(el, 0) * n for s, n in res["reactants"].items())
-        rhs = sum(elements_of(s).get(el, 0) * n for s, n in res["products"].items())
-        if lhs != rhs:
-            return None
-    lhs = sum(charge_of(s) * n for s, n in res["reactants"].items())
-    rhs = sum(charge_of(s) * n for s, n in res["products"].items())
+    # 守恒断言（防御数值误差）：元素与电荷两侧必须相等。
+    # 按物种遍历其自身元素表（共享只读 dict.items()）累积差值——比按
+    # 元素 × 物种双重循环少一个量级的字典查找，整数和与次序无关。
+    rr, pp = res["reactants"], res["products"]
+    diff: dict[str, int] = {}
+    for s, n in rr.items():
+        for el, cnt in elements_of(s).items():
+            diff[el] = diff.get(el, 0) + cnt * n
+    for s, n in pp.items():
+        for el, cnt in elements_of(s).items():
+            diff[el] = diff.get(el, 0) - cnt * n
+    if any(diff.values()):
+        return None
+    lhs = sum(charge_of(s) * n for s, n in rr.items())
+    rhs = sum(charge_of(s) * n for s, n in pp.items())
     if lhs != rhs:
         return None
     return res
 
 
 def _to_ints(vec) -> list[int] | None:
-    fracs = [Fraction(v).limit_denominator(1000) for v in vec]
-    den = reduce(lambda a, b: a * b // gcd(a, b), (f.denominator for f in fracs), 1)
-    ints = [int(f * den) for f in fracs]
-    g = reduce(gcd, (abs(i) for i in ints if i != 0), 0)
+    # 精确分数（分母 ≤1000）limit_denominator(1000) 必恒等返回自身，
+    # 跳过 Stern-Brocot 走向；int 条目分母恒 1。
+    den = 1
+    for v in vec:
+        d = 1 if type(v) is int else (
+            v.denominator if type(v) is Fraction else Fraction(v).denominator)
+        if d != 1:
+            den = den // gcd(den, d) * d
+    ints = [v * den if type(v) is int else
+            v.numerator * (den // v.denominator) if type(v) is Fraction
+            else int(Fraction(v) * den) for v in vec]
+    g = reduce(gcd, (abs(i) for i in ints if i), 0)
     if g == 0:
         return None
     return [i // g for i in ints]
@@ -234,8 +320,17 @@ def _vant(dH: float, T_K: float) -> float:
     return dH / R_LN10_KJ * (1.0 / 298.15 - 1.0 / T_K)
 
 
+_PKW_C: dict[float, float] = {}
+
+
 def pKw_of(T_K: float) -> float:
-    """pKw(T) 经验式：298.15 K -> 14.0，373 K -> 12.3。"""
-    return 4471.0 / T_K - 6.09 + 0.0171 * T_K
+    """pKw(T) 经验式：298.15 K -> 14.0，373 K -> 12.3。
+    纯函数值按 T_K 记忆（热路径每次 S_of/estimate_state 都经过；
+    缓存值与逐次计算 bit 级一致，T_K 取值全流程只有个位数个不同点）。"""
+    v = _PKW_C.get(T_K)
+    if v is None:
+        v = 4471.0 / T_K - 6.09 + 0.0171 * T_K
+        _PKW_C[T_K] = v
+    return v
 
 

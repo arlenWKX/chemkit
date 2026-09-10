@@ -56,14 +56,6 @@
  "H_2O_2": {
   "form": "molecule"
  },
- "Na_2O_2": {
-  "form": "ions",
-  "ions": [
-   "Na^+",
-   "Na^+",
-   "O_2^{2-}"
-  ]
- },
  "SiO_2": {
   "form": "solid"
  },
@@ -158,49 +150,17 @@
    "SO_4^{2-}"
   ]
  },
- "CaC_2": {
-  "form": "ions",
-  "ions": [
-   "Ca^{2+}",
-   "C_2^{2-}"
-  ]
- },
- "Mg_3N_2": {
-  "form": "ions",
-  "ions": [
-   "Mg^{2+}",
-   "Mg^{2+}",
-   "Mg^{2+}",
-   "N^{3-}",
-   "N^{3-}"
-  ]
- },
  "Ca": {
   "form": "solid"
  },
  "Mn": {
   "form": "solid"
  },
- "Na[Al(OH)_4]": {
-  "form": "ions",
-  "ions": [
-   "Na^+",
-   "[Al(OH)_4]^-"
-  ]
- },
- "Na_2[Zn(OH)_4]": {
-  "form": "ions",
-  "ions": [
-   "Na^+",
-   "Na^+",
-   "[Zn(OH)_4]^{2-}"
-  ]
- },
  "NaAc": {
   "form": "ions",
   "ions": [
    "Na^+",
-   "Ac^-"
+   "CH_3COO^-"
   ]
  },
  "Sn": {
@@ -254,42 +214,6 @@
  "SiF_4": {
   "form": "gas"
  },
- "KO_2": {
-  "form": "ions",
-  "ions": [
-   "K^+",
-   "O_2^-"
-  ]
- },
- "NaH": {
-  "form": "ions",
-  "ions": [
-   "Na^+",
-   "H^-"
-  ]
- },
- "CaH_2": {
-  "form": "ions",
-  "ions": [
-   "Ca^{2+}",
-   "H^-",
-   "H^-"
-  ]
- },
- "BaO_2": {
-  "form": "ions",
-  "ions": [
-   "Ba^{2+}",
-   "O_2^{2-}"
-  ]
- },
- "Na[B(OH)_4]": {
-  "form": "ions",
-  "ions": [
-   "Na^+",
-   "[B(OH)_4]^-"
-  ]
- },
  "H_3BO_3": {
   "form": "molecule"
  },
@@ -303,14 +227,6 @@
  },
  "CH_4": {
   "form": "gas"
- },
- "Na_2O": {
-  "form": "ions",
-  "ions": [
-   "Na^+",
-   "Na^+",
-   "O^{2-}"
-  ]
  },
  "CH_3COOH": {
   "form": "molecule"
@@ -360,76 +276,6 @@
  },
  "N_2O": {
   "form": "gas"
- },
- "ScCl_3": {
-  "form": "ions",
-  "ions": [
-   "Sc^{3+}",
-   "Cl^-"
-  ]
- },
- "TiCl_3": {
-  "form": "ions",
-  "ions": [
-   "Ti^{3+}",
-   "Cl^-"
-  ]
- },
- "TiOSO_4": {
-  "form": "ions",
-  "ions": [
-   "TiO^{2+}",
-   "SO_4^{2-}"
-  ]
- },
- "NH_4VO_3": {
-  "form": "ions",
-  "ions": [
-   "NH_4^+",
-   "VO_3^-"
-  ]
- },
- "VOSO_4": {
-  "form": "ions",
-  "ions": [
-   "VO^{2+}",
-   "SO_4^{2-}"
-  ]
- },
- "VCl_3": {
-  "form": "ions",
-  "ions": [
-   "V^{3+}",
-   "Cl^-"
-  ]
- },
- "VCl_2": {
-  "form": "ions",
-  "ions": [
-   "V^{2+}",
-   "Cl^-"
-  ]
- },
- "HAuCl_4": {
-  "form": "ions",
-  "ions": [
-   "H^+",
-   "[AuCl_4]^-"
-  ]
- },
- "AuCl_3": {
-  "form": "ions",
-  "ions": [
-   "Au^{3+}",
-   "Cl^-"
-  ]
- },
- "H_2PtCl_6": {
-  "form": "ions",
-  "ions": [
-   "H^+",
-   "[PtCl_6]^{2-}"
-  ]
  },
  "Sc": {
   "form": "solid"
@@ -497,5 +343,520 @@
  },
  "MnOOH": {
   "form": "solid"
+ },
+ "Tl_2SO_4": {
+  "form": "ions",
+  "ions": [
+   "Tl^+",
+   "SO_4^{2-}"
+  ]
+ },
+ "TlNO_3": {
+  "form": "ions",
+  "ions": [
+   "Tl^+",
+   "NO_3^-"
+  ]
+ },
+ "InCl_3": {
+  "form": "ions",
+  "ions": [
+   "In^{3+}",
+   "Cl^-"
+  ]
+ },
+ "In(NO_3)_3": {
+  "form": "ions",
+  "ions": [
+   "In^{3+}",
+   "NO_3^-"
+  ]
+ },
+ "In_2(SO_4)_3": {
+  "form": "ions",
+  "ions": [
+   "In^{3+}",
+   "SO_4^{2-}"
+  ]
+ },
+ "PdCl_2": {
+  "form": "solid",
+  "note": "PdCl2 固态；常见 Pd(II) 盐"
+ },
+ "Pd(NO_3)_2": {
+  "form": "ions",
+  "ions": [
+   "Pd^{2+}",
+   "NO_3^-"
+  ]
+ },
+ "PdSO_4": {
+  "form": "ions",
+  "ions": [
+   "Pd^{2+}",
+   "SO_4^{2-}"
+  ]
+ },
+ "Ce(NO_3)_3": {
+  "form": "ions",
+  "ions": [
+   "Ce^{3+}",
+   "NO_3^-"
+  ]
+ },
+ "CeCl_3": {
+  "form": "ions",
+  "ions": [
+   "Ce^{3+}",
+   "Cl^-"
+  ]
+ },
+ "Ce(SO_4)_2": {
+  "form": "ions",
+  "ions": [
+   "Ce^{4+}",
+   "SO_4^{2-}"
+  ],
+  "note": "Ce(IV) 硫酸盐；硫酸高铈"
+ },
+ "La(NO_3)_3": {
+  "form": "ions",
+  "ions": [
+   "La^{3+}",
+   "NO_3^-"
+  ]
+ },
+ "LaCl_3": {
+  "form": "ions",
+  "ions": [
+   "La^{3+}",
+   "Cl^-"
+  ]
+ },
+ "La_2(SO_4)_3": {
+  "form": "ions",
+  "ions": [
+   "La^{3+}",
+   "SO_4^{2-}"
+  ]
+ },
+ "ZrCl_4": {
+  "form": "ions",
+  "ions": [
+   "Zr^{4+}",
+   "Cl^-"
+  ]
+ },
+ "Na_2MoO_4": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "MoO_4^{2-}"
+  ],
+  "note": "钼酸钠；钼酸盐"
+ },
+ "Na_2WO_4": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "WO_4^{2-}"
+  ],
+  "note": "钨酸钠；钨酸盐"
+ },
+ "K_2Cr_2O_7": {
+  "form": "ions",
+  "ions": [
+   "K^+",
+   "Cr_2O_7^{2-}"
+  ],
+  "note": "重铬酸钾"
+ },
+ "Na_2S_2O_3": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "S_2O_3^{2-}"
+  ],
+  "note": "硫代硫酸钠"
+ },
+ "NaBO_2": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "[B(OH)_4]^-"
+  ],
+  "note": "偏硼酸钠水溶液实际形态 [B(OH)4]-（与 NaAlO_2 类似）"
+ },
+ "Na_2B_4O_7": {
+  "form": "ions",
+  "ions": [
+   "Na^+",
+   "[B(OH)_4]^-"
+  ],
+  "note": "硼砂；Na2B4O7·10H2O；水溶液中主要为 [B(OH)4]- 和 H3BO3"
+ },
+ "K_2PtCl_6": {
+  "form": "solid",
+  "note": "氯铂酸钾；黄色沉淀"
+ },
+ "MoO_3": {
+  "form": "solid",
+  "note": "Mo(VI) 三氧化钼；酸性氧化物"
+ },
+ "WO_3": {
+  "form": "solid",
+  "note": "W(VI) 三氧化钨；酸性氧化物"
+ },
+ "CrO_3": {
+  "form": "solid",
+  "note": "Cr(VI) 三氧化铬；酸性氧化物；铬酐"
+ },
+ "As_2O_3": {
+  "form": "solid",
+  "note": "As(III) 三氧化二砷；两性氧化物；砒霜"
+ },
+ "Sb_2O_3": {
+  "form": "solid",
+  "note": "Sb(III) 三氧化二锑；两性"
+ },
+ "Bi_2O_3": {
+  "form": "solid",
+  "note": "Bi(III) 三氧化二铋；碱性"
+ },
+ "TeO_2": {
+  "form": "solid",
+  "note": "Te(IV) 二氧化碲；两性"
+ },
+ "In_2O_3": {
+  "form": "solid",
+  "note": "In(III) 三氧化二铟"
+ },
+ "Tl_2O": {
+  "form": "solid",
+  "note": "Tl(I) 氧化亚铊"
+ },
+ "PdO": {
+  "form": "solid",
+  "note": "Pd(II) 氧化钯"
+ },
+ "Tl": {
+  "form": "solid",
+  "note": "铊；柔软金属；汞齐法电解制氯工业电极"
+ },
+ "In": {
+  "form": "solid",
+  "note": "铟；柔软金属；低熔点合金"
+ },
+ "Pd": {
+  "form": "solid",
+  "note": "钯；铂族；可吸收氢气"
+ },
+ "Ce": {
+  "form": "solid",
+  "note": "铈；镧系；稀土金属"
+ },
+ "La": {
+  "form": "solid",
+  "note": "镧；镧系；稀土金属"
+ },
+ "Zr": {
+  "form": "solid",
+  "note": "锆；高熔点金属；耐腐蚀"
+ },
+ "Mo": {
+  "form": "solid",
+  "note": "钼；高熔点过渡金属"
+ },
+ "W": {
+  "form": "solid",
+  "note": "钨；最高熔点金属"
+ },
+ "Te": {
+  "form": "solid",
+  "note": "碲；类金属"
+ },
+ "Sb": {
+  "form": "solid",
+  "note": "锑；类金属"
+ },
+ "Bi": {
+  "form": "solid",
+  "note": "铋；脆性金属；低熔点"
+ },
+ "AsH_3": {
+  "form": "gas",
+  "note": "砷化氢；剧毒；马氏试砷法"
+ },
+ "SbH_3": {
+  "form": "gas",
+  "note": "锑化氢；剧毒"
+ },
+ "GeH_4": {
+  "form": "gas",
+  "note": "锗烷"
+ },
+ "H_3AsO_3": {
+  "form": "molecule",
+  "note": "亚砷酸；As(III)；可作还原剂"
+ },
+ "H_3AsO_4": {
+  "form": "molecule",
+  "note": "砷酸；As(V)"
+ },
+ "H_2MoO_4": {
+  "form": "molecule",
+  "note": "钼酸"
+ },
+ "H_2WO_4": {
+  "form": "molecule",
+  "note": "钨酸"
+ },
+ "HIO_3": {
+  "form": "molecule",
+  "note": "碘酸"
+ },
+ "HIO_4": {
+  "form": "molecule",
+  "note": "偏高碘酸"
+ },
+ "H_5IO_6": {
+  "form": "molecule",
+  "note": "正高碘酸"
+ },
+ "HClO_3": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "ClO_3^-"
+  ],
+  "note": "氯酸；强酸"
+ },
+ "HClO_4": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "ClO_4^-"
+  ],
+  "note": "高氯酸；最强酸"
+ },
+ "HBrO_3": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "BrO_3^-"
+  ],
+  "note": "溴酸；强酸"
+ },
+ "HBrO_4": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "BrO_4^-"
+  ],
+  "note": "高溴酸；强酸"
+ },
+ "H_2SeO_3": {
+  "form": "molecule",
+  "note": "亚硒酸"
+ },
+ "H_2SeO_4": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "HSeO_4^-"
+  ],
+  "note": "硒酸；强酸（一级完全电离）"
+ },
+ "H_2TeO_3": {
+  "form": "molecule",
+  "note": "亚碲酸"
+ },
+ "H_6TeO_6": {
+  "form": "molecule",
+  "note": "正碲酸"
+ },
+ "As_2S_3": {
+  "form": "solid",
+  "note": "三硫化二砷；黄色沉淀"
+ },
+ "Sb_2S_3": {
+  "form": "solid",
+  "note": "三硫化二锑；橙红色沉淀"
+ },
+ "Bi_2S_3": {
+  "form": "solid",
+  "note": "三硫化二铋；棕黑色沉淀"
+ },
+ "CuCN": {
+  "form": "solid",
+  "note": "氰化亚铜；白色沉淀"
+ },
+ "CuSCN": {
+  "form": "solid",
+  "note": "硫氰酸亚铜；白色沉淀"
+ },
+ "Hg_2Cl_2": {
+  "form": "solid",
+  "note": "甘汞；白色沉淀"
+ },
+ "KClO_4": {
+  "form": "solid",
+  "note": "高氯酸钾；白色沉淀"
+ },
+ "B_2H_6": {
+  "form": "gas",
+  "note": "乙硼烷；气体；火箭燃料"
+ },
+ "SiH_4": {
+  "form": "gas",
+  "note": "硅烷"
+ },
+ "H_2SO_3": {
+  "form": "molecule",
+  "note": "亚硫酸；二元中强酸"
+ },
+ "H_2PtCl_6": {
+  "form": "ions",
+  "ions": [
+   "H^+",
+   "[PtCl_6]^{2-}"
+  ],
+  "note": "氯铂酸；强酸；六氯合铂(IV)酸"
+ },
+ "Fr": {
+  "form": "solid"
+ },
+ "Ra": {
+  "form": "solid",
+  "note": "镭；碱土金属（放射性）"
+ },
+ "Y": {
+  "form": "solid",
+  "note": "钇；重稀土"
+ },
+ "Pr": {
+  "form": "solid",
+  "note": "镨；镧系"
+ },
+ "Nd": {
+  "form": "solid",
+  "note": "钕；镧系"
+ },
+ "Pm": {
+  "form": "solid",
+  "note": "钷；镧系（放射性）"
+ },
+ "Sm": {
+  "form": "solid",
+  "note": "钐；镧系"
+ },
+ "Eu": {
+  "form": "solid",
+  "note": "铕；镧系"
+ },
+ "Gd": {
+  "form": "solid",
+  "note": "钆；镧系"
+ },
+ "Tb": {
+  "form": "solid",
+  "note": "铽；镧系"
+ },
+ "Dy": {
+  "form": "solid",
+  "note": "镝；镧系"
+ },
+ "Ho": {
+  "form": "solid",
+  "note": "钬；镧系"
+ },
+ "Er": {
+  "form": "solid",
+  "note": "铒；镧系"
+ },
+ "Tm": {
+  "form": "solid",
+  "note": "铥；镧系"
+ },
+ "Yb": {
+  "form": "solid",
+  "note": "镱；镧系"
+ },
+ "Lu": {
+  "form": "solid",
+  "note": "镥；镧系"
+ },
+ "Th": {
+  "form": "solid",
+  "note": "钍；锕系"
+ },
+ "Pa": {
+  "form": "solid",
+  "note": "镤；锕系"
+ },
+ "U": {
+  "form": "solid",
+  "note": "铀；锕系"
+ },
+ "Np": {
+  "form": "solid"
+ },
+ "Pu": {
+  "form": "solid"
+ },
+ "Am": {
+  "form": "solid"
+ },
+ "Cm": {
+  "form": "solid"
+ },
+ "Bk": {
+  "form": "solid"
+ },
+ "Cf": {
+  "form": "solid"
+ },
+ "Ac": {
+  "form": "solid",
+  "note": "锕；锕系"
+ },
+ "Hf": {
+  "form": "solid",
+  "note": "铪；类质同象于锆"
+ },
+ "Nb": {
+  "form": "solid",
+  "note": "铌（耐蚀，HF 中溶）"
+ },
+ "Ta": {
+  "form": "solid",
+  "note": "钽（耐 HF 外所有酸）"
+ },
+ "Tc": {
+  "form": "solid",
+  "note": "锝；放射性"
+ },
+ "Re": {
+  "form": "solid",
+  "note": "铼；难熔金属"
+ },
+ "Ru": {
+  "form": "solid",
+  "note": "钌；铂族（耐单一酸）"
+ },
+ "Os": {
+  "form": "solid"
+ },
+ "Rh": {
+  "form": "solid",
+  "note": "铑；铂族（耐单一酸）"
+ },
+ "Ir": {
+  "form": "solid",
+  "note": "铱；铂族（最耐蚀，王水不溶）"
+ },
+ "Po": {
+  "form": "solid",
+  "note": "钋"
  }
 }

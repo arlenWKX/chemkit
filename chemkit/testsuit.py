@@ -15,11 +15,16 @@
 用例字段（断言维度）：
   subs     [["化学式", mol], ...]            投料
   cond     {"V_L":..., "T_K"/"T_C":..., "p_kpa":...}  条件（可选）
-  reacted  bool                              是否反应
-  degree   str 或 [str, ...]                 程度（可给可接受列表）
+  changed  bool                              体系是否发生显著净变化（宽口径，
+                                            含纯溶解/电离/水解等形态变化）
+  reacted  bool                              狭义化学反应（不含纯溶解/电离/水解）
+  degree   int/str/[int|str, ...]            程度（可给可接受列表；int=2/1/0，
+                                            str=complete/incomplete/hardly/none）
   has      {化学式: 最少 mol}                产物/终态下限
   has_not  {化学式: 上限 mol}                不应生成（默认上限外的量即失败）
   has_range {化学式: [lo, hi]}
+  has_initial {化学式: 最少 mol}             初态下限（post-normalize）
+  has_in_initial_not {化学式}                初态不应含
   ph       [lo, hi]
   ann      ["slow"/"blocked"...]
   override OVERRIDE id
@@ -36,7 +41,6 @@ import time
 
 from .data import load_tables, Tables, _half_balance
 from .engine import judge
-from .core import charge_of
 from .system import Reaction, _parse_equation
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -71,9 +75,18 @@ def _eq_signature(eq: str) -> tuple | None:
 
 
 def _eq_match(expected: str, actual: str | None) -> bool:
+    """方程式匹配：方向无关（正反应与逆反应视为同一）。
+
+    引擎按记账顺序产出步骤方程，方向可能与教材期望相反（如
+    'CH_3COOH -> CH_3COO^- + H^+' vs 'Ac^- + H^+ -> HAc'）。化学上等价，
+    断言应放过。"""
     if actual is None:
         return False
-    return _eq_signature(expected) == _eq_signature(actual)
+    es = _eq_signature(expected)
+    as_ = _eq_signature(actual)
+    if es is None or as_ is None:
+        return False
+    return es == as_ or (es[0], es[1]) == (as_[1], as_[0])
 
 
 def check_equations(c: dict, rxn: Reaction, errs: list[str]) -> None:
@@ -82,10 +95,10 @@ def check_equations(c: dict, rxn: Reaction, errs: list[str]) -> None:
     if "eq" in c:
         exp = c["eq"]
         if exp is None:
-            if rxn.equation is not None:
-                errs.append(f"不应有净方程，实际 {rxn.equation}")
-        elif not _eq_match(exp, rxn.equation):
-            errs.append(f"净方程不符：实际 {rxn.equation} 期望 {exp}")
+            if rxn.net_equation is not None:
+                errs.append(f"不应有净方程，实际 {rxn.net_equation}")
+        elif not _eq_match(exp, rxn.net_equation):
+            errs.append(f"净方程不符：实际 {rxn.net_equation} 期望 {exp}")
     for exp in c.get("eq_has", []):
         if not any(_eq_match(exp, a) for a in rxn.equations):
             errs.append(f"多步方程缺 {exp}（实际 {rxn.equations}）")
@@ -101,15 +114,45 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
     TIMES.append((time.time() - t0, name))
     errs = []
     # 量值校验统一用 最终态∪产物 的合并视图
+    # v0.4.0 弱池口径：断言池成员（Zn²⁺/Ni²⁺/Cu²⁺ 及弱卤配形态）时按池
+    # 总量聚合——O02 has Zn²⁺ 0.95 是池口径（溶解态总量），物种级 free
+    # Zn²⁺ 0.74 属形态细节。has_not/has_range 维持物种级（上限/区间断言
+    # 锁的是具体形态量）
+    pool_map = r.get("pool_map") or {}
     amt = {}
-    for e in r["produced"] + r["final"]:
-        amt[e["name"]] = max(amt.get(e["name"], 0.0), e["mol"])
+    amt_sp = {}   # 物种级视图（has_not/has_range 用：上限/区间锁具体形态量）
+    pool_tot: dict[str, float] = {}
+    for e in r["production"] + r["final"]:
+        sp = e["name"]
+        amt_sp[sp] = max(amt_sp.get(sp, 0.0), e["mol"])
+        a = pool_map.get(sp)
+        if a is not None:
+            pool_tot[a] = pool_tot.get(a, 0.0) + e["mol"]
+        else:
+            amt[sp] = max(amt.get(sp, 0.0), e["mol"])
+    for a, v in pool_tot.items():
+        amt[a] = max(amt.get(a, 0.0), v)
+    # 初态视图（post-normalize，强电解质电离 + 气体处理 + 中和已记账）
+    init_map: dict[str, float] = {e["name"]: e["mol"]
+                                  for e in r.get("initial", [])}
+    if "changed" in c and r["changed"] != c["changed"]:
+        errs.append(f"changed={r['changed']} 期望{c['changed']}")
     if "reacted" in c and r["reacted"] != c["reacted"]:
         errs.append(f"reacted={r['reacted']} 期望{c['reacted']}")
     if "degree" in c:
-        exp = c["degree"] if isinstance(c["degree"], list) else [c["degree"]]
-        if r["degree"] not in exp:
-            errs.append(f"degree={r['degree']} 期望{exp}")
+        exp_raw = c["degree"]
+        exp_list = exp_raw if isinstance(exp_raw, list) else [exp_raw]
+        # 同时支持 str（complete/...）与 int（2/1/0）；引擎输出为 int
+        _DSTR_TO_INT = {"complete": 2, "incomplete": 1,
+                        "hardly": 0, "none": 0}
+        exp_ints = set()
+        for v in exp_list:
+            if isinstance(v, int):
+                exp_ints.add(v)
+            else:
+                exp_ints.add(_DSTR_TO_INT.get(v, -1))
+        if r["degree"] not in exp_ints:
+            errs.append(f"degree={r['degree']} 期望{exp_list}")
     for a in c.get("ann", []):
         if a not in r["annotations"]:
             errs.append(f"缺标注 {a}")
@@ -120,17 +163,25 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
         if m < lo:
             errs.append(f"{sp} 产量 {m:.4g} < {lo}")
     for sp, hi in c.get("has_not", {}).items():
-        m = amt.get(sp, 0.0)
+        m = amt_sp.get(sp, 0.0)
         if m > hi:
             errs.append(f"{sp} 不应生成 {m:.4g} > {hi}")
     for sp, (lo, hi) in c.get("has_range", {}).items():
-        m = amt.get(sp, 0.0)
+        m = amt_sp.get(sp, 0.0)
         if not (lo <= m <= hi):
             errs.append(f"{sp}={m:.4g} 不在 [{lo},{hi}]")
     for sp, lo in c.get("has_any", {}).items():
         m = amt.get(sp, 0.0)
         if m < lo:
             errs.append(f"{sp}(any) 产量 {m:.4g} < {lo}")
+    for sp, lo in c.get("has_initial", {}).items():
+        m = init_map.get(sp, 0.0)
+        if m < lo:
+            errs.append(f"初态 {sp}={m:.4g} < {lo}")
+    for sp in c.get("has_in_initial_not", {}):
+        m = init_map.get(sp, 0.0)
+        if m > 1e-6:
+            errs.append(f"初态不应含 {sp}（实际 {m:.4g}）")
     if "ph" in c and r["final_pH"] is not None:
         if not (c["ph"][0] <= r["final_pH"] <= c["ph"][1]):
             errs.append(f"ph={r['final_pH']} 不在 {c['ph']}")
@@ -143,7 +194,7 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
             print(f"[FAIL] {name}  -- {'; '.join(errs)}"
                   + (f"  ({c['note']})" if c.get("note") else ""))
             print("   steps:", [(s["equation"], s["extent"]) for s in r["steps"][:6]])
-            print("   produced:", [(p["name"], p["mol"]) for p in r["produced"]],
+            print("   production:", [(p["name"], p["mol"]) for p in r["production"]],
                   "| pH:", r["final_pH"], "| degree:", r["degree"],
                   "| ann:", r["annotations"])
         return False
@@ -260,6 +311,40 @@ def consistency(T: Tables, verbose: bool = True) -> list[str]:
             print(f"[info] {solid} + 2NH3 ⇌ 配离子 + 卤离子: "
                   f"logK = {b['logb'] - e['pKsp']:.2f}")
 
+    # 7) 配合物电荷/原子一致性（beta schema 单一配体纪律）：
+    #    complex 电荷 = center + nu×ligand；complex 原子组成 = center + nu×ligand。
+    #    混配体配合物（如 [Co(NH3)5Cl]2+ 含非配体元素 Cl）不符合
+    #    center+nu*ligand 生成路径，一律拒绝（引擎配位步将守恒被破坏）
+    from .core import charge_of, elements_of
+    for e in T.beta:
+        q_ok = (charge_of(e["complex"])
+                == charge_of(e["center"]) + e["nu"] * charge_of(e["ligand"]))
+        a_c = elements_of(e["complex"])
+        a_ref = dict(elements_of(e["center"]))
+        for el, cnt in elements_of(e["ligand"]).items():
+            a_ref[el] = a_ref.get(el, 0) + e["nu"] * cnt
+        if not q_ok:
+            fails.append(f"[FAIL] beta 电荷不守恒 {e['complex']}: "
+                         f"{charge_of(e['complex'])} ≠ {charge_of(e['center'])} "
+                         f"+ {e['nu']}×{charge_of(e['ligand'])}")
+        elif a_c != a_ref:
+            extra = set(a_c) ^ set(a_ref)
+            fails.append(f"[FAIL] beta 原子不守恒 {e['complex']} "
+                         f"(混配体/非单一配体条目: 差异元素 {sorted(extra)}; "
+                         f"{a_c} vs {a_ref})")
+        elif verbose:
+            print(f"[ok] beta 守恒 {e['complex']} "
+                  f"(q={charge_of(e['complex'])})")
+
+    # 8) 同名配合物双注册检查（不同 center 的重名条目互相覆盖，产生
+    #    complex/decomplex 幻影振荡，如 [SbCl6]- 曾同时注册 Sb3+/Sb5+ 中心）
+    seen: dict = {}
+    for e in T.beta:
+        if e["complex"] in seen and seen[e["complex"]] != e["center"]:
+            fails.append(f"[FAIL] beta 同名双中心 {e['complex']}: "
+                         f"{seen[e['complex']]} vs {e['center']}")
+        seen[e["complex"]] = e["center"]
+
     return fails
 
 
@@ -273,39 +358,129 @@ def dH_coverage(T: Tables) -> None:
 
 
 def case_api() -> None:
-    """System/Reaction 高层 API 自检（6 项）：对象语义、累计投料再平衡、
-    raw 过程保留、equation 净离子方程式、H+/OH-/H2O 显式出现、外界气压调节。"""
+    """System/Reaction/Engine 高层 API 自检：对象语义、累计投料再平衡、
+    raw 过程保留、net_equation 净离子方程式、H+/OH-/H2O 显式出现、外界气压调节，
+    Engine 对象三层级平级方法（v0.3.6），以及核心字段：initial/degree/
+    consumption/production/reacted/changed。"""
     import chemkit
     global PASS_N
     sys = chemkit.System(V=1.0)
     sys.add("NaOH", 0.1)
     r2 = sys.add("HCl", 0.1)
-    ok1 = (isinstance(r2, chemkit.Reaction) and r2.reacted
-           and r2.degree == "complete" and r2.pH is not None
+    ok1 = (isinstance(r2, chemkit.Reaction) and r2.changed
+           and r2.degree == 2 and r2.pH is not None
            and 6.0 <= r2.pH <= 8.0 and len(sys.history) == 2
            and sys.feeds.get("NaOH") == 0.1)
     r3 = chemkit.react({"Ca(OH)_2": 1.0, "CO_2": 0.5}, V=1.0)
-    ok2 = (r3.produced.get("CaCO_3", 0.0) >= 0.45
+    ok2 = (r3.production.get("CaCO_3", 0.0) >= 0.45
            and isinstance(r3.raw.get("steps"), list))
     ok3 = chemkit.System({"NaCl": 0.1}).result is not None
     # 净离子方程式：Zn + H2SO4 → Zn + 2H+ -> H2 + Zn2+
     r4 = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0)
-    ok4 = (isinstance(r4.equation, str) and "Zn" in r4.equation
-           and "H^+" in r4.equation and "H_2" in r4.equation)
-    # H+/OH-/H2O 显式出现在 consumed/produced：
-    # NaOH+HCl → consumed 含 H+ 和 OH-，produced 含 H2O
+    ok4 = (isinstance(r4.net_equation, str) and "Zn" in r4.net_equation
+           and "H^+" in r4.net_equation and "H_2" in r4.net_equation)
+    # H+/OH-/H2O 显式出现在 consumption/production：
+    # NaOH+HCl → consumption 含 H+ 和 OH-，production 含 H2O
     r5 = chemkit.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0)
-    ok5 = ("H^+" in r5.consumed and "OH^-" in r5.consumed
-           and "H_2O" in r5.produced)
+    ok5 = ("H^+" in r5.consumption and "OH^-" in r5.consumption
+           and "H_2O" in r5.production)
     # 外界气压调节：低压下气体更易逸出（不应报错）
     r6 = chemkit.react({"Na_2CO_3": 0.1, "HCl": 0.2}, V=1.0, p=50.0)
-    ok6 = r6.reacted and "CO_2" in r6.produced
+    ok6 = r6.changed and "CO_2" in r6.production
+    # degree / consumption / production / net_equation
+    ok7 = (r4.degree == 2  # Zn + H2SO4 完全反应
+           and r4.consumption is not None
+           and r4.production is not None
+           and r4.net_equation is not None)
+    # initial（初态，post-normalize）
+    # SO3 + H2O → H+ + HSO4-；初态应含 HSO4- 与 H+（强电解质已电离 + 气体已反应）
+    r8 = chemkit.react({"SO_3": 0.1}, V=1.0)
+    ok8 = (r8.initial.get("HSO_4^-", 0.0) >= 0.09
+           and r8.initial.get("H^+", 0.0) >= 0.09
+           and "SO_3" not in r8.initial)
+    # reacted（狭义化学反应）
+    # NaCl 溶解：changed=False（NaCl 已在 normalize 阶段完全电离，账本无 NaCl 残留），
+    # reacted=False（纯溶解不算化学反应）
+    r9 = chemkit.react({"NaCl": 0.1}, V=1.0)
+    ok9 = (r9.changed is False and r9.reacted is False
+           and r9.degree == 0)
+    # Zn + H2SO4：changed=True, reacted=True（redox）
+    ok10 = (r4.reacted is True and r4.degree == 2)
+    # 绝热耦合（isothermal=False）：中和热教材值 55.84 kJ/mol 量热式验证
+    rt = chemkit.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0, isothermal=False)
+    ok11 = (rt.heat_kJ is not None and 5.0 <= rt.heat_kJ <= 6.2
+            and rt.dT_K is not None and 0.8 <= rt.dT_K <= 1.8
+            and 298.9 <= rt.T_final_K <= 299.9
+            and rt.thermal.get("converged") is True
+            and len(rt.thermal.get("trace", [])) >= 1
+            and rt.degree == 2)
+    # 默认恒温：单遍求解、不计热效应（判定引擎主用途）
+    ok12 = (r5.thermal.get("mode") == "isothermal" and r5.heat_kJ is None
+            and r5.dT_K is None)
+    # 绝热耦合收敛（大热效应多轮）+ 化学结果仍在自洽终温下正确
+    rz = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0, isothermal=False)
+    ok13 = (rz.heat_kJ is not None and 140.0 <= rz.heat_kJ <= 165.0
+            and rz.T_final_K is not None and 325.0 <= rz.T_final_K <= 345.0
+            and rz.thermal.get("converged") is True
+            and rz.degree == 2 and "H_2" in rz.production)
+    # v0.3.5 热层新覆盖：thermo.json 统一后新增固体的溶解焓路径
+    # BaF2 沉淀放热（溶解焓 +4.2 kJ/mol → 沉淀放热）
+    rbf = chemkit.react({"BaCl_2": 0.1, "NaF": 0.2}, V=0.1, isothermal=False)
+    ok14 = (rbf.heat_kJ is not None and 0.25 <= rbf.heat_kJ <= 0.55
+            and rbf.dT_K is not None and 0.5 <= rbf.dT_K <= 1.5
+            and rbf.thermal.get("converged") is True
+            and rbf.production.get("BaF_2", 0.0) >= 0.09)
+    # ZnCO3 沉淀吸热（溶解焓 -18.2 → 沉淀吸热，dT 为负——罕见但真实的
+    # 吸热沉淀路径，热层符号正确性检验）
+    rzc = chemkit.react({"ZnCl_2": 0.1, "Na_2CO_3": 0.1}, V=0.1, isothermal=False)
+    ok15 = (rzc.heat_kJ is not None and -2.2 <= rzc.heat_kJ <= -1.4
+            and rzc.dT_K is not None and -5.5 <= rzc.dT_K <= -3.5
+            and rzc.thermal.get("converged") is True)
+    # CaCO3+HCl 逸出气体气相拆分：escaped CO2 按气相 ΔHf 计价、残留溶解态
+    # 按水溶值（比 v0.3.4 全气相口径更准 0.07 kJ 量级）
+    rcc = chemkit.react({"CaCO_3": 0.05, "HCl": 0.1}, V=0.1, isothermal=False)
+    ok16 = (rcc.heat_kJ is not None and 0.6 <= rcc.heat_kJ <= 1.0
+            and rcc.escaped.get("CO_2", 0.0) >= 0.04
+            and rcc.thermal.get("converged") is True
+            and rcc.dT_K is not None and 1.5 <= rcc.dT_K <= 2.5)
+    # v0.3.6 Engine 对象：三个层级是平级方法，与函数式入口同语义
+    eng = chemkit.Engine()
+    re1 = eng.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0)
+    ok17 = (isinstance(re1, chemkit.Reaction) and re1.degree == 2
+            and re1.net_equation == r5.net_equation
+            and re1.thermal.get("mode") == "isothermal")
+    s2 = eng.system(V=1.0)
+    s2.add("NaOH", 0.1)
+    re2 = s2.add("HCl", 0.1)
+    ok18 = (s2._tables is eng.tables and len(s2.history) == 2
+            and re2.degree == 2 and 6.0 <= re2.pH <= 8.0)
+    re3 = eng.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0, isothermal=False)
+    ok19 = (re3.heat_kJ is not None and 5.0 <= re3.heat_kJ <= 6.2
+            and re3.thermal.get("converged") is True)
+    raw4 = eng.judge([{"name": "Zn", "mol": 1.0},
+                      {"name": "H_2SO_4", "mol": 1.0}], {"V_L": 1.0})
+    ok20 = (isinstance(raw4, dict) and raw4["reacted"] is True
+            and raw4["degree"] == 2 and raw4["override"] is None)
     for tag, ok in (("API System 累计投料再平衡", ok1),
                     ("API react 一步式+raw 过程", ok2),
                     ("API System 建立即反应", ok3),
-                    ("API Result.equation 净离子方程式", ok4),
+                    ("API Reaction.net_equation 净离子方程式", ok4),
                     ("API H+/OH-/H2O 显式出现", ok5),
-                    ("API 外界气压 p 调节", ok6)):
+                    ("API 外界气压 p 调节", ok6),
+                    ("API degree/consumption/production/net_equation", ok7),
+                    ("API initial 初态含 HSO4-（SO3+H2O 反应）", ok8),
+                    ("API reacted 纯溶解=False", ok9),
+                    ("API reacted redox=True", ok10),
+                    ("API 绝热耦合中和热/dT/trace", ok11),
+                    ("API 默认恒温 isothermal", ok12),
+                    ("API 绝热耦合大热效应收敛", ok13),
+                    ("API 热层新覆盖 BaF2 沉淀放热", ok14),
+                    ("API 热层新覆盖 ZnCO3 沉淀吸热", ok15),
+                    ("API 热层气相拆分 CaCO3+HCl", ok16),
+                    ("API Engine.react 与函数式同语义", ok17),
+                    ("API Engine.system 共享表与缓存", ok18),
+                    ("API Engine 绝热耦合", ok19),
+                    ("API Engine.judge raw 直通", ok20)):
         if ok:
             PASS_N += 1
         else:
