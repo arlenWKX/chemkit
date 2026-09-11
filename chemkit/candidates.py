@@ -238,6 +238,48 @@ def _split_salt_general(name: str, T):
 
 
 
+# ========================================================== 质子化族（v0.4.2 触发点③）
+
+# 模块级族根映射（load 后由 engine 惰性初始化一次；与 _HALF_CACHE 同模式）。
+# 用途：社区质子交换族数计数（触发点③的族闸——多族 pH 闭包只是启发式，
+# E35 型假不动点防御）。只做计数，不改 netkey 拼写（族级折叠的全量差分
+# 否决记录：碳酸盐/磷酸/硫化物 73 例翻案——族内质子级是真实化学语义）。
+_PROTON_ROOTS: dict = {}
+
+
+def _set_proton_roots(T) -> None:
+    """从 pKa 表共轭酸碱对构建质子化族（并查集，小根挂大根下→根为
+    字典序最小成员）。H2O 不进族（溶剂）；OH⁻ 单独族。"""
+    parent: dict = {}
+
+    def find(x: str) -> str:
+        root = x
+        while parent.get(root, root) != root:
+            root = parent[root]
+        while parent.get(x, x) != x:   # 路径压缩
+            nxt = parent[x]
+            parent[x] = root
+            x = nxt
+        return root
+
+    for e in T.pka:
+        a, b = e["acid"], e["base"]
+        if a == WATER or b == WATER:
+            continue
+        parent.setdefault(a, a)
+        parent.setdefault(b, b)
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            if ra < rb:
+                parent[rb] = ra
+            else:
+                parent[ra] = rb
+    _PROTON_ROOTS.clear()
+    _PROTON_ROOTS.update({s: find(s) for s in parent})
+
+
+
+
 @dataclass(slots=True)
 class Cand:
     kind: str                 # redox / proton / precip / dissolve / complex / decomplex / derived

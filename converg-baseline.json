@@ -1,12 +1,12 @@
 {
  "summary": {
   "n": 1218,
-  "ms_mean": 20.96,
-  "ms_p50": 9.8,
-  "ms_p90": 38.8,
-  "ms_max": 3507.4,
-  "n_gt50": 93,
-  "n_gt100": 26,
+  "ms_mean": 20.35,
+  "ms_p50": 9.5,
+  "ms_p90": 37.5,
+  "ms_max": 3497.3,
+  "n_gt50": 86,
+  "n_gt100": 25,
   "n_gt500": 1,
   "iters_total": 13387,
   "iters_p99": 105,
@@ -20,7 +20,7 @@
  "cases": [
   {
    "name": "1 HCl+NaOH(1:1)",
-   "ms": 3507.4,
+   "ms": 3497.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -62,7 +62,7 @@
   },
   {
    "name": "4 NH3+HCl（合并E47/T74/H82）",
-   "ms": 6.3,
+   "ms": 6.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -76,7 +76,7 @@
   },
   {
    "name": "5 NH4Cl+NaOH(加热)",
-   "ms": 32.4,
+   "ms": 36.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -90,7 +90,7 @@
   },
   {
    "name": "6 Ca(OH)2+CO2(少量)",
-   "ms": 35.9,
+   "ms": 36.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -104,7 +104,7 @@
   },
   {
    "name": "7 AgNO3+NaCl（合并T21）",
-   "ms": 16.8,
+   "ms": 16.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -118,7 +118,7 @@
   },
   {
    "name": "8 BaCl2+Na2SO4（合并E32）",
-   "ms": 7.0,
+   "ms": 7.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -132,7 +132,7 @@
   },
   {
    "name": "9 BaSO4+Na2CO3(浓)",
-   "ms": 17.6,
+   "ms": 16.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -146,7 +146,7 @@
   },
   {
    "name": "10 FeS+稀H2SO4",
-   "ms": 16.6,
+   "ms": 15.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -160,7 +160,7 @@
   },
   {
    "name": "11 MnS+HCl",
-   "ms": 13.2,
+   "ms": 12.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -174,7 +174,7 @@
   },
   {
    "name": "12 CuS+稀H2SO4",
-   "ms": 3.4,
+   "ms": 3.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -188,7 +188,7 @@
   },
   {
    "name": "13 H2S+CuSO4（合并T63）",
-   "ms": 5.7,
+   "ms": 5.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -202,7 +202,7 @@
   },
   {
    "name": "14 H2S+ZnSO4(中性)",
-   "ms": 13.2,
+   "ms": 12.8,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -216,7 +216,7 @@
   },
   {
    "name": "15 CaCO3+HCl（合并E38/T101）",
-   "ms": 15.3,
+   "ms": 14.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -230,7 +230,7 @@
   },
   {
    "name": "16 AlCl3+3NaOH（合并T46）",
-   "ms": 43.4,
+   "ms": 42.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -244,7 +244,7 @@
   },
   {
    "name": "17 AlCl3+4NaOH（合并T47）",
-   "ms": 4.2,
+   "ms": 4.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -258,7 +258,7 @@
   },
   {
    "name": "18 ZnCl2+4NaOH(过量)",
-   "ms": 6.2,
+   "ms": 6.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -272,7 +272,7 @@
   },
   {
    "name": "19 ZnCl2+2NaOH",
-   "ms": 90.1,
+   "ms": 85.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -300,7 +300,7 @@
   },
   {
    "name": "21 AgBr+浓氨水（合并D24）",
-   "ms": 26.5,
+   "ms": 26.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -314,7 +314,7 @@
   },
   {
    "name": "22 AgI+浓氨水",
-   "ms": 20.2,
+   "ms": 19.6,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -328,7 +328,7 @@
   },
   {
    "name": "23 Cu(OH)2+浓氨水",
-   "ms": 12.0,
+   "ms": 11.8,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -342,7 +342,7 @@
   },
   {
    "name": "24 Zn+稀H2SO4",
-   "ms": 14.1,
+   "ms": 14.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -356,7 +356,7 @@
   },
   {
    "name": "25 Cu+稀H2SO4",
-   "ms": 3.2,
+   "ms": 3.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -370,7 +370,7 @@
   },
   {
    "name": "26 Mg+冷水（合并E27）",
-   "ms": 10.3,
+   "ms": 10.0,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -384,7 +384,7 @@
   },
   {
    "name": "27 Mg+热水(353K)",
-   "ms": 31.5,
+   "ms": 34.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -398,7 +398,7 @@
   },
   {
    "name": "28 Fe+稀盐酸（合并T26）",
-   "ms": 7.3,
+   "ms": 7.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -412,7 +412,7 @@
   },
   {
    "name": "29 Na+水（合并T01）",
-   "ms": 4.8,
+   "ms": 4.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -426,7 +426,7 @@
   },
   {
    "name": "30 Cu+浓H2SO4(340K)",
-   "ms": 45.1,
+   "ms": 47.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -440,7 +440,7 @@
   },
   {
    "name": "31 Cu+浓H2SO4(常温)",
-   "ms": 4.2,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -454,7 +454,7 @@
   },
   {
    "name": "32 Cu+稀HNO3",
-   "ms": 7.2,
+   "ms": 7.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -468,7 +468,7 @@
   },
   {
    "name": "33 Cu+浓HNO3",
-   "ms": 3.6,
+   "ms": 3.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -482,7 +482,7 @@
   },
   {
    "name": "34 MnO2+浓盐酸(350K)",
-   "ms": 21.3,
+   "ms": 20.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -496,7 +496,7 @@
   },
   {
    "name": "35 KMnO4+FeSO4(酸性)",
-   "ms": 12.1,
+   "ms": 11.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -510,7 +510,7 @@
   },
   {
    "name": "36 Cl2+NaBr（合并H62）",
-   "ms": 51.0,
+   "ms": 48.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -524,7 +524,7 @@
   },
   {
    "name": "37 FeCl3+Fe（合并T28/H64）",
-   "ms": 5.8,
+   "ms": 5.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -538,7 +538,7 @@
   },
   {
    "name": "38 Fe(OH)2+O2(水)",
-   "ms": 8.6,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -552,7 +552,7 @@
   },
   {
    "name": "39 FeCl3+Cu（合并E22/T29/H65）",
-   "ms": 10.0,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -576,7 +576,7 @@
   },
   {
    "name": "41 Au+王水",
-   "ms": 15.4,
+   "ms": 14.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -600,7 +600,7 @@
   },
   {
    "name": "43 HgS+王水",
-   "ms": 0.8,
+   "ms": 0.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -610,7 +610,7 @@
   },
   {
    "name": "44 Al2(SO4)3+Na2S",
-   "ms": 48.0,
+   "ms": 46.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -624,7 +624,7 @@
   },
   {
    "name": "E01 SO2+2H2S 归中析硫（合并T56）",
-   "ms": 8.3,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -638,7 +638,7 @@
   },
   {
    "name": "E02 Na2SO3+H2S+酸 归中",
-   "ms": 8.9,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -652,7 +652,7 @@
   },
   {
    "name": "E03 H2S+Cl2水",
-   "ms": 6.9,
+   "ms": 6.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -666,7 +666,7 @@
   },
   {
    "name": "E04 H2S+FeCl3",
-   "ms": 8.1,
+   "ms": 8.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -680,7 +680,7 @@
   },
   {
    "name": "E05 H2S+O2 慢",
-   "ms": 40.8,
+   "ms": 38.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -694,7 +694,7 @@
   },
   {
    "name": "E06 SO2+Cl2水（合并T57）",
-   "ms": 5.7,
+   "ms": 5.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -708,7 +708,7 @@
   },
   {
    "name": "E07 SO2+KMnO4酸",
-   "ms": 9.1,
+   "ms": 8.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -722,7 +722,7 @@
   },
   {
    "name": "E08 SO2+FeCl3",
-   "ms": 8.0,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -736,7 +736,7 @@
   },
   {
    "name": "E09 Na2SO3+Br2（合并H30）",
-   "ms": 16.8,
+   "ms": 15.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -750,7 +750,7 @@
   },
   {
    "name": "E10 Na2SO3+盐酸放SO2",
-   "ms": 11.1,
+   "ms": 11.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -764,7 +764,7 @@
   },
   {
    "name": "E11 Na2S+盐酸放H2S",
-   "ms": 10.4,
+   "ms": 9.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -778,7 +778,7 @@
   },
   {
    "name": "E12 Na2SO3+Na2S+酸 归中",
-   "ms": 2.6,
+   "ms": 2.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -792,7 +792,7 @@
   },
   {
    "name": "E13 Cl2+冷NaOH（合并T15）",
-   "ms": 10.5,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -806,7 +806,7 @@
   },
   {
    "name": "E14 Cl2+水(可逆少量)（合并T14/H29）",
-   "ms": 7.1,
+   "ms": 7.0,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -820,7 +820,7 @@
   },
   {
    "name": "E15 Br2+NaOH",
-   "ms": 14.3,
+   "ms": 14.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -834,7 +834,7 @@
   },
   {
    "name": "E16 NO2+水（合并T70）",
-   "ms": 6.9,
+   "ms": 6.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -848,7 +848,7 @@
   },
   {
    "name": "E17 I2+Na2S2O3?",
-   "ms": 6.7,
+   "ms": 6.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -862,7 +862,7 @@
   },
   {
    "name": "E18 H2O2+KI酸",
-   "ms": 9.5,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -876,7 +876,7 @@
   },
   {
    "name": "E19 H2O2+KMnO4酸(还原剂)",
-   "ms": 9.6,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -890,7 +890,7 @@
   },
   {
    "name": "E20 H2O2+FeSO4酸",
-   "ms": 6.7,
+   "ms": 6.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -904,7 +904,7 @@
   },
   {
    "name": "E21 Fe+CuSO4（合并T27）",
-   "ms": 9.0,
+   "ms": 8.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -918,7 +918,7 @@
   },
   {
    "name": "E23 Cu+AgNO3（合并T107）",
-   "ms": 97.6,
+   "ms": 96.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -932,7 +932,7 @@
   },
   {
    "name": "E24 Al+NaOH（合并T41）",
-   "ms": 23.4,
+   "ms": 22.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -946,7 +946,7 @@
   },
   {
    "name": "E25 Al+盐酸（合并T40）",
-   "ms": 10.2,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -960,7 +960,7 @@
   },
   {
    "name": "E26 Fe+稀硝酸",
-   "ms": 43.6,
+   "ms": 42.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -974,7 +974,7 @@
   },
   {
    "name": "E28 Ca+水",
-   "ms": 8.9,
+   "ms": 8.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -988,7 +988,7 @@
   },
   {
    "name": "E29 Pb+盐酸(热力学可反应)",
-   "ms": 38.8,
+   "ms": 38.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1002,7 +1002,7 @@
   },
   {
    "name": "E30 Cu+盐酸 不反应（合并T108）",
-   "ms": 2.8,
+   "ms": 2.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -1026,7 +1026,7 @@
   },
   {
    "name": "E33 CuSO4+H2S 强酸中沉淀",
-   "ms": 1.3,
+   "ms": 1.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1040,7 +1040,7 @@
   },
   {
    "name": "E34 ZnSO4+H2S 强酸不沉",
-   "ms": 1.9,
+   "ms": 1.8,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -1068,7 +1068,7 @@
   },
   {
    "name": "E36 MnSO4+H2S 氨性沉淀",
-   "ms": 25.5,
+   "ms": 24.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1082,7 +1082,7 @@
   },
   {
    "name": "E37 CaCl2+Na2CO3",
-   "ms": 19.0,
+   "ms": 18.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1096,7 +1096,7 @@
   },
   {
    "name": "E39 BaSO4 不溶于盐酸（合并T69）",
-   "ms": 6.9,
+   "ms": 6.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -1110,7 +1110,7 @@
   },
   {
    "name": "E40 AgCl+NaBr 转化",
-   "ms": 21.6,
+   "ms": 20.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1124,7 +1124,7 @@
   },
   {
    "name": "E41 AlCl3+Na2CO3 双水解",
-   "ms": 29.6,
+   "ms": 29.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1138,7 +1138,7 @@
   },
   {
    "name": "E42 FeCl3+Na2CO3 双水解（合并H31）",
-   "ms": 29.1,
+   "ms": 27.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1166,7 +1166,7 @@
   },
   {
    "name": "E44 NH4Cl+NaOH 加热放氨（合并T75）",
-   "ms": 5.6,
+   "ms": 6.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1180,7 +1180,7 @@
   },
   {
    "name": "E45 NaHCO3+HCl（合并T06/H34）",
-   "ms": 14.2,
+   "ms": 14.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1194,7 +1194,7 @@
   },
   {
    "name": "E46 Na2CO3+1HCl->NaHCO3",
-   "ms": 11.7,
+   "ms": 11.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1208,7 +1208,7 @@
   },
   {
    "name": "E48 CuSO4+过量氨水",
-   "ms": 13.8,
+   "ms": 12.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1222,7 +1222,7 @@
   },
   {
    "name": "E49 CuSO4+少量氨水 先沉淀",
-   "ms": 12.7,
+   "ms": 12.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1236,7 +1236,7 @@
   },
   {
    "name": "E50 AgNO3+NaCN 过量",
-   "ms": 11.8,
+   "ms": 11.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1250,7 +1250,7 @@
   },
   {
    "name": "E51 KMnO4+FeSO4酸",
-   "ms": 4.0,
+   "ms": 3.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1264,7 +1264,7 @@
   },
   {
    "name": "E52 KMnO4+Na2SO3中性->MnO2",
-   "ms": 9.8,
+   "ms": 9.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1278,7 +1278,7 @@
   },
   {
    "name": "E53 CaC2+水（合并T116）",
-   "ms": 10.4,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1306,7 +1306,7 @@
   },
   {
    "name": "E55 明矾+适量NaOH",
-   "ms": 42.3,
+   "ms": 41.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1320,7 +1320,7 @@
   },
   {
    "name": "N01 Cl2+KBr（合并T18）",
-   "ms": 48.3,
+   "ms": 47.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1334,7 +1334,7 @@
   },
   {
    "name": "N02 Cl2+KI（合并T17）",
-   "ms": 12.1,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1348,7 +1348,7 @@
   },
   {
    "name": "N03 Br2+KI（合并T19）",
-   "ms": 18.6,
+   "ms": 17.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1362,7 +1362,7 @@
   },
   {
    "name": "N04 Fe+Br2水",
-   "ms": 14.2,
+   "ms": 26.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1376,7 +1376,7 @@
   },
   {
    "name": "N05 Fe+I2",
-   "ms": 5.4,
+   "ms": 5.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1390,7 +1390,7 @@
   },
   {
    "name": "N06 KMnO4+浓盐酸",
-   "ms": 18.7,
+   "ms": 18.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1404,7 +1404,7 @@
   },
   {
    "name": "N07 Cu+浓H2SO4(350K)",
-   "ms": 16.3,
+   "ms": 16.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1418,7 +1418,7 @@
   },
   {
    "name": "N08 C+浓H2SO4(350K)",
-   "ms": 11.9,
+   "ms": 11.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1474,7 +1474,7 @@
   },
   {
    "name": "N12 Cr(OH)3+盐酸",
-   "ms": 6.6,
+   "ms": 6.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1488,7 +1488,7 @@
   },
   {
    "name": "N13 Ca(ClO)2+CO2（合并T20）",
-   "ms": 28.3,
+   "ms": 26.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -1502,7 +1502,7 @@
   },
   {
    "name": "N14 NaClO+KI酸",
-   "ms": 13.0,
+   "ms": 12.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1516,7 +1516,7 @@
   },
   {
    "name": "N15 Na2SiO3+足量CO2",
-   "ms": 28.1,
+   "ms": 27.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1530,7 +1530,7 @@
   },
   {
    "name": "N16 Na2SiO3+盐酸（合并T83）",
-   "ms": 6.3,
+   "ms": 6.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1554,7 +1554,7 @@
   },
   {
    "name": "N18 Na[Al(OH)4]+CO2少量",
-   "ms": 43.2,
+   "ms": 39.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1582,7 +1582,7 @@
   },
   {
    "name": "N20 Na[Al(OH)4]+HCl少量",
-   "ms": 43.0,
+   "ms": 44.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1596,7 +1596,7 @@
   },
   {
    "name": "N21 Na[Al(OH)4]+HCl过量",
-   "ms": 6.0,
+   "ms": 6.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1610,7 +1610,7 @@
   },
   {
    "name": "N22 Na2[Zn(OH)4]+HCl少量",
-   "ms": 68.1,
+   "ms": 66.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1624,7 +1624,7 @@
   },
   {
    "name": "N23 Na3PO4+CaCl2",
-   "ms": 10.7,
+   "ms": 11.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1638,7 +1638,7 @@
   },
   {
    "name": "N24 Na3PO4+1HCl",
-   "ms": 11.3,
+   "ms": 11.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1666,7 +1666,7 @@
   },
   {
    "name": "N26 Fe(OH)2+O2",
-   "ms": 1.7,
+   "ms": 2.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1680,7 +1680,7 @@
   },
   {
    "name": "N27 FeCl3+KI（合并D49/T35）",
-   "ms": 18.0,
+   "ms": 16.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1694,7 +1694,7 @@
   },
   {
    "name": "N28 FeCl2+Cl2（合并T36）",
-   "ms": 11.1,
+   "ms": 11.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1708,7 +1708,7 @@
   },
   {
    "name": "N29 FeSO4+稀HNO3",
-   "ms": 75.6,
+   "ms": 70.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1722,7 +1722,7 @@
   },
   {
    "name": "N30 FeCl3+KSCN",
-   "ms": 191.8,
+   "ms": 185.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1736,7 +1736,7 @@
   },
   {
    "name": "N31 Mn+盐酸",
-   "ms": 5.8,
+   "ms": 5.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1750,7 +1750,7 @@
   },
   {
    "name": "N32 Zn少量+FeCl3",
-   "ms": 44.3,
+   "ms": 40.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1764,7 +1764,7 @@
   },
   {
    "name": "N33 Na2O2+水（合并T03/H36）",
-   "ms": 10.8,
+   "ms": 10.4,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -1778,7 +1778,7 @@
   },
   {
    "name": "N34 明矾+适量Ba(OH)2",
-   "ms": 57.3,
+   "ms": 57.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1792,7 +1792,7 @@
   },
   {
    "name": "N35 NaAc溶液",
-   "ms": 3.0,
+   "ms": 2.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -1806,7 +1806,7 @@
   },
   {
    "name": "N36 Na2S溶液（合并T94）",
-   "ms": 6.9,
+   "ms": 6.0,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -1820,7 +1820,7 @@
   },
   {
    "name": "N37 NH4Cl溶液（合并T76/J07）",
-   "ms": 3.4,
+   "ms": 3.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -1834,7 +1834,7 @@
   },
   {
    "name": "N38 NaHS+HCl",
-   "ms": 3.3,
+   "ms": 3.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1848,7 +1848,7 @@
   },
   {
    "name": "N39 Ca(OH)2+CO2（合并T103）",
-   "ms": 36.7,
+   "ms": 36.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1862,7 +1862,7 @@
   },
   {
    "name": "N40 CaCO3+过量CO2",
-   "ms": 4.8,
+   "ms": 4.4,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -1876,7 +1876,7 @@
   },
   {
    "name": "N41 Ca(OH)2+Na2CO3（合并T09）",
-   "ms": 23.2,
+   "ms": 22.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1890,7 +1890,7 @@
   },
   {
    "name": "N42 Mg(OH)2+NH4Cl",
-   "ms": 12.7,
+   "ms": 12.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -1904,7 +1904,7 @@
   },
   {
    "name": "N43 (NH4)2SO4+Ba(OH)2(350K)",
-   "ms": 14.1,
+   "ms": 14.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1918,7 +1918,7 @@
   },
   {
    "name": "N44 CaSO4+Na2CO3",
-   "ms": 37.4,
+   "ms": 35.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1932,7 +1932,7 @@
   },
   {
    "name": "N45 BaCO3+Na2SO4",
-   "ms": 11.3,
+   "ms": 10.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1960,7 +1960,7 @@
   },
   {
    "name": "N47 NaNO2+盐酸",
-   "ms": 17.1,
+   "ms": 16.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -1988,7 +1988,7 @@
   },
   {
    "name": "N49 KCN+盐酸",
-   "ms": 8.0,
+   "ms": 7.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2002,7 +2002,7 @@
   },
   {
    "name": "N50 SO2+过量NaOH",
-   "ms": 6.5,
+   "ms": 5.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2016,7 +2016,7 @@
   },
   {
    "name": "D01 KIO3+KI+酸归中",
-   "ms": 4.2,
+   "ms": 3.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2030,7 +2030,7 @@
   },
   {
    "name": "D02 I2+Na2S2O3 碘量法",
-   "ms": 6.5,
+   "ms": 5.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2054,7 +2054,7 @@
   },
   {
    "name": "D04 Na2S2O3+Cl2 脱氯（合并H56）",
-   "ms": 5.7,
+   "ms": 5.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2082,7 +2082,7 @@
   },
   {
    "name": "D06 H3AsO3+I2 弱碱性正向",
-   "ms": 59.1,
+   "ms": 58.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2110,7 +2110,7 @@
   },
   {
    "name": "D08 NaNO2+KI+酸",
-   "ms": 28.4,
+   "ms": 27.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2124,7 +2124,7 @@
   },
   {
    "name": "D09 KIO3+Na2SO3酸",
-   "ms": 10.6,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2138,7 +2138,7 @@
   },
   {
    "name": "D10 K2Cr2O7+KI 酸足量",
-   "ms": 10.7,
+   "ms": 10.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2152,7 +2152,7 @@
   },
   {
    "name": "D11 K2Cr2O7+Na2SO3 酸（合并H66）",
-   "ms": 19.7,
+   "ms": 19.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2166,7 +2166,7 @@
   },
   {
    "name": "D12 KMnO4+草酸 加热",
-   "ms": 50.3,
+   "ms": 47.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2180,7 +2180,7 @@
   },
   {
    "name": "D13 KMnO4+草酸 室温慢",
-   "ms": 24.6,
+   "ms": 22.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2194,7 +2194,7 @@
   },
   {
    "name": "D34 CaCl2+Na2C2O4",
-   "ms": 25.7,
+   "ms": 26.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2208,7 +2208,7 @@
   },
   {
    "name": "D35 CaC2O4 溶于盐酸",
-   "ms": 74.3,
+   "ms": 68.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2222,7 +2222,7 @@
   },
   {
    "name": "D42 Na2C2O4 溶液 pH",
-   "ms": 5.9,
+   "ms": 5.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -2236,7 +2236,7 @@
   },
   {
    "name": "D14 PbO2+浓盐酸加热",
-   "ms": 68.2,
+   "ms": 63.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2250,7 +2250,7 @@
   },
   {
    "name": "D21 PbSO4+Na2CO3 转化",
-   "ms": 29.6,
+   "ms": 27.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2264,7 +2264,7 @@
   },
   {
    "name": "D22 Pb(NO3)2+适量NaOH",
-   "ms": 92.7,
+   "ms": 87.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2278,7 +2278,7 @@
   },
   {
    "name": "D23 Pb(OH)2+过量NaOH 部分溶",
-   "ms": 12.3,
+   "ms": 11.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -2292,7 +2292,7 @@
   },
   {
    "name": "D38 Pb(NO3)2+K2CrO4",
-   "ms": 78.0,
+   "ms": 68.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2306,7 +2306,7 @@
   },
   {
    "name": "D45 PbCl2 冷水微溶",
-   "ms": 11.4,
+   "ms": 10.6,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -2320,7 +2320,7 @@
   },
   {
    "name": "D25 AgCl+Na2S2O3 定影",
-   "ms": 8.5,
+   "ms": 8.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2334,7 +2334,7 @@
   },
   {
    "name": "D26 K2CrO4+AgNO3",
-   "ms": 15.2,
+   "ms": 14.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2348,7 +2348,7 @@
   },
   {
    "name": "D27 Ag2CrO4 微量溶于硝酸",
-   "ms": 9.7,
+   "ms": 9.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2362,7 +2362,7 @@
   },
   {
    "name": "D28 NiSO4+过量氨水（合并I25）",
-   "ms": 28.7,
+   "ms": 27.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2376,7 +2376,7 @@
   },
   {
    "name": "D29 Ni(OH)2 不两性",
-   "ms": 8.7,
+   "ms": 7.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2390,7 +2390,7 @@
   },
   {
    "name": "D30 CdSO4+过量氨水",
-   "ms": 31.7,
+   "ms": 27.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2404,7 +2404,7 @@
   },
   {
    "name": "D31 Hg(NO3)2+过量KI",
-   "ms": 10.4,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2418,7 +2418,7 @@
   },
   {
    "name": "D32 FeCl3+NH4SCN",
-   "ms": 417.8,
+   "ms": 390.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2432,7 +2432,7 @@
   },
   {
    "name": "D33 AlCl3+过量NaF",
-   "ms": 74.4,
+   "ms": 68.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2460,7 +2460,7 @@
   },
   {
    "name": "D16 Sn+盐酸（产物部分水解）",
-   "ms": 22.4,
+   "ms": 22.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2474,7 +2474,7 @@
   },
   {
    "name": "D17 Sn+CuSO4 置换（产物部分水解）",
-   "ms": 34.1,
+   "ms": 31.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2488,7 +2488,7 @@
   },
   {
    "name": "D18 CuSO4+KI 碘量测铜",
-   "ms": 1.0,
+   "ms": 1.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2522,7 +2522,7 @@
   },
   {
    "name": "D39 CdSO4+H2S",
-   "ms": 10.8,
+   "ms": 10.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2536,7 +2536,7 @@
   },
   {
    "name": "D36 CaCl2+NaF",
-   "ms": 9.0,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2550,7 +2550,7 @@
   },
   {
    "name": "D37 BaCl2+K2CrO4",
-   "ms": 10.5,
+   "ms": 10.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2564,7 +2564,7 @@
   },
   {
    "name": "D46 SrSO4 微溶",
-   "ms": 8.2,
+   "ms": 8.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -2578,7 +2578,7 @@
   },
   {
    "name": "D40 CoCl2+NaOH",
-   "ms": 10.0,
+   "ms": 9.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2592,7 +2592,7 @@
   },
   {
    "name": "D41 CrCl3+Na2S 双水解",
-   "ms": 66.3,
+   "ms": 63.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2606,7 +2606,7 @@
   },
   {
    "name": "D43 Cl2+石灰乳（合并T16）",
-   "ms": 56.0,
+   "ms": 53.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2634,7 +2634,7 @@
   },
   {
    "name": "D47 Na2O2+FeSO4",
-   "ms": 55.2,
+   "ms": 53.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2662,7 +2662,7 @@
   },
   {
    "name": "D50 Ba(OH)2+NH4Cl",
-   "ms": 10.9,
+   "ms": 11.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2676,7 +2676,7 @@
   },
   {
    "name": "F01 Li+水",
-   "ms": 9.5,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2690,7 +2690,7 @@
   },
   {
    "name": "F02 K+水",
-   "ms": 9.4,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2704,7 +2704,7 @@
   },
   {
    "name": "F03 Rb+水",
-   "ms": 8.8,
+   "ms": 7.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2718,7 +2718,7 @@
   },
   {
    "name": "F04 Cs+水",
-   "ms": 8.2,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2732,7 +2732,7 @@
   },
   {
    "name": "F05 KO2+水 供氧",
-   "ms": 1.0,
+   "ms": 0.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2742,7 +2742,7 @@
   },
   {
    "name": "F06 KO2+CO2 供氧（合并T117）",
-   "ms": 0.7,
+   "ms": 0.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2752,7 +2752,7 @@
   },
   {
    "name": "F07 Li2CO3 微溶",
-   "ms": 20.4,
+   "ms": 19.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -2766,7 +2766,7 @@
   },
   {
    "name": "F08 K+FeCl3 先与水反应",
-   "ms": 12.7,
+   "ms": 13.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2780,7 +2780,7 @@
   },
   {
    "name": "F46 K+CuSO4 先与水反应",
-   "ms": 13.6,
+   "ms": 12.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2794,7 +2794,7 @@
   },
   {
    "name": "F17 LiCl+Na2CO3",
-   "ms": 34.4,
+   "ms": 31.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -2808,7 +2808,7 @@
   },
   {
    "name": "F18 KCl+NaClO4",
-   "ms": 9.3,
+   "ms": 8.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -2832,7 +2832,7 @@
   },
   {
    "name": "F09 Be+盐酸",
-   "ms": 9.8,
+   "ms": 9.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2860,7 +2860,7 @@
   },
   {
    "name": "F11 Be(OH)2+过量NaOH",
-   "ms": 8.6,
+   "ms": 8.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -2874,7 +2874,7 @@
   },
   {
    "name": "F12 Sr+水",
-   "ms": 9.0,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2888,7 +2888,7 @@
   },
   {
    "name": "F13 Ba+水",
-   "ms": 8.7,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2902,7 +2902,7 @@
   },
   {
    "name": "F14 MgCO3 微溶",
-   "ms": 53.5,
+   "ms": 52.1,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -2916,7 +2916,7 @@
   },
   {
    "name": "F15 SrCl2+Na2CO3",
-   "ms": 27.6,
+   "ms": 26.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2930,7 +2930,7 @@
   },
   {
    "name": "F16 Ca(OH)2 微溶",
-   "ms": 8.5,
+   "ms": 8.7,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -2944,7 +2944,7 @@
   },
   {
    "name": "F42 SrSO4+Na2CO3 转化",
-   "ms": 52.0,
+   "ms": 49.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2968,7 +2968,7 @@
   },
   {
    "name": "F44 BaO2+稀硫酸",
-   "ms": 12.6,
+   "ms": 10.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -2982,7 +2982,7 @@
   },
   {
    "name": "F47 Mg+NH4Cl 溶液",
-   "ms": 20.0,
+   "ms": 19.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3006,7 +3006,7 @@
   },
   {
    "name": "F20 Na2GeO3+盐酸",
-   "ms": 13.8,
+   "ms": 13.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3020,7 +3020,7 @@
   },
   {
    "name": "F21 Na2GeO3+CO2",
-   "ms": 47.7,
+   "ms": 44.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3044,7 +3044,7 @@
   },
   {
    "name": "F23 Ge+稀盐酸不反应",
-   "ms": 4.7,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -3068,7 +3068,7 @@
   },
   {
    "name": "F25 Br2+NaI（合并H63）",
-   "ms": 27.3,
+   "ms": 23.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3082,7 +3082,7 @@
   },
   {
    "name": "F26 I2+热NaOH歧化",
-   "ms": 12.6,
+   "ms": 12.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3096,7 +3096,7 @@
   },
   {
    "name": "F27 NaF 溶液弱碱",
-   "ms": 7.9,
+   "ms": 8.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -3110,7 +3110,7 @@
   },
   {
    "name": "F28 H3BO3+适量NaOH",
-   "ms": 8.8,
+   "ms": 8.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3124,7 +3124,7 @@
   },
   {
    "name": "F29 Na[B(OH)4] 溶液",
-   "ms": 10.2,
+   "ms": 9.5,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -3138,7 +3138,7 @@
   },
   {
    "name": "F30 H3BO3 极弱酸",
-   "ms": 5.1,
+   "ms": 4.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -3152,7 +3152,7 @@
   },
   {
    "name": "F31 GaCl3+3NaOH",
-   "ms": 97.6,
+   "ms": 92.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3166,7 +3166,7 @@
   },
   {
    "name": "F32 Ga(OH)3+过量NaOH",
-   "ms": 8.0,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3180,7 +3180,7 @@
   },
   {
    "name": "F33 Na[Ga(OH)4]+CO2适量",
-   "ms": 104.5,
+   "ms": 107.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3194,7 +3194,7 @@
   },
   {
    "name": "F34 Ga+盐酸",
-   "ms": 15.2,
+   "ms": 14.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3208,7 +3208,7 @@
   },
   {
    "name": "F49 GaCl3 溶液酸性",
-   "ms": 9.8,
+   "ms": 9.7,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -3222,7 +3222,7 @@
   },
   {
    "name": "F35 NaH2PO4 溶液 pH（合并H83）",
-   "ms": 14.5,
+   "ms": 13.5,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -3236,7 +3236,7 @@
   },
   {
    "name": "F36 Na2HPO4 溶液 pH（合并T90）",
-   "ms": 15.0,
+   "ms": 14.5,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -3250,7 +3250,7 @@
   },
   {
    "name": "F48 KAl(SO4)2 明矾酸性",
-   "ms": 20.7,
+   "ms": 21.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -3264,7 +3264,7 @@
   },
   {
    "name": "F37 H2Se+2NaOH",
-   "ms": 11.5,
+   "ms": 11.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3278,7 +3278,7 @@
   },
   {
    "name": "F38 Na2Se 溶液",
-   "ms": 8.8,
+   "ms": 9.0,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -3292,7 +3292,7 @@
   },
   {
    "name": "F39 SeO2+NaOH",
-   "ms": 12.7,
+   "ms": 12.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3306,7 +3306,7 @@
   },
   {
    "name": "F40 SeO2+SO2 制硒",
-   "ms": 8.1,
+   "ms": 7.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3320,7 +3320,7 @@
   },
   {
    "name": "F41 Na2SeO3 溶液",
-   "ms": 9.5,
+   "ms": 8.9,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -3334,7 +3334,7 @@
   },
   {
    "name": "F45 Li2CO3+盐酸",
-   "ms": 19.8,
+   "ms": 17.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3348,7 +3348,7 @@
   },
   {
    "name": "T02 Na2O+水",
-   "ms": 8.6,
+   "ms": 7.5,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -3362,7 +3362,7 @@
   },
   {
    "name": "T05 Na2CO3+2HCl（合并H41）",
-   "ms": 3.7,
+   "ms": 3.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3390,7 +3390,7 @@
   },
   {
    "name": "T08 Na2CO3+CO2+水（合并H100）",
-   "ms": 21.6,
+   "ms": 20.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -3404,7 +3404,7 @@
   },
   {
    "name": "T10 Na2CO3+BaCl2",
-   "ms": 29.7,
+   "ms": 26.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3418,7 +3418,7 @@
   },
   {
    "name": "T11 NaHCO3+少量Ca(OH)2",
-   "ms": 40.3,
+   "ms": 35.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3432,7 +3432,7 @@
   },
   {
    "name": "T12 NaHCO3+过量Ca(OH)2",
-   "ms": 35.9,
+   "ms": 23.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3446,7 +3446,7 @@
   },
   {
    "name": "T13 侯氏制碱 NaCl+NH3+CO2(浓)（合并H15）",
-   "ms": 50.3,
+   "ms": 49.8,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -3460,7 +3460,7 @@
   },
   {
    "name": "T22 MnO2+4HCl浓 制氯气(350K)",
-   "ms": 9.3,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3474,7 +3474,7 @@
   },
   {
    "name": "T23 KMnO4+浓盐酸",
-   "ms": 9.4,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3488,7 +3488,7 @@
   },
   {
    "name": "T24 KClO3+6HCl浓",
-   "ms": 24.5,
+   "ms": 13.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -3502,7 +3502,7 @@
   },
   {
    "name": "T25 NaClO+CO2+水",
-   "ms": 25.5,
+   "ms": 23.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -3516,7 +3516,7 @@
   },
   {
    "name": "T30 FeSO4+2NaOH",
-   "ms": 11.2,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3530,7 +3530,7 @@
   },
   {
    "name": "T31 4Fe(OH)2+O2+水",
-   "ms": 6.6,
+   "ms": 6.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3558,7 +3558,7 @@
   },
   {
    "name": "T33 Fe(OH)3+3HCl",
-   "ms": 10.3,
+   "ms": 9.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -3572,7 +3572,7 @@
   },
   {
    "name": "T34 FeCl3+3KSCN 显色（合并H98）",
-   "ms": 6.9,
+   "ms": 7.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3586,7 +3586,7 @@
   },
   {
    "name": "T37 FeSO4+H2O2+硫酸",
-   "ms": 12.0,
+   "ms": 12.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3610,7 +3610,7 @@
   },
   {
    "name": "T39 FeO+2HCl",
-   "ms": 7.4,
+   "ms": 7.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3644,7 +3644,7 @@
   },
   {
    "name": "T44 Al(OH)3+盐酸",
-   "ms": 9.3,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3658,7 +3658,7 @@
   },
   {
    "name": "T45 Al(OH)3+NaOH",
-   "ms": 9.1,
+   "ms": 8.8,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -3672,7 +3672,7 @@
   },
   {
    "name": "T48 AlCl3+氨水",
-   "ms": 54.7,
+   "ms": 53.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3686,7 +3686,7 @@
   },
   {
    "name": "T49 NaAlO2+CO2过量",
-   "ms": 16.4,
+   "ms": 16.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3700,7 +3700,7 @@
   },
   {
    "name": "T50 NaAlO2+CO2少量",
-   "ms": 26.7,
+   "ms": 23.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3714,7 +3714,7 @@
   },
   {
    "name": "T51 NaAlO2+少量盐酸",
-   "ms": 39.8,
+   "ms": 38.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3728,7 +3728,7 @@
   },
   {
    "name": "T52 AlCl3+NaAlO2 双水解",
-   "ms": 46.0,
+   "ms": 46.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3742,7 +3742,7 @@
   },
   {
    "name": "T53 SO2+水",
-   "ms": 9.9,
+   "ms": 9.0,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -3756,7 +3756,7 @@
   },
   {
    "name": "T54 SO2+2NaOH",
-   "ms": 7.2,
+   "ms": 6.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3770,7 +3770,7 @@
   },
   {
    "name": "T55 SO2+NaOH(1:1)",
-   "ms": 10.9,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3784,7 +3784,7 @@
   },
   {
    "name": "T58 SO2+Br2+水 海水提溴",
-   "ms": 7.9,
+   "ms": 7.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3798,7 +3798,7 @@
   },
   {
    "name": "T59 Na2SO3+O2 久置氧化",
-   "ms": 12.2,
+   "ms": 11.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3812,7 +3812,7 @@
   },
   {
    "name": "T60 Na2SO3+稀硫酸 制SO2（合并H95）",
-   "ms": 12.2,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -3826,7 +3826,7 @@
   },
   {
    "name": "T61 Cu+浓硫酸(340K)",
-   "ms": 14.1,
+   "ms": 13.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3840,7 +3840,7 @@
   },
   {
    "name": "T62 BaCl2+H2SO4 硫酸根检验",
-   "ms": 11.9,
+   "ms": 12.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3854,7 +3854,7 @@
   },
   {
    "name": "T64 H2S+2NaOH",
-   "ms": 10.8,
+   "ms": 11.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3868,7 +3868,7 @@
   },
   {
    "name": "T65 氢硫酸+O2 久置浑浊",
-   "ms": 5.1,
+   "ms": 4.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3882,7 +3882,7 @@
   },
   {
    "name": "T67 CuS+稀盐酸 不溶",
-   "ms": 5.4,
+   "ms": 4.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -3896,7 +3896,7 @@
   },
   {
    "name": "T68 Na2S+稀硫酸",
-   "ms": 14.2,
+   "ms": 12.2,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -3930,7 +3930,7 @@
   },
   {
    "name": "T73 NH3+水",
-   "ms": 8.1,
+   "ms": 7.6,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -3944,7 +3944,7 @@
   },
   {
    "name": "T77 Cu+浓硝酸",
-   "ms": 1.1,
+   "ms": 1.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3958,7 +3958,7 @@
   },
   {
    "name": "T78 Cu+稀硝酸",
-   "ms": 67.9,
+   "ms": 65.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3972,7 +3972,7 @@
   },
   {
    "name": "T79 NH4HCO3+HCl（合并H97）",
-   "ms": 13.3,
+   "ms": 12.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -3996,7 +3996,7 @@
   },
   {
    "name": "T84 Na2SiO3+CO2过量",
-   "ms": 21.8,
+   "ms": 21.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4010,7 +4010,7 @@
   },
   {
    "name": "T85 HF 弱酸",
-   "ms": 7.8,
+   "ms": 7.3,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -4034,7 +4034,7 @@
   },
   {
    "name": "T87 CH3COOH 弱酸",
-   "ms": 7.7,
+   "ms": 7.4,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -4048,7 +4048,7 @@
   },
   {
    "name": "T88 CH3COONa 溶液碱性",
-   "ms": 2.3,
+   "ms": 1.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4062,7 +4062,7 @@
   },
   {
    "name": "T89 Na2CO3 溶液碱性",
-   "ms": 9.2,
+   "ms": 8.5,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -4076,7 +4076,7 @@
   },
   {
    "name": "T91 NaHSO3 溶液酸性",
-   "ms": 11.2,
+   "ms": 10.0,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -4090,7 +4090,7 @@
   },
   {
    "name": "T92 AlCl3 溶液酸性",
-   "ms": 20.4,
+   "ms": 20.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4104,7 +4104,7 @@
   },
   {
    "name": "T93 FeCl3 溶液酸性",
-   "ms": 9.1,
+   "ms": 9.5,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -4118,7 +4118,7 @@
   },
   {
    "name": "T96 AgCl+氨水 溶解",
-   "ms": 6.3,
+   "ms": 6.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4132,7 +4132,7 @@
   },
   {
    "name": "T97 AgCl+KI 沉淀转化",
-   "ms": 30.1,
+   "ms": 27.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4146,7 +4146,7 @@
   },
   {
    "name": "T98 AgI+Na2S 再转化",
-   "ms": 9.5,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4160,7 +4160,7 @@
   },
   {
    "name": "T99 CaSO4+Na2CO3 水垢转化",
-   "ms": 19.2,
+   "ms": 18.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4174,7 +4174,7 @@
   },
   {
    "name": "T100 Mg(OH)2+FeCl3 转化",
-   "ms": 8.8,
+   "ms": 9.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4188,7 +4188,7 @@
   },
   {
    "name": "T102 CaCO3+CO2+水 溶洞",
-   "ms": 2.4,
+   "ms": 2.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4202,7 +4202,7 @@
   },
   {
    "name": "T104 Ca(OH)2+过量CO2 浊转清",
-   "ms": 17.4,
+   "ms": 18.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4216,7 +4216,7 @@
   },
   {
    "name": "T105 Zn+盐酸",
-   "ms": 51.2,
+   "ms": 48.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4230,7 +4230,7 @@
   },
   {
    "name": "T106 Zn+CuSO4",
-   "ms": 10.6,
+   "ms": 10.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4244,7 +4244,7 @@
   },
   {
    "name": "T109 Fe+2AgNO3",
-   "ms": 8.8,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4258,7 +4258,7 @@
   },
   {
    "name": "T110 Na+CuSO4溶液 先与水",
-   "ms": 16.1,
+   "ms": 15.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4272,7 +4272,7 @@
   },
   {
    "name": "T111 MgCl2+Ca(OH)2 海水提镁",
-   "ms": 14.7,
+   "ms": 15.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4286,7 +4286,7 @@
   },
   {
    "name": "T112 KI+H2O2+硫酸 海带提碘（合并H54）",
-   "ms": 15.1,
+   "ms": 14.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4310,7 +4310,7 @@
   },
   {
    "name": "T115 Al4C3+水",
-   "ms": 0.1,
+   "ms": 0.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4348,7 +4348,7 @@
   },
   {
    "name": "H03 AgNO3+NaCl 1e-4 沉",
-   "ms": 2.0,
+   "ms": 2.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4362,7 +4362,7 @@
   },
   {
    "name": "H04 AgNO3+NaCl 1e-6 不沉",
-   "ms": 4.7,
+   "ms": 4.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4376,7 +4376,7 @@
   },
   {
    "name": "H05 BaCl2+Na2SO4 1e-4 沉",
-   "ms": 1.7,
+   "ms": 1.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4390,7 +4390,7 @@
   },
   {
    "name": "H06 CaCl2+Na2CO3 1e-3 沉",
-   "ms": 7.8,
+   "ms": 7.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4404,7 +4404,7 @@
   },
   {
    "name": "H07 CaCl2+Na2SO4 1e-3 不沉",
-   "ms": 5.9,
+   "ms": 5.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4418,7 +4418,7 @@
   },
   {
    "name": "H08 醋酸 1e-4 pH",
-   "ms": 7.6,
+   "ms": 7.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4432,7 +4432,7 @@
   },
   {
    "name": "H09 氨水 1e-4 pH",
-   "ms": 7.5,
+   "ms": 7.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4446,7 +4446,7 @@
   },
   {
    "name": "H10 Pb(NO3)2+KI 0.01M 沉",
-   "ms": 31.0,
+   "ms": 30.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4474,7 +4474,7 @@
   },
   {
    "name": "H12 Cu+稀HNO3（合并I05）",
-   "ms": 36.1,
+   "ms": 34.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4488,7 +4488,7 @@
   },
   {
    "name": "H13 MnO2+浓HCl 室温不反应",
-   "ms": 2.2,
+   "ms": 1.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -4502,7 +4502,7 @@
   },
   {
    "name": "H14 MnO2+浓HCl 363K",
-   "ms": 33.8,
+   "ms": 34.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4516,7 +4516,7 @@
   },
   {
    "name": "H16 AgCl 1M+氨水 1M 微溶",
-   "ms": 28.8,
+   "ms": 28.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4530,7 +4530,7 @@
   },
   {
    "name": "H17 BaSO4+K2CO3 5M 转化",
-   "ms": 21.6,
+   "ms": 26.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4544,7 +4544,7 @@
   },
   {
    "name": "H18 Ag2CrO4+NaCl 转化",
-   "ms": 68.0,
+   "ms": 57.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4558,7 +4558,7 @@
   },
   {
    "name": "H19 Al+浓NaOH",
-   "ms": 15.5,
+   "ms": 15.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4572,7 +4572,7 @@
   },
   {
    "name": "H20 CaCl2+Na2SO4 0.5M 沉",
-   "ms": 9.7,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4586,7 +4586,7 @@
   },
   {
    "name": "H21 NaOH+Na2CO3+HCl 分配",
-   "ms": 2.2,
+   "ms": 1.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4600,7 +4600,7 @@
   },
   {
    "name": "H22 FeCl3+Fe+Cu 优先级",
-   "ms": 9.0,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4614,7 +4614,7 @@
   },
   {
    "name": "H23 AgNO3+KI+NaCl 竞争",
-   "ms": 37.9,
+   "ms": 36.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4628,7 +4628,7 @@
   },
   {
    "name": "H24 NaOH+NH4Cl+CuSO4",
-   "ms": 35.9,
+   "ms": 35.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4642,7 +4642,7 @@
   },
   {
    "name": "H25 HCl+Fe+CaCO3 分配",
-   "ms": 24.4,
+   "ms": 24.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4656,7 +4656,7 @@
   },
   {
    "name": "H26 KMnO4+FeSO4+KI 酸",
-   "ms": 37.6,
+   "ms": 34.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4670,7 +4670,7 @@
   },
   {
    "name": "H27 Na2CO3+CaCl2+BaCl2",
-   "ms": 36.0,
+   "ms": 34.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4684,7 +4684,7 @@
   },
   {
    "name": "H28 MgCl2+NaOH+NH4Cl",
-   "ms": 14.0,
+   "ms": 14.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4698,7 +4698,7 @@
   },
   {
    "name": "H32 AlCl3+Na2S 双水解",
-   "ms": 59.9,
+   "ms": 56.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4712,7 +4712,7 @@
   },
   {
    "name": "H35 Ca(HCO3)2 加热 353K",
-   "ms": 31.4,
+   "ms": 30.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4726,7 +4726,7 @@
   },
   {
    "name": "H37 CO2+2NaOH",
-   "ms": 13.6,
+   "ms": 14.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4740,7 +4740,7 @@
   },
   {
    "name": "H38 CO2+NaOH 1:1",
-   "ms": 12.4,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4754,7 +4754,7 @@
   },
   {
    "name": "H39 CO2 过量+NaOH",
-   "ms": 12.8,
+   "ms": 11.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4768,7 +4768,7 @@
   },
   {
    "name": "H40 HCl 少量+Na2CO3",
-   "ms": 2.0,
+   "ms": 1.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4782,7 +4782,7 @@
   },
   {
    "name": "H42 AlCl3+NaOH 1:2.5",
-   "ms": 7.3,
+   "ms": 7.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4796,7 +4796,7 @@
   },
   {
    "name": "H43 AlCl3+NaOH 1:3.5",
-   "ms": 10.3,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4810,7 +4810,7 @@
   },
   {
    "name": "H44 AlCl3+NaOH 过量",
-   "ms": 0.7,
+   "ms": 0.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4824,7 +4824,7 @@
   },
   {
    "name": "H45 Na[Al(OH)4]+HCl 半量",
-   "ms": 11.0,
+   "ms": 10.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -4838,7 +4838,7 @@
   },
   {
    "name": "H46 AgNO3+氨水 1:1.5",
-   "ms": 248.7,
+   "ms": 243.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4852,7 +4852,7 @@
   },
   {
    "name": "H47 AgNO3+氨水 过量",
-   "ms": 14.7,
+   "ms": 13.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4866,7 +4866,7 @@
   },
   {
    "name": "H48 FeCl3+3NaOH",
-   "ms": 8.9,
+   "ms": 8.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4894,7 +4894,7 @@
   },
   {
    "name": "H50 Ca(OH)2+CO2 少量",
-   "ms": 9.9,
+   "ms": 9.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4908,7 +4908,7 @@
   },
   {
    "name": "H51 Ca(OH)2+CO2 过量",
-   "ms": 11.0,
+   "ms": 10.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4922,7 +4922,7 @@
   },
   {
    "name": "H52 KIO3+KI+酸 归中",
-   "ms": 14.2,
+   "ms": 13.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4936,7 +4936,7 @@
   },
   {
    "name": "H53 Na2S+Na2SO3+酸 归中",
-   "ms": 17.3,
+   "ms": 16.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4950,7 +4950,7 @@
   },
   {
    "name": "H55 H2O2+KMnO4 酸",
-   "ms": 17.2,
+   "ms": 16.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4964,7 +4964,7 @@
   },
   {
    "name": "H57 Cl2 少量+FeBr2",
-   "ms": 37.0,
+   "ms": 35.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4978,7 +4978,7 @@
   },
   {
    "name": "H58 Cl2 过量+FeBr2",
-   "ms": 90.9,
+   "ms": 85.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -4992,7 +4992,7 @@
   },
   {
    "name": "H59 Zn+CuSO4+FeSO4",
-   "ms": 13.9,
+   "ms": 12.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5006,7 +5006,7 @@
   },
   {
    "name": "H60 Fe+CuCl2+HCl",
-   "ms": 17.9,
+   "ms": 17.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5020,7 +5020,7 @@
   },
   {
    "name": "H61 KClO3+浓HCl 归中",
-   "ms": 11.1,
+   "ms": 10.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5048,7 +5048,7 @@
   },
   {
    "name": "H68 Cl2+NaOH 350K",
-   "ms": 8.8,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5062,7 +5062,7 @@
   },
   {
    "name": "H69 I2+NaOH 室温",
-   "ms": 11.0,
+   "ms": 10.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5076,7 +5076,7 @@
   },
   {
    "name": "H70 Br2+NaOH 室温",
-   "ms": 4.1,
+   "ms": 3.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5090,7 +5090,7 @@
   },
   {
    "name": "H71 NH4Cl+Ca(OH)2 加热",
-   "ms": 17.4,
+   "ms": 16.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -5104,7 +5104,7 @@
   },
   {
    "name": "H72 NH4NO3+NaOH 加热",
-   "ms": 13.3,
+   "ms": 13.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5118,7 +5118,7 @@
   },
   {
    "name": "H73 纯水中性 pH 373K",
-   "ms": 26.1,
+   "ms": 24.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5132,7 +5132,7 @@
   },
   {
    "name": "H74 I2+KOH 室温",
-   "ms": 10.2,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5146,7 +5146,7 @@
   },
   {
    "name": "H75 (NH4)2SO4+Ba(OH)2 加热",
-   "ms": 26.4,
+   "ms": 27.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5160,7 +5160,7 @@
   },
   {
    "name": "H76 Zn+浓H2SO4 350K",
-   "ms": 18.0,
+   "ms": 17.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5174,7 +5174,7 @@
   },
   {
    "name": "H77 NaClO+CO2 过量",
-   "ms": 20.7,
+   "ms": 20.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -5188,7 +5188,7 @@
   },
   {
    "name": "H78 醋酸半中和",
-   "ms": 8.7,
+   "ms": 8.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -5216,7 +5216,7 @@
   },
   {
    "name": "H80 Na2CO3+HCl 近等当",
-   "ms": 3.7,
+   "ms": 3.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -5230,7 +5230,7 @@
   },
   {
    "name": "H81 醋酸钠等当点",
-   "ms": 8.2,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5244,7 +5244,7 @@
   },
   {
    "name": "H84 HCl+醋酸 混合酸",
-   "ms": 4.5,
+   "ms": 4.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5258,7 +5258,7 @@
   },
   {
    "name": "H85 K2CO3+Ba(NO3)2",
-   "ms": 28.1,
+   "ms": 27.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5272,7 +5272,7 @@
   },
   {
    "name": "H86 (NH4)2SO4+Ba(OH)2",
-   "ms": 4.4,
+   "ms": 4.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5286,7 +5286,7 @@
   },
   {
    "name": "H87 醋酸钾+盐酸",
-   "ms": 10.2,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5300,7 +5300,7 @@
   },
   {
    "name": "H88 醋酸铵 pH",
-   "ms": 14.4,
+   "ms": 13.8,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -5314,7 +5314,7 @@
   },
   {
    "name": "H89 Ca(HCO3)2+Ca(OH)2",
-   "ms": 17.0,
+   "ms": 17.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5328,7 +5328,7 @@
   },
   {
    "name": "H90 MgSO4+BaCl2",
-   "ms": 9.2,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5342,7 +5342,7 @@
   },
   {
    "name": "H91 KClO+Na2SO3",
-   "ms": 9.3,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5356,7 +5356,7 @@
   },
   {
    "name": "H92 Ca(ClO)2+Na2CO3",
-   "ms": 24.1,
+   "ms": 22.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5370,7 +5370,7 @@
   },
   {
    "name": "H93 Ba(OH)2+H2SO4 等量",
-   "ms": 8.0,
+   "ms": 11.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5384,7 +5384,7 @@
   },
   {
    "name": "H94 NaHSO4+NaOH",
-   "ms": 4.3,
+   "ms": 4.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5398,7 +5398,7 @@
   },
   {
    "name": "H99 CO2 饱和水 pH",
-   "ms": 7.8,
+   "ms": 7.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5426,7 +5426,7 @@
   },
   {
    "name": "I02 Zn+中稀硝酸(2.5M)->N2O",
-   "ms": 12.1,
+   "ms": 12.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5440,7 +5440,7 @@
   },
   {
    "name": "I03 Mg+极稀硝酸(0.25M)->NH4+",
-   "ms": 11.0,
+   "ms": 10.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5454,7 +5454,7 @@
   },
   {
    "name": "I04 Zn+极稀硝酸(0.25M)->NH4+",
-   "ms": 24.3,
+   "ms": 23.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5468,7 +5468,7 @@
   },
   {
    "name": "I06 Fe+稀硝酸(4M)->NO",
-   "ms": 8.0,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5482,7 +5482,7 @@
   },
   {
    "name": "I07 Ag+浓硝酸->NO2",
-   "ms": 7.2,
+   "ms": 6.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5496,7 +5496,7 @@
   },
   {
    "name": "I08 Hg+浓硝酸->NO2",
-   "ms": 27.4,
+   "ms": 27.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5510,7 +5510,7 @@
   },
   {
    "name": "I09 Cd+稀硝酸->NO",
-   "ms": 10.3,
+   "ms": 10.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5524,7 +5524,7 @@
   },
   {
    "name": "I10 Sc+盐酸",
-   "ms": 9.7,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5538,7 +5538,7 @@
   },
   {
    "name": "I11 Ti+盐酸",
-   "ms": 9.1,
+   "ms": 8.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5552,7 +5552,7 @@
   },
   {
    "name": "I12 V+盐酸",
-   "ms": 9.3,
+   "ms": 8.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5566,7 +5566,7 @@
   },
   {
    "name": "I13 Cr+盐酸",
-   "ms": 9.5,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5580,7 +5580,7 @@
   },
   {
    "name": "I14 Co+盐酸",
-   "ms": 9.9,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5594,7 +5594,7 @@
   },
   {
    "name": "I15 Ni+盐酸",
-   "ms": 33.6,
+   "ms": 33.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5636,7 +5636,7 @@
   },
   {
    "name": "I18 Au+浓硝酸不反应",
-   "ms": 4.8,
+   "ms": 4.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5664,7 +5664,7 @@
   },
   {
    "name": "I20 Zn+NH4VO3+盐酸(钒彩虹终点)",
-   "ms": 141.8,
+   "ms": 138.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5678,7 +5678,7 @@
   },
   {
    "name": "I21 Zn+TiOSO4+盐酸",
-   "ms": 54.5,
+   "ms": 52.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5692,7 +5692,7 @@
   },
   {
    "name": "I22 NH4VO3+盐酸",
-   "ms": 14.4,
+   "ms": 13.7,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -5706,7 +5706,7 @@
   },
   {
    "name": "I23 CrCl3+过量NaOH+H2O2",
-   "ms": 16.7,
+   "ms": 15.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5720,7 +5720,7 @@
   },
   {
    "name": "I24 CoCl2+氨水+O2",
-   "ms": 79.6,
+   "ms": 77.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5734,7 +5734,7 @@
   },
   {
    "name": "I26 VCl2 溶液亚稳",
-   "ms": 6.4,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5748,7 +5748,7 @@
   },
   {
    "name": "I27 TiCl3+FeCl3",
-   "ms": 10.4,
+   "ms": 10.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5762,7 +5762,7 @@
   },
   {
    "name": "J01 纯水中性pH@363K",
-   "ms": 29.6,
+   "ms": 29.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5776,7 +5776,7 @@
   },
   {
    "name": "J02 纯水中性pH@298K",
-   "ms": 6.8,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5790,7 +5790,7 @@
   },
   {
    "name": "J03 Ca(OH)2 溶解度@298K",
-   "ms": 8.3,
+   "ms": 8.7,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -5804,7 +5804,7 @@
   },
   {
    "name": "J04 Ca(OH)2 溶解度@363K",
-   "ms": 10.9,
+   "ms": 11.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5818,7 +5818,7 @@
   },
   {
    "name": "J05 PbCl2 溶解度@298K",
-   "ms": 13.9,
+   "ms": 13.7,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -5832,7 +5832,7 @@
   },
   {
    "name": "J06 PbCl2 溶解度@363K",
-   "ms": 61.6,
+   "ms": 58.9,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -5846,7 +5846,7 @@
   },
   {
    "name": "J08 NH4Cl 酸性@323K",
-   "ms": 26.4,
+   "ms": 29.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5860,7 +5860,7 @@
   },
   {
    "name": "J09 CaCO3 密闭溶解@298K",
-   "ms": 10.0,
+   "ms": 9.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5874,7 +5874,7 @@
   },
   {
    "name": "J10 CaCO3 密闭溶解@363K",
-   "ms": 8.3,
+   "ms": 7.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -5888,7 +5888,7 @@
   },
   {
    "name": "J11 Zn+CuSO4@363K 仍完全",
-   "ms": 15.0,
+   "ms": 14.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5902,7 +5902,7 @@
   },
   {
    "name": "J12 Cu+FeCl3@350K 仍完全",
-   "ms": 54.6,
+   "ms": 51.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5946,7 +5946,7 @@
   },
   {
    "name": "Q01 SO2+2NaOH",
-   "ms": 9.3,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5960,7 +5960,7 @@
   },
   {
    "name": "Q02 CO2+过量NaOH",
-   "ms": 11.0,
+   "ms": 10.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5974,7 +5974,7 @@
   },
   {
    "name": "Q03 NH3+CH3COOH",
-   "ms": 11.1,
+   "ms": 10.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -5988,7 +5988,7 @@
   },
   {
    "name": "Q04 H2S+NaOH(1:1)",
-   "ms": 12.5,
+   "ms": 11.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6002,7 +6002,7 @@
   },
   {
    "name": "Q05 H2S过量+NaOH",
-   "ms": 8.7,
+   "ms": 8.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6016,7 +6016,7 @@
   },
   {
    "name": "Q06 CO2+Na2CO3溶液",
-   "ms": 10.0,
+   "ms": 9.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6030,7 +6030,7 @@
   },
   {
    "name": "Q07 SO2+溴水",
-   "ms": 7.1,
+   "ms": 6.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6044,7 +6044,7 @@
   },
   {
    "name": "R01 Na2CO3 0.1M",
-   "ms": 9.4,
+   "ms": 8.0,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -6058,7 +6058,7 @@
   },
   {
    "name": "R02 Na3PO4 0.1M",
-   "ms": 9.7,
+   "ms": 9.5,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -6072,7 +6072,7 @@
   },
   {
    "name": "R03 Na2HPO4 0.1M",
-   "ms": 12.8,
+   "ms": 12.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6086,7 +6086,7 @@
   },
   {
    "name": "R04 (NH4)2SO4 0.1M",
-   "ms": 5.4,
+   "ms": 5.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6100,7 +6100,7 @@
   },
   {
    "name": "R05 FeCl3 0.1M",
-   "ms": 8.9,
+   "ms": 9.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6114,7 +6114,7 @@
   },
   {
    "name": "R06 AlCl3 0.1M",
-   "ms": 14.1,
+   "ms": 13.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6128,7 +6128,7 @@
   },
   {
    "name": "R07 CH3COONa 0.1M",
-   "ms": 2.1,
+   "ms": 1.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6142,7 +6142,7 @@
   },
   {
    "name": "R08 NaClO 0.1M",
-   "ms": 9.6,
+   "ms": 9.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6156,7 +6156,7 @@
   },
   {
    "name": "P04 AgCl+KI->AgI",
-   "ms": 24.7,
+   "ms": 25.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6184,7 +6184,7 @@
   },
   {
    "name": "P06 BaCO3+Na2SO4->BaSO4",
-   "ms": 8.1,
+   "ms": 7.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6198,7 +6198,7 @@
   },
   {
    "name": "P07 BaSO4+稀Na2CO3 不转化",
-   "ms": 10.4,
+   "ms": 10.1,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -6212,7 +6212,7 @@
   },
   {
    "name": "P09 Mg(OH)2 溶于 NH4Cl",
-   "ms": 4.1,
+   "ms": 4.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6226,7 +6226,7 @@
   },
   {
    "name": "P10 Fe(OH)3 不溶 NH4Cl",
-   "ms": 9.4,
+   "ms": 10.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6240,7 +6240,7 @@
   },
   {
    "name": "P11 PbSO4+Na2CO3->PbCO3",
-   "ms": 171.5,
+   "ms": 162.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6254,7 +6254,7 @@
   },
   {
    "name": "P12 CuS 不溶稀HCl",
-   "ms": 5.2,
+   "ms": 4.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6268,7 +6268,7 @@
   },
   {
    "name": "P13 MnS 溶稀HCl",
-   "ms": 4.7,
+   "ms": 4.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6282,7 +6282,7 @@
   },
   {
    "name": "O01 Fe+CuSO4",
-   "ms": 1.7,
+   "ms": 1.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6296,7 +6296,7 @@
   },
   {
    "name": "O02 Zn+FeCl2",
-   "ms": 81.8,
+   "ms": 79.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6310,7 +6310,7 @@
   },
   {
    "name": "O03 Cu+FeCl3 腐蚀",
-   "ms": 2.9,
+   "ms": 3.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6324,7 +6324,7 @@
   },
   {
    "name": "O04 Fe+FeCl3 归中",
-   "ms": 1.1,
+   "ms": 1.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6338,7 +6338,7 @@
   },
   {
    "name": "O05 Cl2+FeCl2",
-   "ms": 9.6,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6352,7 +6352,7 @@
   },
   {
    "name": "O06 Br2+KI",
-   "ms": 6.9,
+   "ms": 6.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6366,7 +6366,7 @@
   },
   {
    "name": "O07 FeCl3+KI",
-   "ms": 6.1,
+   "ms": 6.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6380,7 +6380,7 @@
   },
   {
    "name": "O08 Cu+浓H2SO4 加热",
-   "ms": 39.6,
+   "ms": 37.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6394,7 +6394,7 @@
   },
   {
    "name": "O09 MnO2+浓HCl 加热",
-   "ms": 5.4,
+   "ms": 5.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6408,7 +6408,7 @@
   },
   {
    "name": "O10 KMnO4+浓HCl",
-   "ms": 8.6,
+   "ms": 8.5,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -6436,7 +6436,7 @@
   },
   {
    "name": "U02 Zn(OH)2+过量NaOH",
-   "ms": 8.3,
+   "ms": 9.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6450,7 +6450,7 @@
   },
   {
    "name": "U03 Al(OH)3+NaOH",
-   "ms": 7.9,
+   "ms": 8.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6464,7 +6464,7 @@
   },
   {
    "name": "U04 Al(OH)3 不溶氨水",
-   "ms": 12.5,
+   "ms": 11.9,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -6478,7 +6478,7 @@
   },
   {
    "name": "U05 ZnS 溶稀HCl",
-   "ms": 60.4,
+   "ms": 57.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6492,7 +6492,7 @@
   },
   {
    "name": "U06 CdS 不溶稀HCl",
-   "ms": 27.9,
+   "ms": 27.1,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6506,7 +6506,7 @@
   },
   {
    "name": "M01 AlCl3+少量NaOH",
-   "ms": 5.6,
+   "ms": 5.8,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6520,7 +6520,7 @@
   },
   {
    "name": "M02 AlCl3+过量NaOH",
-   "ms": 1.7,
+   "ms": 1.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6534,7 +6534,7 @@
   },
   {
    "name": "M03 Na[Al(OH)4]+少量HCl",
-   "ms": 11.0,
+   "ms": 25.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6548,7 +6548,7 @@
   },
   {
    "name": "M04 Na[Al(OH)4]+过量HCl",
-   "ms": 6.3,
+   "ms": 6.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6562,7 +6562,7 @@
   },
   {
    "name": "M05 Na2CO3+少量HCl",
-   "ms": 4.9,
+   "ms": 4.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6576,7 +6576,7 @@
   },
   {
    "name": "M06 Na2CO3+过量HCl",
-   "ms": 9.8,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6590,7 +6590,7 @@
   },
   {
    "name": "J13 Ca(OH)2 全溶@273K",
-   "ms": 252.0,
+   "ms": 228.0,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -6604,7 +6604,7 @@
   },
   {
    "name": "J14 PbCl2 溶解度@363K",
-   "ms": 52.0,
+   "ms": 48.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6618,7 +6618,7 @@
   },
   {
    "name": "J15 NaOH 0.1M@323K",
-   "ms": 7.3,
+   "ms": 7.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6632,7 +6632,7 @@
   },
   {
    "name": "J16 纯水@323K",
-   "ms": 3.9,
+   "ms": 3.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6646,7 +6646,7 @@
   },
   {
    "name": "K01 AlCl3+Na2S 双水解",
-   "ms": 61.5,
+   "ms": 56.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6674,7 +6674,7 @@
   },
   {
    "name": "K03 AlCl3+NaHCO3 泡沫灭火",
-   "ms": 32.6,
+   "ms": 31.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6688,7 +6688,7 @@
   },
   {
    "name": "K04 (NH4)2CO3 溶液",
-   "ms": 13.0,
+   "ms": 12.0,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -6702,7 +6702,7 @@
   },
   {
    "name": "K05 NH3+NH4Cl 缓冲",
-   "ms": 1.3,
+   "ms": 1.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6730,7 +6730,7 @@
   },
   {
    "name": "L01 Ba(OH)2+H2SO4 等当量",
-   "ms": 7.8,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6744,7 +6744,7 @@
   },
   {
    "name": "L04 MgSO4+Ba(OH)2 双沉淀",
-   "ms": 12.6,
+   "ms": 13.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6772,7 +6772,7 @@
   },
   {
    "name": "L08 CuSO4+NaOH",
-   "ms": 11.5,
+   "ms": 10.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6786,7 +6786,7 @@
   },
   {
    "name": "L09 AgNO3+NaCl",
-   "ms": 4.6,
+   "ms": 5.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6800,7 +6800,7 @@
   },
   {
    "name": "L10 BaCl2+Na2SO4",
-   "ms": 1.6,
+   "ms": 1.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6814,7 +6814,7 @@
   },
   {
    "name": "L11 Pb(NO3)2+KI",
-   "ms": 36.4,
+   "ms": 34.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6828,7 +6828,7 @@
   },
   {
    "name": "L12 AgNO3+KBr",
-   "ms": 18.9,
+   "ms": 18.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6842,7 +6842,7 @@
   },
   {
    "name": "Q08 Na2SO3+溴水",
-   "ms": 2.7,
+   "ms": 2.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -6856,20 +6856,6 @@
   },
   {
    "name": "B01 HCl 1e-7M 极稀",
-   "ms": 3.9,
-   "deg": 0,
-   "changed": false,
-   "reacted": false,
-   "pH": 7.0,
-   "steps_n": 0,
-   "digest": "c65bb18d9332f9ff",
-   "exit": "no-cands",
-   "iters": 1,
-   "resid": 0.0,
-   "resid_live": 0.0
-  },
-  {
-   "name": "B02 NaOH 1e-7M 极稀",
    "ms": 3.6,
    "deg": 0,
    "changed": false,
@@ -6883,8 +6869,22 @@
    "resid_live": 0.0
   },
   {
+   "name": "B02 NaOH 1e-7M 极稀",
+   "ms": 4.0,
+   "deg": 0,
+   "changed": false,
+   "reacted": false,
+   "pH": 7.0,
+   "steps_n": 0,
+   "digest": "c65bb18d9332f9ff",
+   "exit": "no-cands",
+   "iters": 1,
+   "resid": 0.0,
+   "resid_live": 0.0
+  },
+  {
    "name": "B03 AgCl+0.1M NaCl 同离子",
-   "ms": 9.5,
+   "ms": 9.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6898,7 +6898,7 @@
   },
   {
    "name": "B04 BaSO4+0.1M Na2SO4 同离子",
-   "ms": 6.8,
+   "ms": 5.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6912,7 +6912,7 @@
   },
   {
    "name": "B05 AgCl 纯水溶解度",
-   "ms": 8.4,
+   "ms": 8.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6926,7 +6926,7 @@
   },
   {
    "name": "B06 BaSO4 纯水溶解度",
-   "ms": 8.3,
+   "ms": 7.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6940,7 +6940,7 @@
   },
   {
    "name": "B07 缓冲等比稀释 pH 不变",
-   "ms": 1.3,
+   "ms": 1.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6954,7 +6954,7 @@
   },
   {
    "name": "B08 缓冲抗酸",
-   "ms": 2.0,
+   "ms": 2.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6968,7 +6968,7 @@
   },
   {
    "name": "B09 缓冲抗碱",
-   "ms": 2.3,
+   "ms": 2.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -6982,7 +6982,7 @@
   },
   {
    "name": "B10 CH_3COOH/NaAc 缓冲",
-   "ms": 5.8,
+   "ms": 5.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -6996,7 +6996,7 @@
   },
   {
    "name": "B11 HCl+NaAc 等当点",
-   "ms": 10.6,
+   "ms": 9.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -7010,7 +7010,7 @@
   },
   {
    "name": "B12 CH_3COOH 半中和",
-   "ms": 8.3,
+   "ms": 7.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -7024,7 +7024,7 @@
   },
   {
    "name": "B13 CaCO3+CO2 部分溶解",
-   "ms": 2.7,
+   "ms": 1.9,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -7038,7 +7038,7 @@
   },
   {
    "name": "B14 AgCl+氨水(1:1) 不足",
-   "ms": 24.2,
+   "ms": 23.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -7052,7 +7052,7 @@
   },
   {
    "name": "B15 Cu(OH)2+氨水(1:2) 不足",
-   "ms": 4.4,
+   "ms": 4.8,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -7066,7 +7066,7 @@
   },
   {
    "name": "B16 NH4Cl 1e-3M",
-   "ms": 1.1,
+   "ms": 1.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7080,7 +7080,7 @@
   },
   {
    "name": "B17 Na2CO3+HCl(2:1)",
-   "ms": 1.7,
+   "ms": 1.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -7094,7 +7094,7 @@
   },
   {
    "name": "B18 H3PO4+NaOH(1:1)",
-   "ms": 12.5,
+   "ms": 12.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7108,7 +7108,7 @@
   },
   {
    "name": "B19 H3PO4+NaOH(1:2)",
-   "ms": 15.4,
+   "ms": 14.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7122,7 +7122,7 @@
   },
   {
    "name": "B20 NaHCO3+HCl(1:1)",
-   "ms": 4.8,
+   "ms": 4.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7136,7 +7136,7 @@
   },
   {
    "name": "B21 NaHCO3+NaOH(1:1)",
-   "ms": 14.7,
+   "ms": 14.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7150,7 +7150,7 @@
   },
   {
    "name": "B22 纯水@373K",
-   "ms": 28.1,
+   "ms": 30.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7164,7 +7164,7 @@
   },
   {
    "name": "B23 纯水@273K",
-   "ms": 6.0,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7178,7 +7178,7 @@
   },
   {
    "name": "B24 PbCl2+0.2M NaCl 同离子",
-   "ms": 21.4,
+   "ms": 19.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7192,7 +7192,7 @@
   },
   {
    "name": "B25 AgCl+KI 半量转化",
-   "ms": 28.1,
+   "ms": 26.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7206,7 +7206,7 @@
   },
   {
    "name": "B26 FeCl3+NaOH(1:2) 不足",
-   "ms": 9.2,
+   "ms": 9.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -7220,7 +7220,7 @@
   },
   {
    "name": "B27 H3PO4+NaOH(1:3)",
-   "ms": 16.7,
+   "ms": 15.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7234,7 +7234,7 @@
   },
   {
    "name": "B28 H2S 0.1M 水溶液",
-   "ms": 7.8,
+   "ms": 7.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7248,7 +7248,7 @@
   },
   {
    "name": "B29 Na2S+HCl(1:1)",
-   "ms": 7.6,
+   "ms": 6.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7262,7 +7262,7 @@
   },
   {
    "name": "B30 SO2+NaOH(1:1) NaHSO3",
-   "ms": 9.9,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -7276,7 +7276,7 @@
   },
   {
    "name": "NR01 NaCl+KNO3",
-   "ms": 5.8,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7290,7 +7290,7 @@
   },
   {
    "name": "NR02 NaCl+K2SO4",
-   "ms": 5.2,
+   "ms": 5.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7304,7 +7304,7 @@
   },
   {
    "name": "NR03 NaNO3+KCl",
-   "ms": 5.2,
+   "ms": 5.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7318,7 +7318,7 @@
   },
   {
    "name": "NR04 Na2SO4+KCl",
-   "ms": 5.1,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7332,7 +7332,7 @@
   },
   {
    "name": "NR05 NaNO3+K2SO4",
-   "ms": 6.0,
+   "ms": 6.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7346,7 +7346,7 @@
   },
   {
    "name": "NR06 KNO3+Na2SO4",
-   "ms": 5.5,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7360,7 +7360,7 @@
   },
   {
    "name": "NR07 NaCl+NaNO3",
-   "ms": 5.9,
+   "ms": 6.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7374,7 +7374,7 @@
   },
   {
    "name": "NR08 KCl+KNO3",
-   "ms": 5.8,
+   "ms": 6.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7388,7 +7388,7 @@
   },
   {
    "name": "NR09 NaBr+KCl",
-   "ms": 6.1,
+   "ms": 6.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7402,7 +7402,7 @@
   },
   {
    "name": "NR10 NaI+KNO3",
-   "ms": 6.5,
+   "ms": 6.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7416,7 +7416,7 @@
   },
   {
    "name": "NR11 CaCl2+NaNO3",
-   "ms": 6.2,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7430,7 +7430,7 @@
   },
   {
    "name": "NR12 MgCl2+K2SO4",
-   "ms": 5.8,
+   "ms": 5.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7444,7 +7444,7 @@
   },
   {
    "name": "NR13 BaCl2+NaNO3",
-   "ms": 6.2,
+   "ms": 5.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7458,7 +7458,7 @@
   },
   {
    "name": "NR14 NH4Cl+NaNO3",
-   "ms": 6.6,
+   "ms": 6.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7472,7 +7472,7 @@
   },
   {
    "name": "NR15 (NH4)2SO4+KCl",
-   "ms": 6.4,
+   "ms": 5.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7486,7 +7486,7 @@
   },
   {
    "name": "NR17 NaCl+CuSO4",
-   "ms": 9.9,
+   "ms": 9.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -7514,7 +7514,7 @@
   },
   {
    "name": "NR19 NaCl+ZnSO4",
-   "ms": 47.2,
+   "ms": 47.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7528,7 +7528,7 @@
   },
   {
    "name": "NR20 KCl+Mg(NO3)2",
-   "ms": 6.2,
+   "ms": 6.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7542,7 +7542,7 @@
   },
   {
    "name": "NR22 K2SO4+AlCl3",
-   "ms": 10.6,
+   "ms": 10.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7556,7 +7556,7 @@
   },
   {
    "name": "NR23 NaCl+MnSO4",
-   "ms": 6.6,
+   "ms": 6.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7570,7 +7570,7 @@
   },
   {
    "name": "NR24 KNO3+NiCl2",
-   "ms": 32.3,
+   "ms": 30.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7584,7 +7584,7 @@
   },
   {
    "name": "NR25 NaClO4+CuCl2",
-   "ms": 9.5,
+   "ms": 9.9,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -7598,7 +7598,7 @@
   },
   {
    "name": "NR26 NaCl+稀硫酸",
-   "ms": 6.6,
+   "ms": 6.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7612,7 +7612,7 @@
   },
   {
    "name": "NR27 NaNO3+稀盐酸",
-   "ms": 6.2,
+   "ms": 5.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7626,7 +7626,7 @@
   },
   {
    "name": "NR28 K2SO4+稀盐酸",
-   "ms": 5.8,
+   "ms": 5.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7640,7 +7640,7 @@
   },
   {
    "name": "NR29 NaNO3+稀硫酸",
-   "ms": 6.5,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7654,7 +7654,7 @@
   },
   {
    "name": "NR30 KNO3+稀盐酸",
-   "ms": 6.1,
+   "ms": 5.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7668,7 +7668,7 @@
   },
   {
    "name": "NR31 Na2SO4+稀盐酸",
-   "ms": 0.8,
+   "ms": 0.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7682,7 +7682,7 @@
   },
   {
    "name": "NR32 BaSO4+盐酸",
-   "ms": 1.3,
+   "ms": 1.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7696,7 +7696,7 @@
   },
   {
    "name": "NR33 BaSO4+稀硝酸",
-   "ms": 9.2,
+   "ms": 8.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7710,7 +7710,7 @@
   },
   {
    "name": "NR34 AgCl+稀硝酸",
-   "ms": 10.4,
+   "ms": 9.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7724,7 +7724,7 @@
   },
   {
    "name": "NR36 SiO2+盐酸",
-   "ms": 4.5,
+   "ms": 3.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7738,7 +7738,7 @@
   },
   {
    "name": "NR37 SiO2+稀硫酸",
-   "ms": 4.5,
+   "ms": 3.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7752,7 +7752,7 @@
   },
   {
    "name": "NR38 SiO2+稀硝酸",
-   "ms": 4.5,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7766,7 +7766,7 @@
   },
   {
    "name": "NR40 S+稀盐酸",
-   "ms": 1.3,
+   "ms": 1.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7780,7 +7780,7 @@
   },
   {
    "name": "NR41 Cu+稀盐酸",
-   "ms": 0.7,
+   "ms": 0.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7794,7 +7794,7 @@
   },
   {
    "name": "NR42 Cu+稀硫酸",
-   "ms": 0.8,
+   "ms": 0.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7808,7 +7808,7 @@
   },
   {
    "name": "NR43 Ag+稀盐酸",
-   "ms": 4.1,
+   "ms": 3.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7822,7 +7822,7 @@
   },
   {
    "name": "NR44 Ag+稀硫酸",
-   "ms": 4.7,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7836,7 +7836,7 @@
   },
   {
    "name": "NR45 Au+稀盐酸",
-   "ms": 4.4,
+   "ms": 3.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7850,7 +7850,7 @@
   },
   {
    "name": "NR46 Au+稀硝酸",
-   "ms": 4.5,
+   "ms": 4.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7864,7 +7864,7 @@
   },
   {
    "name": "NR47 Pt+稀盐酸",
-   "ms": 3.9,
+   "ms": 4.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7878,7 +7878,7 @@
   },
   {
    "name": "NR48 Cu+ZnSO4",
-   "ms": 5.5,
+   "ms": 4.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7920,7 +7920,7 @@
   },
   {
    "name": "NR51 Ag+ZnSO4",
-   "ms": 5.4,
+   "ms": 4.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7934,7 +7934,7 @@
   },
   {
    "name": "NR52 Cu+MgCl2",
-   "ms": 5.7,
+   "ms": 5.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7948,7 +7948,7 @@
   },
   {
    "name": "NR53 Fe+MgSO4",
-   "ms": 9.8,
+   "ms": 9.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7962,7 +7962,7 @@
   },
   {
    "name": "NR55 Cu+AlCl3",
-   "ms": 24.0,
+   "ms": 23.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -7976,7 +7976,7 @@
   },
   {
    "name": "NR56 Sn+MgSO4",
-   "ms": 12.5,
+   "ms": 11.8,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -7990,7 +7990,7 @@
   },
   {
    "name": "NR57 Pb+ZnSO4",
-   "ms": 5.3,
+   "ms": 4.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8004,7 +8004,7 @@
   },
   {
    "name": "NR59 CuO+水",
-   "ms": 4.3,
+   "ms": 3.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8018,7 +8018,7 @@
   },
   {
    "name": "NR60 Fe2O3+水",
-   "ms": 4.0,
+   "ms": 3.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8032,7 +8032,7 @@
   },
   {
    "name": "NR61 Al2O3+水",
-   "ms": 3.9,
+   "ms": 3.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8046,7 +8046,7 @@
   },
   {
    "name": "NR62 MgO+水(难)",
-   "ms": 7.3,
+   "ms": 6.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8060,7 +8060,7 @@
   },
   {
    "name": "NR63 ZnO+水",
-   "ms": 6.8,
+   "ms": 7.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8074,7 +8074,7 @@
   },
   {
    "name": "NR64 SiO2+水",
-   "ms": 4.1,
+   "ms": 3.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8088,7 +8088,7 @@
   },
   {
    "name": "NR65 MnO2+水",
-   "ms": 4.6,
+   "ms": 4.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8102,7 +8102,7 @@
   },
   {
    "name": "NR66 CuO+NaOH",
-   "ms": 5.2,
+   "ms": 4.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8116,7 +8116,7 @@
   },
   {
    "name": "NR67 Fe2O3+NaOH",
-   "ms": 5.0,
+   "ms": 5.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8158,7 +8158,7 @@
   },
   {
    "name": "NR70 CO2+CaCl2溶液",
-   "ms": 5.5,
+   "ms": 5.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8172,7 +8172,7 @@
   },
   {
    "name": "NR72 CO2+Ba(NO3)2",
-   "ms": 11.4,
+   "ms": 10.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8186,7 +8186,7 @@
   },
   {
    "name": "NR73 SO3+NaCl溶液",
-   "ms": 5.3,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8200,7 +8200,7 @@
   },
   {
    "name": "NR74 NaOH+KOH",
-   "ms": 6.2,
+   "ms": 5.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8214,7 +8214,7 @@
   },
   {
    "name": "NR76 KOH+Ba(OH)2",
-   "ms": 6.1,
+   "ms": 6.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8228,7 +8228,7 @@
   },
   {
    "name": "NR77 NaOH+NaCl",
-   "ms": 0.6,
+   "ms": 0.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8242,7 +8242,7 @@
   },
   {
    "name": "NR78 KOH+KNO3",
-   "ms": 6.4,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8256,7 +8256,7 @@
   },
   {
    "name": "NR79 NaOH+Na2SO4",
-   "ms": 5.7,
+   "ms": 4.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8270,7 +8270,7 @@
   },
   {
    "name": "NR81 Ba(OH)2+KNO3",
-   "ms": 6.2,
+   "ms": 6.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8284,7 +8284,7 @@
   },
   {
    "name": "NR82 HCl+H2SO4",
-   "ms": 4.5,
+   "ms": 4.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8298,7 +8298,7 @@
   },
   {
    "name": "NR83 HCl+HNO3(稀)",
-   "ms": 5.5,
+   "ms": 4.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8326,7 +8326,7 @@
   },
   {
    "name": "NR86 NH4Cl+Na2SO4",
-   "ms": 5.9,
+   "ms": 6.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8340,7 +8340,7 @@
   },
   {
    "name": "NR91 CaCO3+BaSO4",
-   "ms": 18.2,
+   "ms": 17.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8354,7 +8354,7 @@
   },
   {
    "name": "NR92 AgCl+BaSO4",
-   "ms": 12.8,
+   "ms": 12.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8368,7 +8368,7 @@
   },
   {
    "name": "NR93 CaCO3+SiO2(溶液中)",
-   "ms": 13.4,
+   "ms": 12.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8382,7 +8382,7 @@
   },
   {
    "name": "NR94 Fe(OH)3+Cu(OH)2",
-   "ms": 9.8,
+   "ms": 10.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8396,7 +8396,7 @@
   },
   {
    "name": "NR95 AgCl+CaCO3",
-   "ms": 19.3,
+   "ms": 18.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8410,7 +8410,7 @@
   },
   {
    "name": "NR96 Cu+水",
-   "ms": 4.0,
+   "ms": 3.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8424,7 +8424,7 @@
   },
   {
    "name": "NR97 Fe+水(常温)",
-   "ms": 7.8,
+   "ms": 7.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8438,7 +8438,7 @@
   },
   {
    "name": "NR98 Ag+水",
-   "ms": 3.7,
+   "ms": 3.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8452,7 +8452,7 @@
   },
   {
    "name": "NR99 Au+水",
-   "ms": 3.8,
+   "ms": 3.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8466,7 +8466,7 @@
   },
   {
    "name": "NR103 H2CO3+NaCl",
-   "ms": 4.7,
+   "ms": 5.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8480,7 +8480,7 @@
   },
   {
    "name": "NR105 H2S+NaCl溶液",
-   "ms": 4.4,
+   "ms": 4.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8494,7 +8494,7 @@
   },
   {
    "name": "NR107 Br-+Fe2+",
-   "ms": 6.3,
+   "ms": 6.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8508,7 +8508,7 @@
   },
   {
    "name": "NR108 Cl-+Mn2+",
-   "ms": 6.2,
+   "ms": 6.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8522,7 +8522,7 @@
   },
   {
    "name": "NR109 I-+Na+",
-   "ms": 6.2,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8564,7 +8564,7 @@
   },
   {
    "name": "NR112 Sn2+ + Zn2+?",
-   "ms": 55.8,
+   "ms": 53.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -8578,7 +8578,7 @@
   },
   {
    "name": "NR113 MnO2+稀盐酸(常温稀)",
-   "ms": 1.3,
+   "ms": 1.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8592,7 +8592,7 @@
   },
   {
    "name": "NR114 Cr3+ + Cl-",
-   "ms": 9.8,
+   "ms": 9.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8606,7 +8606,7 @@
   },
   {
    "name": "NR116 KCl+NaNO3 稀",
-   "ms": 5.3,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8620,7 +8620,7 @@
   },
   {
    "name": "NR117 AgNO3+NaNO3",
-   "ms": 6.0,
+   "ms": 6.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8634,7 +8634,7 @@
   },
   {
    "name": "NR118 BaCl2+KNO3",
-   "ms": 5.9,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8648,7 +8648,7 @@
   },
   {
    "name": "NR119 CuSO4+ZnCl2",
-   "ms": 41.5,
+   "ms": 40.8,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -8662,7 +8662,7 @@
   },
   {
    "name": "NR122 Fe(OH)3+NaOH",
-   "ms": 5.1,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8676,7 +8676,7 @@
   },
   {
    "name": "NR123 Cu(OH)2+NaOH(稀)",
-   "ms": 6.2,
+   "ms": 6.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8690,7 +8690,7 @@
   },
   {
    "name": "NR124 Mg(OH)2+NaOH",
-   "ms": 5.7,
+   "ms": 6.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8718,7 +8718,7 @@
   },
   {
    "name": "NR128 O2+NaCl溶液",
-   "ms": 5.7,
+   "ms": 5.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8732,7 +8732,7 @@
   },
   {
    "name": "NR129 N2+水",
-   "ms": 3.9,
+   "ms": 3.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8746,7 +8746,7 @@
   },
   {
    "name": "NR130 CH4+水",
-   "ms": 3.8,
+   "ms": 3.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8760,7 +8760,7 @@
   },
   {
    "name": "NR131 CO+NaOH",
-   "ms": 5.1,
+   "ms": 4.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8774,7 +8774,7 @@
   },
   {
    "name": "NR132 NO+NaOH",
-   "ms": 4.7,
+   "ms": 4.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8788,7 +8788,7 @@
   },
   {
    "name": "NR133 H2+CuSO4溶液",
-   "ms": 5.1,
+   "ms": 4.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8802,7 +8802,7 @@
   },
   {
    "name": "NR135 Na2SO4+BaSO4",
-   "ms": 5.3,
+   "ms": 5.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8816,7 +8816,7 @@
   },
   {
    "name": "NR136 KCl+AgCl",
-   "ms": 5.7,
+   "ms": 6.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8830,7 +8830,7 @@
   },
   {
    "name": "NR138 MgSO4+MgCl2",
-   "ms": 6.0,
+   "ms": 5.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8844,7 +8844,7 @@
   },
   {
    "name": "NR139 NaBr+NaI",
-   "ms": 5.8,
+   "ms": 6.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8858,7 +8858,7 @@
   },
   {
    "name": "NR141 (NH4)2SO4+NaNO3",
-   "ms": 7.0,
+   "ms": 6.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8872,7 +8872,7 @@
   },
   {
    "name": "NR142 NH4Cl+K2SO4",
-   "ms": 6.4,
+   "ms": 6.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8886,7 +8886,7 @@
   },
   {
    "name": "NR143 NaHSO4+NaCl",
-   "ms": 0.7,
+   "ms": 0.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8914,7 +8914,7 @@
   },
   {
    "name": "NR149 CH3COONa+NaCl",
-   "ms": 6.5,
+   "ms": 6.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8942,7 +8942,7 @@
   },
   {
    "name": "NR153 Cu+CuSO4",
-   "ms": 9.2,
+   "ms": 8.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8970,7 +8970,7 @@
   },
   {
    "name": "NR156 NaCl+H2O 纯盐",
-   "ms": 0.6,
+   "ms": 0.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -8998,7 +8998,7 @@
   },
   {
    "name": "NR158 Na2SO4 溶液",
-   "ms": 5.0,
+   "ms": 4.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9012,7 +9012,7 @@
   },
   {
    "name": "NR159 BaCl2 溶液",
-   "ms": 5.1,
+   "ms": 5.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9026,7 +9026,7 @@
   },
   {
    "name": "NR160 CaCl2 溶液",
-   "ms": 4.8,
+   "ms": 4.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9054,7 +9054,7 @@
   },
   {
    "name": "NR163 CO2+Na2SO4",
-   "ms": 9.9,
+   "ms": 9.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9068,7 +9068,7 @@
   },
   {
    "name": "NR166 Cu2+ + Cl-(稀,无络合)",
-   "ms": 8.5,
+   "ms": 8.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9082,7 +9082,7 @@
   },
   {
    "name": "NR168 Zn2+ + Na+",
-   "ms": 47.3,
+   "ms": 45.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9096,7 +9096,7 @@
   },
   {
    "name": "NR169 Al3+ + NO3-",
-   "ms": 23.4,
+   "ms": 22.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9110,7 +9110,7 @@
   },
   {
    "name": "NR171 Fe(OH)2+NaOH",
-   "ms": 5.9,
+   "ms": 6.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9124,7 +9124,7 @@
   },
   {
    "name": "NR172 Ni(OH)2+NaOH",
-   "ms": 4.9,
+   "ms": 5.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9152,7 +9152,7 @@
   },
   {
    "name": "NR174 Cu+NaNO3溶液",
-   "ms": 5.5,
+   "ms": 5.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9166,7 +9166,7 @@
   },
   {
    "name": "NR175 Cu+NaNO3+NaCl",
-   "ms": 6.1,
+   "ms": 6.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9180,7 +9180,7 @@
   },
   {
    "name": "X01 Mg+NH4Cl溶液 放氢",
-   "ms": 19.6,
+   "ms": 18.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9194,7 +9194,7 @@
   },
   {
    "name": "X02 Zn+NaOH溶液",
-   "ms": 57.4,
+   "ms": 55.2,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -9208,7 +9208,7 @@
   },
   {
    "name": "X03 Sn+FeCl3",
-   "ms": 23.4,
+   "ms": 21.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9222,7 +9222,7 @@
   },
   {
    "name": "X04 Zn过量+FeCl3 到铁",
-   "ms": 131.3,
+   "ms": 123.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9236,7 +9236,7 @@
   },
   {
    "name": "X05 Al+CuSO4 置换",
-   "ms": 14.2,
+   "ms": 12.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9250,7 +9250,7 @@
   },
   {
    "name": "X06 Mg+CuSO4 置换",
-   "ms": 12.6,
+   "ms": 10.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9264,7 +9264,7 @@
   },
   {
    "name": "X07 Ca+CuSO4溶液 先与水",
-   "ms": 20.6,
+   "ms": 19.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9278,7 +9278,7 @@
   },
   {
    "name": "X08 Ba+CuSO4溶液 先与水",
-   "ms": 18.8,
+   "ms": 18.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9292,7 +9292,7 @@
   },
   {
    "name": "X09 Na+FeCl3溶液 先与水",
-   "ms": 13.2,
+   "ms": 12.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9306,7 +9306,7 @@
   },
   {
    "name": "X10 Cu+Hg(NO3)2 置换",
-   "ms": 205.0,
+   "ms": 193.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9320,7 +9320,7 @@
   },
   {
    "name": "X11 Zn+Pb(NO3)2 置换",
-   "ms": 8.7,
+   "ms": 8.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9334,7 +9334,7 @@
   },
   {
    "name": "X12 Fe+醋酸 弱酸放氢",
-   "ms": 13.5,
+   "ms": 13.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9348,7 +9348,7 @@
   },
   {
    "name": "X13 Mg+醋酸",
-   "ms": 18.1,
+   "ms": 17.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9362,7 +9362,7 @@
   },
   {
    "name": "X14 Mn+稀硫酸",
-   "ms": 10.3,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9376,7 +9376,7 @@
   },
   {
    "name": "X15 Ni+稀硫酸",
-   "ms": 11.7,
+   "ms": 11.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9390,7 +9390,7 @@
   },
   {
    "name": "X16 Cd+CuSO4 置换",
-   "ms": 10.1,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9404,7 +9404,7 @@
   },
   {
    "name": "X17 Fe+Pb(NO3)2 置换",
-   "ms": 8.3,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9418,7 +9418,7 @@
   },
   {
    "name": "X19 Ag+HI 放氢",
-   "ms": 10.8,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9432,7 +9432,7 @@
   },
   {
    "name": "X20 Cu+浓HI 放氢",
-   "ms": 12.8,
+   "ms": 11.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9446,7 +9446,7 @@
   },
   {
    "name": "X21 Sr+水",
-   "ms": 9.1,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9460,7 +9460,7 @@
   },
   {
    "name": "Y01 Pb(NO3)2+KI 黄沉",
-   "ms": 35.5,
+   "ms": 35.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9474,7 +9474,7 @@
   },
   {
    "name": "Y02 Pb(NO3)2+Na2S 黑沉",
-   "ms": 9.7,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9488,7 +9488,7 @@
   },
   {
    "name": "Y03 AgNO3+Na3PO4 黄沉",
-   "ms": 56.9,
+   "ms": 63.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9502,7 +9502,7 @@
   },
   {
    "name": "Y04 AgNO3+Na2CO3 黄沉",
-   "ms": 113.9,
+   "ms": 111.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9516,7 +9516,7 @@
   },
   {
    "name": "Y05 BaCl2+Na2SO3 白沉",
-   "ms": 13.9,
+   "ms": 14.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9530,7 +9530,7 @@
   },
   {
    "name": "Y06 BaSO3+盐酸 溶解",
-   "ms": 17.3,
+   "ms": 17.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -9544,7 +9544,7 @@
   },
   {
    "name": "Y07 FeS+盐酸 溶解",
-   "ms": 4.1,
+   "ms": 3.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -9558,7 +9558,7 @@
   },
   {
    "name": "Y08 ZnS+盐酸 溶解",
-   "ms": 57.5,
+   "ms": 56.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -9572,7 +9572,7 @@
   },
   {
    "name": "Y09 PbS+盐酸 不溶",
-   "ms": 6.0,
+   "ms": 5.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9586,7 +9586,7 @@
   },
   {
    "name": "Y10 CO2+NaOH 1:1 酸式盐",
-   "ms": 11.4,
+   "ms": 10.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9600,7 +9600,7 @@
   },
   {
    "name": "Y11 CO2+过量NaOH 正盐",
-   "ms": 11.2,
+   "ms": 10.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9614,7 +9614,7 @@
   },
   {
    "name": "Y12 CO2+过量Ca(OH)2 溶解",
-   "ms": 9.0,
+   "ms": 9.3,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -9628,7 +9628,7 @@
   },
   {
    "name": "Y13 SO2+Ca(OH)2 白沉",
-   "ms": 54.6,
+   "ms": 52.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9642,7 +9642,7 @@
   },
   {
    "name": "Y14 CuO+盐酸 溶解",
-   "ms": 10.9,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9656,7 +9656,7 @@
   },
   {
    "name": "Y15 Fe2O3+盐酸 溶解",
-   "ms": 8.5,
+   "ms": 8.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -9690,7 +9690,7 @@
   },
   {
    "name": "Y18 CaO+水 放熟石灰",
-   "ms": 11.9,
+   "ms": 11.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9704,7 +9704,7 @@
   },
   {
    "name": "Y19 SO3+水 成酸",
-   "ms": 4.3,
+   "ms": 3.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -9718,7 +9718,7 @@
   },
   {
    "name": "Y20 Na2O+水 成碱",
-   "ms": 7.8,
+   "ms": 7.5,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -9742,7 +9742,7 @@
   },
   {
    "name": "Y22 Cu2O+稀硫酸 歧化",
-   "ms": 18.3,
+   "ms": 18.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9756,7 +9756,7 @@
   },
   {
    "name": "Y23 FeCl2+NaOH 白沉",
-   "ms": 10.5,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9770,7 +9770,7 @@
   },
   {
    "name": "Y24 FeSO4+Na2S 黑沉",
-   "ms": 9.8,
+   "ms": 8.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9784,7 +9784,7 @@
   },
   {
    "name": "Y25 NiSO4+Na2S 黑沉",
-   "ms": 9.4,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9798,7 +9798,7 @@
   },
   {
    "name": "Y26 MgCl2+NaOH 白沉",
-   "ms": 9.6,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9812,7 +9812,7 @@
   },
   {
    "name": "Z01 H2S+I2 析硫",
-   "ms": 11.0,
+   "ms": 10.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9826,7 +9826,7 @@
   },
   {
    "name": "Z03 K2Cr2O7+浓盐酸 350K",
-   "ms": 73.7,
+   "ms": 70.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -9840,7 +9840,7 @@
   },
   {
    "name": "Z04 Ag+稀硝酸 放NO",
-   "ms": 93.3,
+   "ms": 90.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9854,7 +9854,7 @@
   },
   {
    "name": "Z05 Fe(OH)3+HI 溶解氧化",
-   "ms": 31.6,
+   "ms": 28.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9868,7 +9868,7 @@
   },
   {
    "name": "Z06 CoS+盐酸 不溶",
-   "ms": 10.4,
+   "ms": 9.2,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -9882,7 +9882,7 @@
   },
   {
    "name": "Z07 MnS+醋酸 溶解",
-   "ms": 26.1,
+   "ms": 25.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -9896,7 +9896,7 @@
   },
   {
    "name": "Z08 Zn+AgNO3 置换",
-   "ms": 8.1,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9910,7 +9910,7 @@
   },
   {
    "name": "Z09 Mg+盐酸 放氢",
-   "ms": 10.8,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9924,7 +9924,7 @@
   },
   {
    "name": "Z10 Fe+Cl2水 到三价",
-   "ms": 5.2,
+   "ms": 5.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9938,7 +9938,7 @@
   },
   {
    "name": "Z11 FeCl3+Na2S 析硫",
-   "ms": 15.0,
+   "ms": 13.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9952,7 +9952,7 @@
   },
   {
    "name": "Z12 NaClO+HCl 放氯",
-   "ms": 52.9,
+   "ms": 49.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9966,7 +9966,7 @@
   },
   {
    "name": "Z13 Ca(ClO)2+浓盐酸 放氯",
-   "ms": 18.3,
+   "ms": 19.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9980,7 +9980,7 @@
   },
   {
    "name": "Z14 H2S+2NaOH 正盐",
-   "ms": 10.7,
+   "ms": 10.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -9994,7 +9994,7 @@
   },
   {
    "name": "Z15 H2S+NaOH 1:1 酸式盐",
-   "ms": 12.4,
+   "ms": 11.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10008,7 +10008,7 @@
   },
   {
    "name": "Z16 CaCl2+NaF 沉淀",
-   "ms": 9.5,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10022,7 +10022,7 @@
   },
   {
    "name": "Z18 NaNO2+KMnO4 酸 氧化",
-   "ms": 13.5,
+   "ms": 12.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10050,7 +10050,7 @@
   },
   {
    "name": "Z21 Cu+Hg(NO3)2 置换",
-   "ms": 188.4,
+   "ms": 181.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10064,7 +10064,7 @@
   },
   {
    "name": "Z22 Ba(OH)2+Na2SO4",
-   "ms": 10.2,
+   "ms": 9.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10078,7 +10078,7 @@
   },
   {
    "name": "Z23 H3PO4+NaOH 1:1",
-   "ms": 13.2,
+   "ms": 11.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10092,7 +10092,7 @@
   },
   {
    "name": "Z24 H3PO4+NaOH 1:2",
-   "ms": 16.0,
+   "ms": 14.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10106,7 +10106,7 @@
   },
   {
    "name": "Z25 H3PO4+NaOH 1:3",
-   "ms": 16.0,
+   "ms": 16.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10120,7 +10120,7 @@
   },
   {
    "name": "Z26 FeO+盐酸 溶解",
-   "ms": 6.9,
+   "ms": 7.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10134,7 +10134,7 @@
   },
   {
    "name": "Z27 MgO+盐酸 溶解",
-   "ms": 7.6,
+   "ms": 7.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10148,7 +10148,7 @@
   },
   {
    "name": "Z29 KAl(SO4)2+过量NaOH",
-   "ms": 4.5,
+   "ms": 4.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10162,7 +10162,7 @@
   },
   {
    "name": "Z30 Mg+FeSO4 置换",
-   "ms": 12.7,
+   "ms": 11.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10176,7 +10176,7 @@
   },
   {
    "name": "Z17 AgNO3+NaCN 等摩尔 归中沉淀",
-   "ms": 90.2,
+   "ms": 85.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10190,7 +10190,7 @@
   },
   {
    "name": "W01 CuSO4+Ba(OH)2 双沉淀(波尔多液)",
-   "ms": 19.1,
+   "ms": 16.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10204,7 +10204,7 @@
   },
   {
    "name": "W02 MnSO4+NaOH 白沉",
-   "ms": 11.1,
+   "ms": 10.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10218,7 +10218,7 @@
   },
   {
    "name": "W04 AgNO3+Na2S 黑沉",
-   "ms": 10.0,
+   "ms": 9.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10232,7 +10232,7 @@
   },
   {
    "name": "W05 Hg(NO3)2+Na2S 黑沉",
-   "ms": 10.0,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10246,7 +10246,7 @@
   },
   {
    "name": "W06 K2CrO4+BaCl2 黄沉",
-   "ms": 10.4,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10260,7 +10260,7 @@
   },
   {
    "name": "W07 Ag+FeCl3 氯化银拉动",
-   "ms": 14.7,
+   "ms": 14.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10274,7 +10274,7 @@
   },
   {
    "name": "W08 Fe+NaOH溶液 不反应",
-   "ms": 4.8,
+   "ms": 5.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10288,7 +10288,7 @@
   },
   {
    "name": "W09 Cu+NaOH溶液 不反应",
-   "ms": 5.1,
+   "ms": 5.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10302,7 +10302,7 @@
   },
   {
    "name": "W10 Zn(OH)2+浓氨水 溶解",
-   "ms": 45.7,
+   "ms": 42.7,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -10316,7 +10316,7 @@
   },
   {
    "name": "W11 FeCl3+KSCN 显色",
-   "ms": 169.8,
+   "ms": 171.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10330,7 +10330,7 @@
   },
   {
    "name": "W12 FeCl3+过量NaF 掩蔽",
-   "ms": 32.8,
+   "ms": 32.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10344,7 +10344,7 @@
   },
   {
    "name": "W13 AlCl3+过量NaF",
-   "ms": 66.2,
+   "ms": 64.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10358,7 +10358,7 @@
   },
   {
    "name": "W14 Hg(NO3)2+过量KI 溶解",
-   "ms": 16.4,
+   "ms": 16.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10372,7 +10372,7 @@
   },
   {
    "name": "W15 Hg(NO3)2+少量KI 红沉",
-   "ms": 13.6,
+   "ms": 12.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10386,7 +10386,7 @@
   },
   {
    "name": "W16 CdSO4+Na2S 黄沉",
-   "ms": 9.1,
+   "ms": 8.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10400,7 +10400,7 @@
   },
   {
    "name": "W17 Ca(HCO3)2+少量NaOH",
-   "ms": 60.1,
+   "ms": 55.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10414,7 +10414,7 @@
   },
   {
    "name": "W18 Ca(HCO3)2+过量NaOH",
-   "ms": 21.2,
+   "ms": 20.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10428,7 +10428,7 @@
   },
   {
    "name": "W19 Be(OH)2+NaOH 溶解",
-   "ms": 8.2,
+   "ms": 8.3,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -10442,7 +10442,7 @@
   },
   {
    "name": "W20 Ga(OH)3+NaOH 溶解",
-   "ms": 8.4,
+   "ms": 8.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10456,7 +10456,7 @@
   },
   {
    "name": "W21 HClO+NaOH 中和",
-   "ms": 8.6,
+   "ms": 8.5,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -10470,7 +10470,7 @@
   },
   {
    "name": "W22 HF+NaOH 中和",
-   "ms": 9.3,
+   "ms": 8.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10484,7 +10484,7 @@
   },
   {
    "name": "W23 FeSO4+Ba(OH)2 双沉淀",
-   "ms": 14.5,
+   "ms": 13.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10498,7 +10498,7 @@
   },
   {
    "name": "W24 MgSO4+Ba(OH)2 双沉淀",
-   "ms": 11.6,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10512,7 +10512,7 @@
   },
   {
    "name": "W25 Na+CuSO4溶液 先与水",
-   "ms": 14.2,
+   "ms": 13.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10526,7 +10526,7 @@
   },
   {
    "name": "W26 K+CuSO4溶液 先与水",
-   "ms": 15.1,
+   "ms": 14.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10540,7 +10540,7 @@
   },
   {
    "name": "W27 Ca+Na2CO3溶液",
-   "ms": 20.8,
+   "ms": 19.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10554,7 +10554,7 @@
   },
   {
    "name": "W28 Ba+稀硫酸",
-   "ms": 14.2,
+   "ms": 13.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10568,7 +10568,7 @@
   },
   {
    "name": "W29 ZnS+CuSO4 沉淀转化",
-   "ms": 9.0,
+   "ms": 7.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10582,7 +10582,7 @@
   },
   {
    "name": "W30 AgCl+Na2S 转化黑",
-   "ms": 9.1,
+   "ms": 8.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10610,7 +10610,7 @@
   },
   {
    "name": "W04 KMnO4+浓KOH 绿色锰酸钾",
-   "ms": 14.6,
+   "ms": 14.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10624,7 +10624,7 @@
   },
   {
    "name": "W05 KMnO4+稀KOH 不反应",
-   "ms": 7.9,
+   "ms": 7.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10638,7 +10638,7 @@
   },
   {
    "name": "W06 K2MnO4稀碱歧化",
-   "ms": 12.2,
+   "ms": 12.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -10652,7 +10652,7 @@
   },
   {
    "name": "W07 MnO2+Mn(OH)2 归中",
-   "ms": 10.0,
+   "ms": 9.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10666,7 +10666,7 @@
   },
   {
    "name": "V01 Fe+NaCl溶液(中性无O2) 不反应",
-   "ms": 9.3,
+   "ms": 9.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10680,7 +10680,7 @@
   },
   {
    "name": "V02 Zn+Na2SO4溶液 不反应",
-   "ms": 18.4,
+   "ms": 16.6,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -10694,7 +10694,7 @@
   },
   {
    "name": "V03 Cu+MgSO4 不反应",
-   "ms": 6.3,
+   "ms": 5.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10708,7 +10708,7 @@
   },
   {
    "name": "V04 Ag+CuSO4 不反应",
-   "ms": 5.8,
+   "ms": 5.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10722,7 +10722,7 @@
   },
   {
    "name": "V05 Cu+ZnSO4 不反应",
-   "ms": 5.5,
+   "ms": 4.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10736,7 +10736,7 @@
   },
   {
    "name": "V06 Zn+MgSO4 不反应",
-   "ms": 17.0,
+   "ms": 16.4,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -10750,7 +10750,7 @@
   },
   {
    "name": "V07 Na2CO3溶液水解(KCl旁观)",
-   "ms": 10.2,
+   "ms": 9.5,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -10792,7 +10792,7 @@
   },
   {
    "name": "V10 BaSO4+NaOH 不转化",
-   "ms": 8.3,
+   "ms": 8.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10806,7 +10806,7 @@
   },
   {
    "name": "V11 AgBr+稀硝酸 不溶",
-   "ms": 5.9,
+   "ms": 6.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10820,7 +10820,7 @@
   },
   {
    "name": "V12 CuS+NaOH 不反应",
-   "ms": 5.7,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10834,7 +10834,7 @@
   },
   {
    "name": "V14 H2S+NaCl 不反应",
-   "ms": 4.5,
+   "ms": 4.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10848,7 +10848,7 @@
   },
   {
    "name": "V15 CO2+NaCl 不反应",
-   "ms": 4.9,
+   "ms": 5.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10862,7 +10862,7 @@
   },
   {
    "name": "V16 SO2+CaCl2溶液 仅溶出不沉淀",
-   "ms": 10.9,
+   "ms": 10.8,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -10890,7 +10890,7 @@
   },
   {
    "name": "V18 NaOH+KCl 不反应",
-   "ms": 5.3,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10904,7 +10904,7 @@
   },
   {
    "name": "V19 Ag+NaOH 不反应",
-   "ms": 5.1,
+   "ms": 4.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10918,7 +10918,7 @@
   },
   {
    "name": "V20 Ag+FeCl2 不反应",
-   "ms": 5.8,
+   "ms": 6.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10932,7 +10932,7 @@
   },
   {
    "name": "V21 Cu+FeCl2 不反应",
-   "ms": 5.4,
+   "ms": 5.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10946,7 +10946,7 @@
   },
   {
    "name": "V22 CaCl2+KNO3 不反应",
-   "ms": 5.8,
+   "ms": 6.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -10960,7 +10960,7 @@
   },
   {
    "name": "V24 CaF2+浓硫酸 制HF",
-   "ms": 53.1,
+   "ms": 54.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10974,7 +10974,7 @@
   },
   {
    "name": "V25 Ca3(PO4)2+硫酸 制磷酸",
-   "ms": 147.7,
+   "ms": 142.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -10988,7 +10988,7 @@
   },
   {
    "name": "V26 NH4Cl+NaOH 常温 氨水",
-   "ms": 3.3,
+   "ms": 3.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11016,7 +11016,7 @@
   },
   {
    "name": "V28 Na2S2O3+AgBr(过量固体)",
-   "ms": 8.6,
+   "ms": 8.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -11030,7 +11030,7 @@
   },
   {
    "name": "V29 FeCl3+Cu 回收铜? no dup",
-   "ms": 9.4,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11044,7 +11044,7 @@
   },
   {
    "name": "V30 NaHCO3+Na2CO3? no",
-   "ms": 8.5,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11058,7 +11058,7 @@
   },
   {
    "name": "U01 Al2(SO4)3+适量NaOH 沉淀",
-   "ms": 133.2,
+   "ms": 131.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11072,7 +11072,7 @@
   },
   {
    "name": "U02 Al2(SO4)3+过量NaOH 溶解",
-   "ms": 14.3,
+   "ms": 13.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11086,7 +11086,7 @@
   },
   {
    "name": "U03 ZnCl2+Na2S 白沉",
-   "ms": 15.0,
+   "ms": 15.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11100,7 +11100,7 @@
   },
   {
    "name": "U04 FeCl3+Na2SO3 氧化还原",
-   "ms": 9.9,
+   "ms": 9.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11114,7 +11114,7 @@
   },
   {
    "name": "U06 NH4Cl+Ca(OH)2 加热制氨",
-   "ms": 15.9,
+   "ms": 15.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -11128,7 +11128,7 @@
   },
   {
    "name": "U07 Na2CO3+足量盐酸 放CO2",
-   "ms": 12.3,
+   "ms": 10.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11142,7 +11142,7 @@
   },
   {
    "name": "U08 K2CO3+盐酸 放CO2",
-   "ms": 16.3,
+   "ms": 14.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11156,7 +11156,7 @@
   },
   {
    "name": "U09 AgNO3+少量氨水 Ag2O 褐沉",
-   "ms": 42.0,
+   "ms": 38.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11170,7 +11170,7 @@
   },
   {
    "name": "U10 Cu+H2O2+盐酸 溶解",
-   "ms": 12.4,
+   "ms": 12.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11184,7 +11184,7 @@
   },
   {
    "name": "U11 Zn少量+FeCl3 到亚铁",
-   "ms": 13.7,
+   "ms": 12.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11198,7 +11198,7 @@
   },
   {
    "name": "U12 Na3PO4+CaCl2 白沉",
-   "ms": 2.7,
+   "ms": 2.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11212,7 +11212,7 @@
   },
   {
    "name": "Z28 Na2SiO3+CO2 硅酸凝胶",
-   "ms": 33.4,
+   "ms": 31.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11226,7 +11226,7 @@
   },
   {
    "name": "Z29 稀Na2SiO3+少量盐酸 不沉淀",
-   "ms": 8.3,
+   "ms": 7.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -11240,7 +11240,7 @@
   },
   {
    "name": "Z30 Na2SiO3+NH4Cl 双水解",
-   "ms": 20.9,
+   "ms": 19.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11254,7 +11254,7 @@
   },
   {
    "name": "Z31 Na2SiO3+半量盐酸 部分析胶",
-   "ms": 30.8,
+   "ms": 29.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -11268,7 +11268,7 @@
   },
   {
    "name": "V13 FeS+浓NaOH 不反应",
-   "ms": 18.0,
+   "ms": 14.8,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -11282,7 +11282,7 @@
   },
   {
    "name": "Z32 PbS+H2O2 氧化为PbSO4",
-   "ms": 21.3,
+   "ms": 18.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11296,7 +11296,7 @@
   },
   {
    "name": "Z33 CuS+稀硝酸 止于单质硫",
-   "ms": 17.9,
+   "ms": 15.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11310,7 +11310,7 @@
   },
   {
    "name": "Z34 Hg+S 室温化合",
-   "ms": 9.8,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11338,7 +11338,7 @@
   },
   {
    "name": "Z36 S+热浓NaOH 歧化",
-   "ms": 36.6,
+   "ms": 41.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11352,7 +11352,7 @@
   },
   {
    "name": "T01 TlCl+水溶解度",
-   "ms": 12.0,
+   "ms": 11.3,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -11366,7 +11366,7 @@
   },
   {
    "name": "T02 Tl_2SO_4+BaCl2 沉淀",
-   "ms": 13.2,
+   "ms": 12.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11394,7 +11394,7 @@
   },
   {
    "name": "T04 Tl_2CrO_4+水",
-   "ms": 15.0,
+   "ms": 13.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -11408,7 +11408,7 @@
   },
   {
    "name": "I31 InCl3+3NaOH",
-   "ms": 101.1,
+   "ms": 95.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11422,7 +11422,7 @@
   },
   {
    "name": "I32 InCl3+过量NaOH",
-   "ms": 8.0,
+   "ms": 7.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11436,7 +11436,7 @@
   },
   {
    "name": "I33 InCl3+氨水",
-   "ms": 51.6,
+   "ms": 50.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11450,7 +11450,7 @@
   },
   {
    "name": "P31 PdCl2+NaOH 沉淀",
-   "ms": 11.1,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11464,7 +11464,7 @@
   },
   {
    "name": "P32 PdCl2+过量KCN 溶解",
-   "ms": 12.4,
+   "ms": 12.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11478,7 +11478,7 @@
   },
   {
    "name": "C31 Ce(NO3)3+草酸",
-   "ms": 14.7,
+   "ms": 13.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11492,7 +11492,7 @@
   },
   {
    "name": "C32 Ce(SO4)2+FeSO4 氧化",
-   "ms": 14.2,
+   "ms": 13.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11506,7 +11506,7 @@
   },
   {
    "name": "C33 CeCl3+NaOH",
-   "ms": 9.3,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11520,7 +11520,7 @@
   },
   {
    "name": "L31 La(NO3)3+3NaOH",
-   "ms": 9.8,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11534,7 +11534,7 @@
   },
   {
    "name": "L32 LaCl3+NaF 沉淀",
-   "ms": 9.8,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11548,7 +11548,7 @@
   },
   {
    "name": "Z31 ZrCl4+水",
-   "ms": 9.2,
+   "ms": 8.2,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -11562,7 +11562,7 @@
   },
   {
    "name": "M31 Na2MoO4+水",
-   "ms": 5.5,
+   "ms": 4.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -11576,7 +11576,7 @@
   },
   {
    "name": "M32 Na2MoO4+Pb(NO3)2",
-   "ms": 92.2,
+   "ms": 87.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11590,7 +11590,7 @@
   },
   {
    "name": "W31 Na2WO4+水",
-   "ms": 5.5,
+   "ms": 5.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -11614,7 +11614,7 @@
   },
   {
    "name": "S31 SbCl3+水 水解",
-   "ms": 8.9,
+   "ms": 8.6,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -11628,7 +11628,7 @@
   },
   {
    "name": "S32 SbCl3+NaOH",
-   "ms": 59.5,
+   "ms": 63.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11642,7 +11642,7 @@
   },
   {
    "name": "Bi31 Bi(NO3)3+水",
-   "ms": 8.5,
+   "ms": 8.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -11656,7 +11656,7 @@
   },
   {
    "name": "Bi32 Bi(NO3)3+NaOH",
-   "ms": 8.9,
+   "ms": 8.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11670,7 +11670,7 @@
   },
   {
    "name": "Bi33 BiCl3+H2S",
-   "ms": 10.5,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11684,7 +11684,7 @@
   },
   {
    "name": "Te31 TeO2+NaOH",
-   "ms": 5.2,
+   "ms": 5.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -11698,7 +11698,7 @@
   },
   {
    "name": "X31 AgBr+过量NaCN",
-   "ms": 12.9,
+   "ms": 12.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11712,7 +11712,7 @@
   },
   {
    "name": "X32 AgBr+过量Na2S2O3",
-   "ms": 8.2,
+   "ms": 7.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11726,7 +11726,7 @@
   },
   {
    "name": "X33 AgCl+过量NaSCN",
-   "ms": 12.7,
+   "ms": 12.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11740,7 +11740,7 @@
   },
   {
    "name": "X34 AgCl+过量Na2SO3",
-   "ms": 14.4,
+   "ms": 13.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11754,7 +11754,7 @@
   },
   {
    "name": "Cu31 CuSO4+NaCl+Cu 还原",
-   "ms": 136.9,
+   "ms": 132.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11768,7 +11768,7 @@
   },
   {
    "name": "Cu32 CuSO4+NaCN",
-   "ms": 16.5,
+   "ms": 14.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11782,7 +11782,7 @@
   },
   {
    "name": "Cu33 CuSO4+过量KCN 溶解",
-   "ms": 16.5,
+   "ms": 13.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11796,7 +11796,7 @@
   },
   {
    "name": "Cu34 CuSO4+NaSCN",
-   "ms": 6.4,
+   "ms": 5.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -11810,7 +11810,7 @@
   },
   {
    "name": "Hg31 Hg(NO3)2+过量KCN",
-   "ms": 14.6,
+   "ms": 13.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11824,7 +11824,7 @@
   },
   {
    "name": "Hg32 HgCl2+过量KI",
-   "ms": 10.8,
+   "ms": 10.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11838,7 +11838,7 @@
   },
   {
    "name": "Fe31 FeCl3+KSCN 显色",
-   "ms": 169.0,
+   "ms": 163.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11852,7 +11852,7 @@
   },
   {
    "name": "Fe32 Fe2(SO4)3+NaF",
-   "ms": 32.8,
+   "ms": 31.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11866,7 +11866,7 @@
   },
   {
    "name": "Co31 CoCl2+过量KCN",
-   "ms": 95.9,
+   "ms": 90.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11880,7 +11880,7 @@
   },
   {
    "name": "Co32 CoCl2+过量NH3",
-   "ms": 57.4,
+   "ms": 56.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11894,7 +11894,7 @@
   },
   {
    "name": "Pt31 K2PtCl6+KCl 沉淀",
-   "ms": 9.0,
+   "ms": 8.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -11908,7 +11908,7 @@
   },
   {
    "name": "Cr31 CrCl3+过量NH3",
-   "ms": 25.2,
+   "ms": 25.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11922,7 +11922,7 @@
   },
   {
    "name": "Bi34 BiCl3+过量HCl",
-   "ms": 7.9,
+   "ms": 7.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11936,7 +11936,7 @@
   },
   {
    "name": "HIO HIO3+NaOH",
-   "ms": 8.8,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11950,7 +11950,7 @@
   },
   {
    "name": "HIO2 HIO3+KI",
-   "ms": 18.1,
+   "ms": 18.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11978,7 +11978,7 @@
   },
   {
    "name": "HClO3 HClO3+NaOH",
-   "ms": 5.3,
+   "ms": 5.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -11992,7 +11992,7 @@
   },
   {
    "name": "HBrO3 HBrO3+NaOH",
-   "ms": 5.5,
+   "ms": 5.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12006,7 +12006,7 @@
   },
   {
    "name": "Se31 H2SeO3+NaOH",
-   "ms": 19.0,
+   "ms": 18.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12020,7 +12020,7 @@
   },
   {
    "name": "Se32 H2SeO3+2NaOH",
-   "ms": 12.0,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12034,7 +12034,7 @@
   },
   {
    "name": "Se33 H2SeO4+Cu",
-   "ms": 37.3,
+   "ms": 36.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12048,7 +12048,7 @@
   },
   {
    "name": "Te32 H2TeO3+2NaOH",
-   "ms": 11.3,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12062,7 +12062,7 @@
   },
   {
    "name": "Te33 H5IO6 NaOH",
-   "ms": 8.7,
+   "ms": 8.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12076,7 +12076,7 @@
   },
   {
    "name": "V31 NaVO3+H+->VO2+",
-   "ms": 25.7,
+   "ms": 24.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -12090,7 +12090,7 @@
   },
   {
    "name": "V32 NH4VO3+水",
-   "ms": 19.5,
+   "ms": 19.0,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -12104,7 +12104,7 @@
   },
   {
    "name": "M33 Na2MoO4+BaCl2",
-   "ms": 9.4,
+   "ms": 9.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12118,7 +12118,7 @@
   },
   {
    "name": "W33 Na2WO4+BaCl2",
-   "ms": 13.7,
+   "ms": 13.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12132,7 +12132,7 @@
   },
   {
    "name": "Ge31 GeO2+HCl",
-   "ms": 4.2,
+   "ms": 3.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -12146,7 +12146,7 @@
   },
   {
    "name": "As31 AsCl3+H2S",
-   "ms": 7.0,
+   "ms": 7.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12160,7 +12160,7 @@
   },
   {
    "name": "Sb31 SbCl3+H2S",
-   "ms": 8.0,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12174,7 +12174,7 @@
   },
   {
    "name": "Bi35 Bi(NO3)3+H2S",
-   "ms": 112.6,
+   "ms": 107.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12188,7 +12188,7 @@
   },
   {
    "name": "Co41 CoCl2+NaHCO3",
-   "ms": 68.6,
+   "ms": 66.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12202,7 +12202,7 @@
   },
   {
    "name": "Ni41 NiCl2+NaHCO3",
-   "ms": 231.5,
+   "ms": 220.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12216,7 +12216,7 @@
   },
   {
    "name": "Cd41 CdCl2+Na2CO3",
-   "ms": 40.9,
+   "ms": 38.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12230,7 +12230,7 @@
   },
   {
    "name": "Zn31 ZnCl2+2KCN",
-   "ms": 144.0,
+   "ms": 138.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12244,7 +12244,7 @@
   },
   {
    "name": "Zn32 Zn(CN)2+过量KCN",
-   "ms": 12.0,
+   "ms": 12.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12258,7 +12258,7 @@
   },
   {
    "name": "Cd31 CdCl2+过量KCN",
-   "ms": 13.0,
+   "ms": 12.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12272,7 +12272,7 @@
   },
   {
    "name": "Ni31 NiCl2+过量KCN",
-   "ms": 13.1,
+   "ms": 13.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12286,7 +12286,7 @@
   },
   {
    "name": "Pb31 Pb(NO3)2+过量NaOH",
-   "ms": 15.3,
+   "ms": 17.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12314,7 +12314,7 @@
   },
   {
    "name": "Ag32 AgNO3+氨水 1:2",
-   "ms": 44.3,
+   "ms": 44.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12328,7 +12328,7 @@
   },
   {
    "name": "Fe33 FeCl3+3KSCN",
-   "ms": 7.3,
+   "ms": 7.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12370,7 +12370,7 @@
   },
   {
    "name": "Ni32 NiCl2+过量氨水",
-   "ms": 26.6,
+   "ms": 25.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12384,7 +12384,7 @@
   },
   {
    "name": "Cd32 CdCl2+过量氨水",
-   "ms": 40.2,
+   "ms": 39.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12398,7 +12398,7 @@
   },
   {
    "name": "Co33 CoCl2+过量氨水",
-   "ms": 56.8,
+   "ms": 56.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12412,7 +12412,7 @@
   },
   {
    "name": "Hg33 HgCl2+2NH3",
-   "ms": 25.1,
+   "ms": 25.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12426,7 +12426,7 @@
   },
   {
    "name": "Hg34 Hg(NO3)2+过量KSCN",
-   "ms": 10.3,
+   "ms": 10.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12440,7 +12440,7 @@
   },
   {
    "name": "Hg2_1 Hg2(NO3)2+2HCl",
-   "ms": 328.2,
+   "ms": 333.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12454,7 +12454,7 @@
   },
   {
    "name": "Pt32 KCl+H2PtCl6",
-   "ms": 9.0,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12468,7 +12468,7 @@
   },
   {
    "name": "Pt33 K2PtCl4+BaCl2",
-   "ms": 10.7,
+   "ms": 10.5,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -12482,7 +12482,7 @@
   },
   {
    "name": "N31 SrCl2+Na2SO4",
-   "ms": 10.7,
+   "ms": 9.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12496,7 +12496,7 @@
   },
   {
    "name": "N32 MgCl2+NaF",
-   "ms": 9.7,
+   "ms": 10.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12510,7 +12510,7 @@
   },
   {
    "name": "N33 MnCl2+Na2C2O4",
-   "ms": 12.2,
+   "ms": 10.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12524,7 +12524,7 @@
   },
   {
    "name": "N34 ZnCl2+Na2C2O4",
-   "ms": 166.8,
+   "ms": 162.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12552,7 +12552,7 @@
   },
   {
    "name": "N36 CaCl2+Na2SO3",
-   "ms": 21.0,
+   "ms": 20.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12566,7 +12566,7 @@
   },
   {
    "name": "N37 MgCl2+NaF(少量)",
-   "ms": 9.8,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12580,7 +12580,7 @@
   },
   {
    "name": "P31 MgCl2+Na3PO4",
-   "ms": 26.4,
+   "ms": 24.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12594,7 +12594,7 @@
   },
   {
    "name": "P32 Pb(NO3)2+Na3PO4",
-   "ms": 10.5,
+   "ms": 9.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12608,7 +12608,7 @@
   },
   {
    "name": "Pt34 K2PtCl6+还原为K2PtCl4",
-   "ms": 20.9,
+   "ms": 19.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12622,7 +12622,7 @@
   },
   {
    "name": "As32 As2O3+NaOH",
-   "ms": 4.7,
+   "ms": 4.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -12636,7 +12636,7 @@
   },
   {
    "name": "As33 As2O3+HCl",
-   "ms": 4.1,
+   "ms": 4.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -12650,7 +12650,7 @@
   },
   {
    "name": "T05 TlNO3+K2CrO4",
-   "ms": 14.6,
+   "ms": 14.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12664,7 +12664,7 @@
   },
   {
    "name": "V33 NH4VO3+H2O2+酸",
-   "ms": 27.3,
+   "ms": 26.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12678,7 +12678,7 @@
   },
   {
    "name": "X41 AgBr+过量KBr 溶解",
-   "ms": 8.8,
+   "ms": 9.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -12720,7 +12720,7 @@
   },
   {
    "name": "Zn33 Zn(OH)2+过量NaOH 溶解",
-   "ms": 7.9,
+   "ms": 8.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12734,7 +12734,7 @@
   },
   {
    "name": "Cd33 Cd(OH)2+过量KCN",
-   "ms": 8.8,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12748,7 +12748,7 @@
   },
   {
    "name": "Hg35 HgI2+过量KI 溶解",
-   "ms": 8.0,
+   "ms": 8.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12762,7 +12762,7 @@
   },
   {
    "name": "Amp1 Zn(OH)2+HCl",
-   "ms": 32.7,
+   "ms": 32.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12776,7 +12776,7 @@
   },
   {
    "name": "Amp2 Zn(OH)2+NaOH",
-   "ms": 7.9,
+   "ms": 7.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12790,7 +12790,7 @@
   },
   {
    "name": "Amp3 Al(OH)3+HCl",
-   "ms": 9.5,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12804,7 +12804,7 @@
   },
   {
    "name": "Amp4 Al(OH)3+NaOH",
-   "ms": 7.7,
+   "ms": 7.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12818,7 +12818,7 @@
   },
   {
    "name": "Amp5 Cr(OH)3+HCl",
-   "ms": 1.9,
+   "ms": 2.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12846,7 +12846,7 @@
   },
   {
    "name": "Amp7 Be(OH)2+HCl",
-   "ms": 7.6,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12860,7 +12860,7 @@
   },
   {
    "name": "Amp8 Be(OH)2+过量NaOH",
-   "ms": 8.1,
+   "ms": 8.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -12874,7 +12874,7 @@
   },
   {
    "name": "Amp9 Ga(OH)3+HCl",
-   "ms": 9.4,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12888,7 +12888,7 @@
   },
   {
    "name": "Amp10 Ga(OH)3+NaOH",
-   "ms": 7.2,
+   "ms": 7.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12902,7 +12902,7 @@
   },
   {
    "name": "Amp11 Pb(OH)2+HCl",
-   "ms": 63.6,
+   "ms": 62.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -12916,7 +12916,7 @@
   },
   {
    "name": "Amp12 Pb(OH)2+过量NaOH",
-   "ms": 11.7,
+   "ms": 11.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -12930,7 +12930,7 @@
   },
   {
    "name": "Hyd1 FeCl3 水解",
-   "ms": 9.8,
+   "ms": 9.1,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -12958,7 +12958,7 @@
   },
   {
    "name": "Hyd3 CrCl3 水解",
-   "ms": 6.9,
+   "ms": 7.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -12972,7 +12972,7 @@
   },
   {
    "name": "Hyd4 BiCl3+水 水解",
-   "ms": 13.2,
+   "ms": 11.9,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -12986,7 +12986,7 @@
   },
   {
    "name": "Hyd5 SbCl3+水 水解",
-   "ms": 8.3,
+   "ms": 7.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -13000,7 +13000,7 @@
   },
   {
    "name": "Hyd6 SnCl2+水 水解",
-   "ms": 9.7,
+   "ms": 9.1,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -13014,7 +13014,7 @@
   },
   {
    "name": "We1 H2SO3 弱酸",
-   "ms": 4.1,
+   "ms": 3.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13028,7 +13028,7 @@
   },
   {
    "name": "We2 HNO2 弱酸",
-   "ms": 14.9,
+   "ms": 13.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13042,7 +13042,7 @@
   },
   {
    "name": "We3 HCOOH 弱酸",
-   "ms": 8.3,
+   "ms": 8.1,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -13056,7 +13056,7 @@
   },
   {
    "name": "We4 苯酚 酸性",
-   "ms": 8.3,
+   "ms": 8.0,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -13070,7 +13070,7 @@
   },
   {
    "name": "We5 HClO 弱酸",
-   "ms": 9.3,
+   "ms": 8.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13084,7 +13084,7 @@
   },
   {
    "name": "We6 HCN 弱酸",
-   "ms": 4.6,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13098,7 +13098,7 @@
   },
   {
    "name": "We7 H2O2 弱酸",
-   "ms": 4.6,
+   "ms": 4.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13112,7 +13112,7 @@
   },
   {
    "name": "We8 H3BO3 弱酸",
-   "ms": 4.8,
+   "ms": 4.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13126,7 +13126,7 @@
   },
   {
    "name": "SH1 NH4Cl 水解",
-   "ms": 1.3,
+   "ms": 1.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13140,7 +13140,7 @@
   },
   {
    "name": "SH2 NaAc 水解",
-   "ms": 1.5,
+   "ms": 1.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13154,7 +13154,7 @@
   },
   {
    "name": "SH3 Na2CO3 水解",
-   "ms": 8.6,
+   "ms": 8.4,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -13168,7 +13168,7 @@
   },
   {
    "name": "SH4 NaHCO3 水解",
-   "ms": 28.8,
+   "ms": 26.8,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -13182,7 +13182,7 @@
   },
   {
    "name": "SH5 Na2S 水解",
-   "ms": 1.9,
+   "ms": 1.6,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -13196,7 +13196,7 @@
   },
   {
    "name": "SH6 NaHS 水解",
-   "ms": 5.3,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13210,7 +13210,7 @@
   },
   {
    "name": "SH7 Na3PO4 水解",
-   "ms": 8.7,
+   "ms": 8.5,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -13224,7 +13224,7 @@
   },
   {
    "name": "SH8 CuSO4 水解",
-   "ms": 5.1,
+   "ms": 4.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13238,7 +13238,7 @@
   },
   {
    "name": "Sf1 CuSO4+H2S",
-   "ms": 1.3,
+   "ms": 1.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13252,7 +13252,7 @@
   },
   {
    "name": "Sf2 ZnSO4+H2S 中性",
-   "ms": 3.4,
+   "ms": 3.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -13266,7 +13266,7 @@
   },
   {
    "name": "Sf4 FeSO4+H2S",
-   "ms": 15.8,
+   "ms": 14.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -13280,7 +13280,7 @@
   },
   {
    "name": "Sf5 CdSO4+H2S",
-   "ms": 8.3,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13294,7 +13294,7 @@
   },
   {
    "name": "Sf7 HgCl2+H2S",
-   "ms": 7.9,
+   "ms": 8.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13308,7 +13308,7 @@
   },
   {
    "name": "H1 Cl2+NaBr 置换",
-   "ms": 23.3,
+   "ms": 24.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13322,7 +13322,7 @@
   },
   {
    "name": "H2 Br2+NaI 置换",
-   "ms": 23.0,
+   "ms": 21.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13336,7 +13336,7 @@
   },
   {
    "name": "H3 Cl2+NaI 置换",
-   "ms": 14.0,
+   "ms": 13.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13350,7 +13350,7 @@
   },
   {
    "name": "AS1 NaHSO4+NaOH",
-   "ms": 4.7,
+   "ms": 4.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13364,7 +13364,7 @@
   },
   {
    "name": "AS2 NaH2PO4+NaOH",
-   "ms": 13.6,
+   "ms": 13.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13378,7 +13378,7 @@
   },
   {
    "name": "AS3 Na2HPO4+HCl",
-   "ms": 5.7,
+   "ms": 5.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13392,7 +13392,7 @@
   },
   {
    "name": "AS4 NaHCO3+HCl",
-   "ms": 4.8,
+   "ms": 4.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13434,7 +13434,7 @@
   },
   {
    "name": "DR1 AgNO3+NaBr",
-   "ms": 18.3,
+   "ms": 19.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13448,7 +13448,7 @@
   },
   {
    "name": "DR2 AgNO3+NaI",
-   "ms": 18.2,
+   "ms": 14.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13462,7 +13462,7 @@
   },
   {
    "name": "DR3 BaCl2+Na2CO3",
-   "ms": 26.6,
+   "ms": 25.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13476,7 +13476,7 @@
   },
   {
    "name": "DR4 CaCl2+Na2CO3",
-   "ms": 8.8,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13490,7 +13490,7 @@
   },
   {
    "name": "DR5 SrCl2+Na2CO3",
-   "ms": 26.2,
+   "ms": 24.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13504,7 +13504,7 @@
   },
   {
    "name": "DR6 MgCl2+Na2CO3",
-   "ms": 80.3,
+   "ms": 77.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13518,7 +13518,7 @@
   },
   {
    "name": "DR7 BaCl2+K2CrO4",
-   "ms": 10.1,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13532,7 +13532,7 @@
   },
   {
    "name": "DR8 Pb(NO3)2+K2CrO4",
-   "ms": 57.9,
+   "ms": 54.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13546,7 +13546,7 @@
   },
   {
    "name": "pH1 HCl 0.1M",
-   "ms": 4.7,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13560,7 +13560,7 @@
   },
   {
    "name": "pH2 HCl 0.01M",
-   "ms": 4.2,
+   "ms": 3.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13574,7 +13574,7 @@
   },
   {
    "name": "pH3 NaOH 0.1M",
-   "ms": 4.7,
+   "ms": 4.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13588,7 +13588,7 @@
   },
   {
    "name": "pH4 NaOH 0.01M",
-   "ms": 4.7,
+   "ms": 4.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -13602,7 +13602,7 @@
   },
   {
    "name": "pH5 CH3COOH 0.1M",
-   "ms": 7.5,
+   "ms": 7.2,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -13630,7 +13630,7 @@
   },
   {
    "name": "DR9 AgNO3+Na2S2O3",
-   "ms": 13.3,
+   "ms": 12.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13644,7 +13644,7 @@
   },
   {
    "name": "DR10 FeCl3+Na2S2O3 还原",
-   "ms": 9.5,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13658,7 +13658,7 @@
   },
   {
    "name": "DR11 AgNO3+HCl(过量)",
-   "ms": 11.7,
+   "ms": 11.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13672,7 +13672,7 @@
   },
   {
    "name": "DR12 BaCl2+H2SO4(过量)",
-   "ms": 8.2,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13686,7 +13686,7 @@
   },
   {
    "name": "Amp13 SnCl2+NaOH 沉淀",
-   "ms": 41.2,
+   "ms": 38.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13700,7 +13700,7 @@
   },
   {
    "name": "Amp14 AlCl3+少量NaOH",
-   "ms": 4.3,
+   "ms": 4.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -13714,7 +13714,7 @@
   },
   {
    "name": "Amp15 CrCl3+少量NaOH",
-   "ms": 10.7,
+   "ms": 10.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -13728,7 +13728,7 @@
   },
   {
    "name": "Hi1 AgNO3+NaCl(过量)",
-   "ms": 10.1,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13742,7 +13742,7 @@
   },
   {
    "name": "Hi2 AgNO3+NaBr(过量)",
-   "ms": 12.4,
+   "ms": 12.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13756,7 +13756,7 @@
   },
   {
    "name": "Hi3 AgNO3+NaI(过量)",
-   "ms": 11.7,
+   "ms": 11.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13770,7 +13770,7 @@
   },
   {
    "name": "Hi4 AgCl+氨水 溶解",
-   "ms": 24.4,
+   "ms": 23.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -13784,7 +13784,7 @@
   },
   {
    "name": "Hi5 AgBr+氨水 部分溶解",
-   "ms": 7.6,
+   "ms": 8.0,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -13798,7 +13798,7 @@
   },
   {
    "name": "MA1 Zn+HCl(过量)",
-   "ms": 45.5,
+   "ms": 43.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13812,7 +13812,7 @@
   },
   {
    "name": "MA2 Fe+HCl(过量)",
-   "ms": 1.0,
+   "ms": 1.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13826,7 +13826,7 @@
   },
   {
    "name": "MA3 Mg+HCl(过量)",
-   "ms": 9.1,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13868,7 +13868,7 @@
   },
   {
    "name": "RX1 FeCl3+Cu(过量)",
-   "ms": 2.7,
+   "ms": 3.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13882,7 +13882,7 @@
   },
   {
    "name": "RX2 FeCl3+Fe(过量)",
-   "ms": 0.9,
+   "ms": 1.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13896,7 +13896,7 @@
   },
   {
    "name": "RX3 Cl2+FeCl2",
-   "ms": 3.5,
+   "ms": 3.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13910,7 +13910,7 @@
   },
   {
    "name": "RX4 Cl2+NaI+CCl4 萃取",
-   "ms": 12.7,
+   "ms": 12.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13924,7 +13924,7 @@
   },
   {
    "name": "DR13 Na2CO3+CaCl2",
-   "ms": 8.3,
+   "ms": 8.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13938,7 +13938,7 @@
   },
   {
    "name": "DR14 Na2CO3+MgCl2",
-   "ms": 79.5,
+   "ms": 75.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13952,7 +13952,7 @@
   },
   {
    "name": "DR15 K2CrO4+Pb(NO3)2",
-   "ms": 58.5,
+   "ms": 54.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13966,7 +13966,7 @@
   },
   {
    "name": "DR16 AgNO3+Na3PO4",
-   "ms": 54.6,
+   "ms": 53.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13980,7 +13980,7 @@
   },
   {
    "name": "DR17 AgNO3+Na2HPO4",
-   "ms": 94.1,
+   "ms": 88.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -13994,7 +13994,7 @@
   },
   {
    "name": "DR18 BaCl2+AgNO3",
-   "ms": 19.0,
+   "ms": 18.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14008,7 +14008,7 @@
   },
   {
    "name": "RE01 NdCl3+3NaOH 沉淀",
-   "ms": 9.4,
+   "ms": 9.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14022,7 +14022,7 @@
   },
   {
    "name": "RE02 Gd(NO3)3+氨水 沉淀",
-   "ms": 9.9,
+   "ms": 9.4,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14050,7 +14050,7 @@
   },
   {
    "name": "RE04 DyCl3+NaF 沉淀",
-   "ms": 9.3,
+   "ms": 9.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14064,7 +14064,7 @@
   },
   {
    "name": "RE05 Lu(NO3)3+草酸钠 沉淀",
-   "ms": 9.9,
+   "ms": 10.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14078,7 +14078,7 @@
   },
   {
    "name": "RE06 YCl3+磷酸钠 沉淀",
-   "ms": 8.4,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14092,7 +14092,7 @@
   },
   {
    "name": "RE07 Nd草酸盐耐稀盐酸",
-   "ms": 15.9,
+   "ms": 15.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14106,7 +14106,7 @@
   },
   {
    "name": "RE08 Y(OH)3+过量NaOH 不溶",
-   "ms": 5.3,
+   "ms": 5.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14120,7 +14120,7 @@
   },
   {
    "name": "RE09 SmCl3+NaF 沉淀",
-   "ms": 10.0,
+   "ms": 10.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14134,7 +14134,7 @@
   },
   {
    "name": "RE10 Ho(NO3)3+NaOH 沉淀",
-   "ms": 10.0,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14148,7 +14148,7 @@
   },
   {
    "name": "RE11 ErCl3+氨水 沉淀",
-   "ms": 11.2,
+   "ms": 11.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14162,7 +14162,7 @@
   },
   {
    "name": "RE12 Pr(OH)3+盐酸 溶解",
-   "ms": 7.8,
+   "ms": 7.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14176,7 +14176,7 @@
   },
   {
    "name": "RE13 LaCl3+磷酸钠 沉淀",
-   "ms": 8.7,
+   "ms": 8.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14190,7 +14190,7 @@
   },
   {
    "name": "RE14 ScCl3+NaOH 沉淀(对照)",
-   "ms": 8.3,
+   "ms": 8.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14204,7 +14204,7 @@
   },
   {
    "name": "RE15 Nd+冷水 缓慢放氢",
-   "ms": 12.9,
+   "ms": 13.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14218,7 +14218,7 @@
   },
   {
    "name": "RE16 Yb+水 放氢",
-   "ms": 14.1,
+   "ms": 14.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14232,7 +14232,7 @@
   },
   {
    "name": "RE17 Nd+盐酸 溶解放氢",
-   "ms": 9.7,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14246,7 +14246,7 @@
   },
   {
    "name": "RE18 Lu2(SO4)3 电离入账",
-   "ms": 8.8,
+   "ms": 8.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14260,7 +14260,7 @@
   },
   {
    "name": "RE19 Tb(NO3)4 兜底电离(Tb IV)",
-   "ms": 5.4,
+   "ms": 5.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14274,7 +14274,7 @@
   },
   {
    "name": "RE20 Ce2(C2O4)3 草酸铈(IV价态对照略)",
-   "ms": 9.5,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14288,7 +14288,7 @@
   },
   {
    "name": "EU01 Zn+Eu(NO3)3 还原",
-   "ms": 31.4,
+   "ms": 30.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14302,7 +14302,7 @@
   },
   {
    "name": "EU02 Eu2+ 纯水缓氧化",
-   "ms": 10.0,
+   "ms": 10.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14316,7 +14316,7 @@
   },
   {
    "name": "EU03 EuCl2+O2 空气氧化",
-   "ms": 32.2,
+   "ms": 31.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14330,7 +14330,7 @@
   },
   {
    "name": "EU04 Zn+Sm(NO3)3 不还原",
-   "ms": 29.7,
+   "ms": 29.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14344,7 +14344,7 @@
   },
   {
    "name": "EU05 EuCl2+盐酸 放氢氧化",
-   "ms": 11.7,
+   "ms": 11.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14358,7 +14358,7 @@
   },
   {
    "name": "EU06 硫酸铈+FeSO4 铈量法",
-   "ms": 12.3,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14372,7 +14372,7 @@
   },
   {
    "name": "UO01 U+稀盐酸 溶解放氢",
-   "ms": 12.2,
+   "ms": 11.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14386,7 +14386,7 @@
   },
   {
    "name": "UO02 U+稀硝酸 溶解为铀酰",
-   "ms": 14.7,
+   "ms": 15.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14400,7 +14400,7 @@
   },
   {
    "name": "UO03 UO2SO4 电离",
-   "ms": 5.7,
+   "ms": 5.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14414,7 +14414,7 @@
   },
   {
    "name": "PG01 Rh(NO3)3+NaOH 沉淀",
-   "ms": 10.1,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14428,7 +14428,7 @@
   },
   {
    "name": "PG02 Rh+浓硝酸 钝化",
-   "ms": 4.5,
+   "ms": 4.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14442,7 +14442,7 @@
   },
   {
    "name": "PG03 Ir+浓硝酸 耐蚀",
-   "ms": 4.6,
+   "ms": 4.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14456,7 +14456,7 @@
   },
   {
    "name": "PG04 Ru(NO3)3+NaOH 沉淀",
-   "ms": 10.2,
+   "ms": 9.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14470,7 +14470,7 @@
   },
   {
    "name": "PG05 Rh(OH)3+盐酸 溶解",
-   "ms": 9.6,
+   "ms": 9.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14484,7 +14484,7 @@
   },
   {
    "name": "PG06 Rh3+盐溶液近中性(弱水解)",
-   "ms": 9.2,
+   "ms": 8.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14498,7 +14498,7 @@
   },
   {
    "name": "PG07 Hf+王水 钝化",
-   "ms": 5.0,
+   "ms": 4.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14512,7 +14512,7 @@
   },
   {
    "name": "RA01 RaCl2+Na2SO4 沉淀",
-   "ms": 9.5,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14526,7 +14526,7 @@
   },
   {
    "name": "RA02 RaCl2+Na2CO3 沉淀",
-   "ms": 27.6,
+   "ms": 26.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14540,7 +14540,7 @@
   },
   {
    "name": "RA03 Ra+水 放氢",
-   "ms": 9.9,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14554,7 +14554,7 @@
   },
   {
    "name": "HF01 HfCl4 水解沉淀",
-   "ms": 9.8,
+   "ms": 8.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14568,7 +14568,7 @@
   },
   {
    "name": "HF02 Hf(OH)4+KF+盐酸 氟配溶解",
-   "ms": 19.6,
+   "ms": 17.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14582,7 +14582,7 @@
   },
   {
    "name": "HF03 Zr(OH)4+KF+盐酸 氟配溶解",
-   "ms": 17.5,
+   "ms": 17.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14596,7 +14596,7 @@
   },
   {
    "name": "HF04 Th+水 钝化不反应",
-   "ms": 4.0,
+   "ms": 3.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14610,7 +14610,7 @@
   },
   {
    "name": "HF05 Zr+水 钝化不反应",
-   "ms": 4.0,
+   "ms": 3.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14624,7 +14624,7 @@
   },
   {
    "name": "KIN01 S+NaOH 常温不反应",
-   "ms": 0.9,
+   "ms": 0.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14638,7 +14638,7 @@
   },
   {
    "name": "KIN02 S+NaOH 热(373K) 歧化",
-   "ms": 22.0,
+   "ms": 21.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14652,7 +14652,7 @@
   },
   {
    "name": "KIN03 H2+FeCl3 常温不还原",
-   "ms": 12.0,
+   "ms": 12.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14666,7 +14666,7 @@
   },
   {
    "name": "KIN04 Zn+中性NaNO3 不还原硝酸根",
-   "ms": 19.2,
+   "ms": 18.8,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14680,7 +14680,7 @@
   },
   {
    "name": "KIN05 K2S2O8+KI 时钟反应(慢)",
-   "ms": 14.2,
+   "ms": 13.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14694,7 +14694,7 @@
   },
   {
    "name": "KIN06 O2+FeSO4 中性缓氧化",
-   "ms": 30.0,
+   "ms": 28.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14708,7 +14708,7 @@
   },
   {
    "name": "KIN07 ClO-+Cl-+酸 产氯气",
-   "ms": 19.4,
+   "ms": 18.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14722,7 +14722,7 @@
   },
   {
    "name": "KIN08 Ta+HF+硝酸 耐蚀",
-   "ms": 9.2,
+   "ms": 8.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14736,7 +14736,7 @@
   },
   {
    "name": "KIN09 KMnO4+草酸 室温慢",
-   "ms": 20.4,
+   "ms": 20.3,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -14750,7 +14750,7 @@
   },
   {
    "name": "KIN10 Zn+纯水 痕量(膜抑制)",
-   "ms": 14.9,
+   "ms": 14.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14764,7 +14764,7 @@
   },
   {
    "name": "KIN11 CuS+稀硝酸加热 溶解",
-   "ms": 21.3,
+   "ms": 19.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14778,7 +14778,7 @@
   },
   {
    "name": "KIN12 银器变黑(H2S+O2 慢)",
-   "ms": 54.5,
+   "ms": 51.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14792,7 +14792,7 @@
   },
   {
    "name": "KIN13 次氯酸光照分解(无热力学通道)",
-   "ms": 7.6,
+   "ms": 7.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14806,7 +14806,7 @@
   },
   {
    "name": "KIN14 亚硝酸钠+KI 酸性(慢)",
-   "ms": 71.8,
+   "ms": 73.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14820,7 +14820,7 @@
   },
   {
    "name": "ION01 垃圾式ZzCl2 为unknown",
-   "ms": 4.3,
+   "ms": 4.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14862,7 +14862,7 @@
   },
   {
    "name": "ION04 直喂Y3+ +NaOH",
-   "ms": 8.5,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14876,7 +14876,7 @@
   },
   {
    "name": "ION05 Gd2(SO4)3+NaOH 兜底+沉淀",
-   "ms": 9.4,
+   "ms": 9.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14890,7 +14890,7 @@
   },
   {
    "name": "ION06 TbCl3(固) 溶解度极小但不拒",
-   "ms": 9.1,
+   "ms": 8.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14904,7 +14904,7 @@
   },
   {
    "name": "ION07 K2HgI4 电离(复盐)",
-   "ms": 12.5,
+   "ms": 12.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -14918,7 +14918,7 @@
   },
   {
    "name": "PH01 HCN 0.1M pH",
-   "ms": 4.3,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14932,7 +14932,7 @@
   },
   {
    "name": "PH02 NaCN 水解碱性",
-   "ms": 9.9,
+   "ms": 9.8,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -14946,7 +14946,7 @@
   },
   {
    "name": "PH03 NaCN+HCl 生成HCN",
-   "ms": 10.2,
+   "ms": 9.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -14960,7 +14960,7 @@
   },
   {
    "name": "PH04 HAc+NaAc 缓冲液pH",
-   "ms": 6.5,
+   "ms": 5.6,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14974,7 +14974,7 @@
   },
   {
    "name": "PH05 H2S 饱和液pH",
-   "ms": 7.9,
+   "ms": 7.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -14988,7 +14988,7 @@
   },
   {
    "name": "PH07 纯水0°C(273K) pH",
-   "ms": 7.7,
+   "ms": 7.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15002,7 +15002,7 @@
   },
   {
    "name": "PH08 纯水50°C(323K) pH",
-   "ms": 7.0,
+   "ms": 6.2,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15016,7 +15016,7 @@
   },
   {
    "name": "PH09 NH3+HCl 等摩尔时pH",
-   "ms": 4.0,
+   "ms": 3.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15030,7 +15030,7 @@
   },
   {
    "name": "PC01 AgNO3+草酸钠 沉淀",
-   "ms": 10.4,
+   "ms": 10.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15044,7 +15044,7 @@
   },
   {
    "name": "PC02 Rb2O+水 化合",
-   "ms": 7.0,
+   "ms": 6.9,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -15058,7 +15058,7 @@
   },
   {
    "name": "PC03 CsOH+CO2 吸收",
-   "ms": 12.7,
+   "ms": 11.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15072,7 +15072,7 @@
   },
   {
    "name": "PC04 Ra(OH)2+CO2 沉镭",
-   "ms": 17.7,
+   "ms": 17.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15086,7 +15086,7 @@
   },
   {
    "name": "PC05 Fe2(SO4)3+KI 氧化",
-   "ms": 30.2,
+   "ms": 29.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15100,7 +15100,7 @@
   },
   {
    "name": "PC06 加料顺序无关性 Y(OH)3",
-   "ms": 9.8,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15114,7 +15114,7 @@
   },
   {
    "name": "PC07 Y(NO3)3+Na2CO3 碱式碳酸盐",
-   "ms": 22.3,
+   "ms": 22.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15128,7 +15128,7 @@
   },
   {
    "name": "PC08 YPO4+硝酸 不溶",
-   "ms": 26.7,
+   "ms": 25.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15142,7 +15142,7 @@
   },
   {
    "name": "PC09 LaPO4+盐酸 不溶",
-   "ms": 25.0,
+   "ms": 23.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15156,7 +15156,7 @@
   },
   {
    "name": "SE01 Nd(NO3)3+KF 氟化物",
-   "ms": 10.1,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15170,7 +15170,7 @@
   },
   {
    "name": "SE02 Y(NO3)3+NaF 氟化钇",
-   "ms": 10.5,
+   "ms": 10.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15184,7 +15184,7 @@
   },
   {
    "name": "SE03 Lu(OH)3+NH4Cl 微溶",
-   "ms": 9.9,
+   "ms": 10.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15198,7 +15198,7 @@
   },
   {
    "name": "SE04 Eu(NO3)3+Na2C2O4 草酸铕",
-   "ms": 9.9,
+   "ms": 10.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15212,7 +15212,7 @@
   },
   {
    "name": "SE05 GdPO4 磷酸钆",
-   "ms": 8.6,
+   "ms": 8.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15226,7 +15226,7 @@
   },
   {
    "name": "SE06 TbF3 氟化铽",
-   "ms": 10.3,
+   "ms": 10.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15240,7 +15240,7 @@
   },
   {
    "name": "SE07 Er2(SO4)3+NaF",
-   "ms": 10.6,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15254,7 +15254,7 @@
   },
   {
    "name": "SE08 Tm(OH)3 酸溶",
-   "ms": 9.5,
+   "ms": 9.1,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -15268,7 +15268,7 @@
   },
   {
    "name": "AM01 Fr+水(理论)",
-   "ms": 8.4,
+   "ms": 7.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15282,7 +15282,7 @@
   },
   {
    "name": "AM02 Cs+HCl 激烈放氢",
-   "ms": 9.9,
+   "ms": 8.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15296,7 +15296,7 @@
   },
   {
    "name": "AM03 Rb+FeCl3 先与水",
-   "ms": 15.2,
+   "ms": 15.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15310,7 +15310,7 @@
   },
   {
    "name": "API01 弱酸溶解 changed≠reacted",
-   "ms": 7.6,
+   "ms": 7.3,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -15324,7 +15324,7 @@
   },
   {
    "name": "API02 弱碱溶解电离",
-   "ms": 7.7,
+   "ms": 7.3,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -15338,7 +15338,7 @@
   },
   {
    "name": "API03 NaCl 溶解纯电离",
-   "ms": 0.6,
+   "ms": 0.8,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15352,7 +15352,7 @@
   },
   {
    "name": "API04 强酸强碱中和 reacted",
-   "ms": 0.3,
+   "ms": 0.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15366,7 +15366,7 @@
   },
   {
    "name": "API05 多元弱碱分步 degree",
-   "ms": 18.9,
+   "ms": 18.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15380,7 +15380,7 @@
   },
   {
    "name": "API06 限量试剂缩放",
-   "ms": 5.8,
+   "ms": 6.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15394,7 +15394,7 @@
   },
   {
    "name": "GA01 低压促进CO2逸出",
-   "ms": 3.8,
+   "ms": 3.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15408,7 +15408,7 @@
   },
   {
    "name": "GA02 高压抑制逸出",
-   "ms": 3.2,
+   "ms": 2.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15422,7 +15422,7 @@
   },
   {
    "name": "GA03 H2 常压逸出",
-   "ms": 27.2,
+   "ms": 32.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15436,7 +15436,7 @@
   },
   {
    "name": "GA04 SO2 高压溶解",
-   "ms": 11.6,
+   "ms": 10.7,
    "deg": 2,
    "changed": true,
    "reacted": false,
@@ -15450,7 +15450,7 @@
   },
   {
    "name": "TE01 NH3 高温水解平衡移",
-   "ms": 10.6,
+   "ms": 9.9,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -15464,7 +15464,7 @@
   },
   {
    "name": "TE02 HAc 加热 pH 降",
-   "ms": 11.6,
+   "ms": 10.4,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -15478,7 +15478,7 @@
   },
   {
    "name": "TE04 Mg+热水加速",
-   "ms": 2.1,
+   "ms": 2.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15492,7 +15492,7 @@
   },
   {
    "name": "MX01 Fe3+ + SCN- 显色平衡",
-   "ms": 9.2,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15506,7 +15506,7 @@
   },
   {
    "name": "MX02 Fe3+ +F- 优先掩蔽",
-   "ms": 22.9,
+   "ms": 23.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15520,7 +15520,7 @@
   },
   {
    "name": "MX03 Ag+过量氨后再酸化",
-   "ms": 9.8,
+   "ms": 9.1,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -15534,7 +15534,7 @@
   },
   {
    "name": "MX04 Cu2+ +过量NH3 深蓝",
-   "ms": 14.8,
+   "ms": 13.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15548,7 +15548,7 @@
   },
   {
    "name": "MX05 Zn2+ +过量NaOH 两性",
-   "ms": 1.0,
+   "ms": 1.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15562,7 +15562,7 @@
   },
   {
    "name": "MX06 Ga3+两性 vs Lu3+不两性对比",
-   "ms": 8.4,
+   "ms": 8.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15576,7 +15576,7 @@
   },
   {
    "name": "MX07 竞争沉淀：Ba2+ vs Y3+ 加SO4",
-   "ms": 11.8,
+   "ms": 11.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15590,7 +15590,7 @@
   },
   {
    "name": "MX08 竞争沉淀 Cu2+/Zn2+ 加S2-(中性)",
-   "ms": 10.6,
+   "ms": 9.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15604,7 +15604,7 @@
   },
   {
    "name": "MX09 镧系+SCN 不显色",
-   "ms": 7.0,
+   "ms": 6.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15618,7 +15618,7 @@
   },
   {
    "name": "MX10 Eu3+ + F- 沉淀vs配位",
-   "ms": 10.0,
+   "ms": 9.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15632,7 +15632,7 @@
   },
   {
    "name": "RX01 FeCl3+Cu 反应(蚀刻)",
-   "ms": 26.8,
+   "ms": 27.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15646,7 +15646,7 @@
   },
   {
    "name": "RX02 Cl2+FeCl2 氧化",
-   "ms": 9.6,
+   "ms": 9.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15660,7 +15660,7 @@
   },
   {
    "name": "RX03 Br2+Fe2+ 恰反应",
-   "ms": 14.4,
+   "ms": 13.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15674,7 +15674,7 @@
   },
   {
    "name": "RX04 I2+Fe3+ 不反应(逆向)",
-   "ms": 24.7,
+   "ms": 24.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -15688,7 +15688,7 @@
   },
   {
    "name": "RX05 SnCl2+FeCl3 还原",
-   "ms": 3.1,
+   "ms": 3.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15702,7 +15702,7 @@
   },
   {
    "name": "RX06 H2O2+FeCl2",
-   "ms": 25.8,
+   "ms": 26.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15730,7 +15730,7 @@
   },
   {
    "name": "RX08 Na2SO3+KMnO4 强碱→MnO4^2-",
-   "ms": 17.1,
+   "ms": 16.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15744,7 +15744,7 @@
   },
   {
    "name": "RX09 KBr+Cl2 置换",
-   "ms": 18.4,
+   "ms": 18.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15758,7 +15758,7 @@
   },
   {
    "name": "RX10 NaI+Br2",
-   "ms": 13.3,
+   "ms": 12.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15772,7 +15772,7 @@
   },
   {
    "name": "RX11 Fe+CuSO4 置换",
-   "ms": 1.8,
+   "ms": 1.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15786,7 +15786,7 @@
   },
   {
    "name": "RX12 Zn+FeSO4",
-   "ms": 12.7,
+   "ms": 11.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15800,7 +15800,7 @@
   },
   {
    "name": "RX13 Cu+AgNO3 置换完全",
-   "ms": 126.8,
+   "ms": 128.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15814,7 +15814,7 @@
   },
   {
    "name": "RX14 铅+醋酸(醋酸铅纸灰化)",
-   "ms": 12.3,
+   "ms": 12.6,
    "deg": 0,
    "changed": true,
    "reacted": true,
@@ -15842,7 +15842,7 @@
   },
   {
    "name": "AB01 NaHCO3+NaOH 转正盐",
-   "ms": 11.5,
+   "ms": 11.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15856,7 +15856,7 @@
   },
   {
    "name": "AB02 NaHSO4+NaOH",
-   "ms": 5.0,
+   "ms": 4.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15870,7 +15870,7 @@
   },
   {
    "name": "AB03 H2S+NaOH 少量",
-   "ms": 12.4,
+   "ms": 11.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15884,7 +15884,7 @@
   },
   {
    "name": "AB04 多元酸分步：H3PO4+1NaOH",
-   "ms": 11.8,
+   "ms": 11.6,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15898,7 +15898,7 @@
   },
   {
    "name": "AB05 H3PO4+2NaOH",
-   "ms": 15.1,
+   "ms": 14.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15912,7 +15912,7 @@
   },
   {
    "name": "AB06 H3PO4+3NaOH",
-   "ms": 14.2,
+   "ms": 13.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -15926,7 +15926,7 @@
   },
   {
    "name": "AB07 Na2S 水解强碱性",
-   "ms": 2.8,
+   "ms": 2.1,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -15940,7 +15940,7 @@
   },
   {
    "name": "AB08 NaHS 两性偏碱",
-   "ms": 5.4,
+   "ms": 5.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15954,7 +15954,7 @@
   },
   {
    "name": "AB09 Na2HPO4 碱性",
-   "ms": 12.9,
+   "ms": 12.3,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15968,7 +15968,7 @@
   },
   {
    "name": "AB10 NaH2PO4 酸性",
-   "ms": 11.5,
+   "ms": 12.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -15982,7 +15982,7 @@
   },
   {
    "name": "SL01 CaSO4 微溶(0.015M)",
-   "ms": 8.3,
+   "ms": 8.0,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -15996,7 +15996,7 @@
   },
   {
    "name": "SL02 PbCl2 微溶(冷水)",
-   "ms": 10.7,
+   "ms": 10.5,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -16010,7 +16010,7 @@
   },
   {
    "name": "SL03 Ag2SO4 微溶",
-   "ms": 8.2,
+   "ms": 7.6,
    "deg": 1,
    "changed": true,
    "reacted": false,
@@ -16024,7 +16024,7 @@
   },
   {
    "name": "SL04 Li2CO3 微溶",
-   "ms": 19.9,
+   "ms": 18.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16038,7 +16038,7 @@
   },
   {
    "name": "EN01 硬水软化 石灰苏打法",
-   "ms": 12.6,
+   "ms": 12.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16052,7 +16052,7 @@
   },
   {
    "name": "EN02 溶洞形成 逆反应",
-   "ms": 17.8,
+   "ms": 16.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16066,7 +16066,7 @@
   },
   {
    "name": "EN03 铁锈化总反应",
-   "ms": 5.7,
+   "ms": 6.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16108,7 +16108,7 @@
   },
   {
    "name": "FB01 ReCl3(铼盐) 电离",
-   "ms": 4.5,
+   "ms": 4.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16122,7 +16122,7 @@
   },
   {
    "name": "FB02 TcO4 高锝酸盐",
-   "ms": 4.9,
+   "ms": 5.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16136,7 +16136,7 @@
   },
   {
    "name": "FB03 Am(NO3)3 镅盐",
-   "ms": 4.8,
+   "ms": 4.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16150,7 +16150,7 @@
   },
   {
    "name": "FB04 Pu(SO4)2 钚盐",
-   "ms": 4.5,
+   "ms": 4.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16164,7 +16164,7 @@
   },
   {
    "name": "FB05 HfF4 氟化铪(固)",
-   "ms": 30.6,
+   "ms": 30.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16178,7 +16178,7 @@
   },
   {
    "name": "FB08 双氧水浓度无关性",
-   "ms": 4.4,
+   "ms": 4.1,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16192,7 +16192,7 @@
   },
   {
    "name": "PH06 偏硼酸钠水解碱性",
-   "ms": 8.4,
+   "ms": 8.1,
    "deg": 0,
    "changed": true,
    "reacted": false,
@@ -16206,7 +16206,7 @@
   },
   {
    "name": "AM04X Ca 使稀土沉淀(碱化)",
-   "ms": 20.6,
+   "ms": 19.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16220,7 +16220,7 @@
   },
   {
    "name": "AB11 (NH4)2SO4 水解酸性",
-   "ms": 5.1,
+   "ms": 5.0,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16234,7 +16234,7 @@
   },
   {
    "name": "AB12 硫酸铝水解酸性(明矾组份)",
-   "ms": 13.8,
+   "ms": 13.9,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16248,7 +16248,7 @@
   },
   {
    "name": "FB06 钼酸钾电离",
-   "ms": 7.1,
+   "ms": 6.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16290,7 +16290,7 @@
   },
   {
    "name": "XL03 HoF3+盐酸(酸溶氟化物)",
-   "ms": 12.4,
+   "ms": 12.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16304,7 +16304,7 @@
   },
   {
    "name": "XL04 Y2(SO4)3+BaCl2 复分解",
-   "ms": 9.1,
+   "ms": 9.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16318,7 +16318,7 @@
   },
   {
    "name": "XL05 Rb2CO3+盐酸放CO2",
-   "ms": 14.4,
+   "ms": 13.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16332,7 +16332,7 @@
   },
   {
    "name": "XL06 CsCl+AgNO3 沉淀",
-   "ms": 17.9,
+   "ms": 17.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16346,7 +16346,7 @@
   },
   {
    "name": "XL07 Nd(OH)3+过量碱不溶",
-   "ms": 5.3,
+   "ms": 5.5,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16360,7 +16360,7 @@
   },
   {
    "name": "XL08 TmCl3+NaOH 沉淀",
-   "ms": 8.7,
+   "ms": 9.2,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16374,7 +16374,7 @@
   },
   {
    "name": "XL09 Tm(NO3)3+NaF 沉淀",
-   "ms": 9.2,
+   "ms": 9.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16388,7 +16388,7 @@
   },
   {
    "name": "XL10 直喂Gd3++磷酸根",
-   "ms": 8.0,
+   "ms": 8.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16402,7 +16402,7 @@
   },
   {
    "name": "XL11 La3+与SCN-不显色",
-   "ms": 5.8,
+   "ms": 5.7,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16416,7 +16416,7 @@
   },
   {
    "name": "XL12 Yb2(SO4)3+草酸盐沉淀",
-   "ms": 9.6,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16430,7 +16430,7 @@
   },
   {
    "name": "TS01 FeCl3+Na2S2O3 定量还原",
-   "ms": 8.5,
+   "ms": 8.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16444,7 +16444,7 @@
   },
   {
    "name": "TS02 Fe3+过量 vs 硫代硫酸根",
-   "ms": 13.5,
+   "ms": 12.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16458,7 +16458,7 @@
   },
   {
    "name": "TS03 CuSO4+过量Na2S2O3 无色Cu(I)配合",
-   "ms": 36.5,
+   "ms": 35.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16472,7 +16472,7 @@
   },
   {
    "name": "TS04 CuSO4+不足量Na2S2O3 部分还原",
-   "ms": 148.4,
+   "ms": 144.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16486,7 +16486,7 @@
   },
   {
    "name": "TS05 H2O2+Na2S2O3 温和氧化",
-   "ms": 8.6,
+   "ms": 8.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16528,7 +16528,7 @@
   },
   {
    "name": "Amp14 Sn(OH)2 两性溶于过量碱",
-   "ms": 12.3,
+   "ms": 12.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16542,7 +16542,7 @@
   },
   {
    "name": "Amp15 Sb(OH)3 两性溶于过量碱",
-   "ms": 11.5,
+   "ms": 11.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16556,7 +16556,7 @@
   },
   {
    "name": "S33 SbCl3 水解自酸化",
-   "ms": 7.7,
+   "ms": 8.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16570,7 +16570,7 @@
   },
   {
    "name": "Sn11 SnCl2+盐酸抑制水解",
-   "ms": 11.7,
+   "ms": 12.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16584,7 +16584,7 @@
   },
   {
    "name": "Sn12 Sn(OH)2+盐酸复溶",
-   "ms": 9.1,
+   "ms": 9.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16598,7 +16598,7 @@
   },
   {
    "name": "N01 BaCl2+2NaF 氟化钡沉淀",
-   "ms": 9.5,
+   "ms": 10.0,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16612,7 +16612,7 @@
   },
   {
    "name": "N02 MgCl2+2NaF 氟化镁沉淀",
-   "ms": 9.2,
+   "ms": 9.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16626,7 +16626,7 @@
   },
   {
    "name": "N03 SrCl2+2NaF 氟化锶沉淀",
-   "ms": 9.3,
+   "ms": 10.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16640,7 +16640,7 @@
   },
   {
    "name": "N04 Hg(NO3)2+2KI 碘化汞沉淀",
-   "ms": 11.9,
+   "ms": 11.5,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16654,7 +16654,7 @@
   },
   {
    "name": "N05 Hg(NO3)2+过量KI 溶于络碘汞",
-   "ms": 9.5,
+   "ms": 9.1,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16668,7 +16668,7 @@
   },
   {
    "name": "N06 ZnCl2+Na2CO3 碳酸锌沉淀",
-   "ms": 135.1,
+   "ms": 131.3,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16682,7 +16682,7 @@
   },
   {
    "name": "N07 MnCl2+Na2CO3 碳酸锰沉淀",
-   "ms": 28.3,
+   "ms": 27.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16696,7 +16696,7 @@
   },
   {
    "name": "N08 BeCl2+2NaOH 氢氧化铍沉淀",
-   "ms": 57.1,
+   "ms": 55.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16710,7 +16710,7 @@
   },
   {
    "name": "N09 BeCl2+过量NaOH 两性部分溶解",
-   "ms": 10.8,
+   "ms": 11.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16724,7 +16724,7 @@
   },
   {
    "name": "N10 Pb(NO3)2+2KBr 溴化铅沉淀",
-   "ms": 32.6,
+   "ms": 33.3,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16738,7 +16738,7 @@
   },
   {
    "name": "N11 AlCl3+Na2HPO4 磷酸铝沉淀",
-   "ms": 60.9,
+   "ms": 59.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16752,7 +16752,7 @@
   },
   {
    "name": "N12 AgNO3+KCN 氰化银沉淀",
-   "ms": 42.5,
+   "ms": 42.2,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16766,7 +16766,7 @@
   },
   {
    "name": "DB1 CuCl+氨水 铜氨溶液",
-   "ms": 12.0,
+   "ms": 11.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16780,7 +16780,7 @@
   },
   {
    "name": "DB2 CoCl2+过量KSCN 钴蓝",
-   "ms": 10.5,
+   "ms": 10.4,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16794,7 +16794,7 @@
   },
   {
    "name": "DB3 AgNO3+KSCN Volhard沉淀",
-   "ms": 17.5,
+   "ms": 16.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16808,7 +16808,7 @@
   },
   {
    "name": "DB4 BaCl2+KIO3 碘酸钡沉淀",
-   "ms": 11.5,
+   "ms": 11.0,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16822,7 +16822,7 @@
   },
   {
    "name": "DB5 KCl+NaClO4 高氯酸钾沉淀",
-   "ms": 8.2,
+   "ms": 8.7,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16836,7 +16836,7 @@
   },
   {
    "name": "DB6 SrCl2+K2CrO4 浓沉淀",
-   "ms": 15.2,
+   "ms": 15.5,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16850,7 +16850,7 @@
   },
   {
    "name": "DB7 SrCl2+K2CrO4 稀不沉淀",
-   "ms": 11.0,
+   "ms": 10.4,
    "deg": 0,
    "changed": false,
    "reacted": false,
@@ -16864,7 +16864,7 @@
   },
   {
    "name": "DB8 ZnSO4+Na3PO4 磷酸锌沉淀",
-   "ms": 9.3,
+   "ms": 8.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16878,7 +16878,7 @@
   },
   {
    "name": "DB9 Cu2O+氨水 铜氨溶液",
-   "ms": 14.6,
+   "ms": 13.9,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16892,7 +16892,7 @@
   },
   {
    "name": "DB10 CuCN+过量NaCN",
-   "ms": 12.2,
+   "ms": 11.7,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16906,7 +16906,7 @@
   },
   {
    "name": "DB11 PbCl2+浓盐酸 氯配溶解",
-   "ms": 16.3,
+   "ms": 15.9,
    "deg": 1,
    "changed": true,
    "reacted": true,
@@ -16920,7 +16920,7 @@
   },
   {
    "name": "DB12 AgNO3+5KI 沉淀加痕量配",
-   "ms": 12.9,
+   "ms": 12.8,
    "deg": 2,
    "changed": true,
    "reacted": true,
@@ -16934,7 +16934,7 @@
   },
   {
    "name": "DB13 Pb(NO3)2+2NaCl 铅氯沉淀",
-   "ms": 66.3,
+   "ms": 67.0,
    "deg": 1,
    "changed": true,
    "reacted": true,

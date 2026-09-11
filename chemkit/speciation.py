@@ -491,6 +491,57 @@ def _respeciate_strong_acids(ledger: dict, H_excess: float, V: float, T) -> floa
     return He
 
 
+# ========================================================== 闭式 pH 快路径（v0.4.2 迭代 A）
+
+def weak_species_set(T) -> frozenset:
+    """所有可能影响 pH 的物种超集（T 级静态，一次构建）：
+    pKa 酸/碱两侧 + OH^- 型 Ksp 阳离子（金属水解）+ beta_pka 派生配
+    离子的反应物侧（滴定储备）。超集方向保守——闭式判据"在账物种与
+    本集合交为空"时，完整路径的两侧滴定堆必空、分支 4 角色扫描必无
+    命中（rolemap 键集 ⊆ 本超集），pH 退化为纯闭式解。"""
+    s = getattr(T, "_weak_set", None)
+    if s is None:
+        names = set(T.pka_acid) | set(T.pka_base)
+        for e in T.ksp:
+            cat, an = e["pair"]
+            if an == "OH^-":
+                names.add(cat)
+        for dc in build_derived(T):
+            if not dc.meta.get("src", "").startswith("beta_pka:"):
+                continue
+            for sp in dc.r:
+                if sp not in (H_ION, WATER):
+                    names.add(sp)
+        s = T._weak_set = frozenset(names)
+    return s
+
+
+def closed_pH(ledger: dict, H_excess: float, V: float, T, T_K: float):
+    """无弱组分体系的闭式 pH：返回 (pH, vled, He_res) 或 None（含弱
+    组分——走 estimate_state 完整路径）。bit 级等价依据：
+      · 两侧滴定堆均空（在账弱组分物种集为空 ⊇ heap 判据）→
+        _buffer_titration 返回 (None, H_excess, ledger 原身份)；
+      · 分支 4 扫描无角色命中 → h_c=o_c=10^(-pKw/2) 不被推进，
+        amph/buf 空，收尾退化为纯水；
+      · 收尾/直读公式逐字符复刻（含 -log10(10.0**(-pKw/2)) 的浮点
+        路径——与 pKw/2 直写可能有 1 ulp 差，不可化简）。
+    量口径取分支 4 的 floor（1e-12·V，两侧堆的 X_MIN 更大）：漏判
+    方向安全（该物种在完整路径同样被跳过）。"""
+    weak = weak_species_set(T)
+    floor_V = 1e-12 * V
+    for sp, m in ledger.items():
+        if m > floor_V and sp in weak:
+            return None
+    pKw = pKw_of(T_K)
+    He = H_excess / V
+    if He >= 1e-3:
+        return max(-1.0, -log10(He)), ledger, H_excess
+    if He <= -1e-3:
+        return min(pKw + 1.0, pKw + log10(-He)), ledger, H_excess
+    pH = -log10(10.0 ** (-pKw / 2))
+    return pH, ledger, H_excess
+
+
 def _full_speciation(ledger: dict, H_excess: float, V: float, T, T_K: float) -> tuple[dict, float]:
     """多级酸碱全形态分布 + 残余 He（仅供"惰性实现"判定）。与 estimate_state
     相同的分支结构，但滴定沿质子化梯走到底（VO3-→HVO3→VO2+ 一次调用完成），

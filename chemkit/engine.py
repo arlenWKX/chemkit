@@ -37,13 +37,15 @@ from .candidates import (Cand, logK_T, build_derived, _bal, _bal_fast,
                          WATER_MOL_PER_L, STRONG_MOLECULAR_ACIDS,
                          WATER_FIRST_METALS, NONMETAL_SOLIDS,
                          HALATE_DISP_T, HALATE_BASE_PH, _NONMETAL_ELEMS,
-                         _STRONG_ACID, _HALF_CACHE)
+                         _STRONG_ACID, _HALF_CACHE, _PROTON_ROOTS,
+                         _set_proton_roots)
 from .normalize import (normalize, _mol_fraction, _split_acid,
                         _salt_ksp_cell, _ionize_map, _split_salt)
 from .speciation import (_buffer_titration, estimate_pH, estimate_state,
                          _respeciate_strong_acids, _full_speciation,
-                         _RESPECIATE_ACIDS, _pksp)
-from .joint import joint_solve, JOINT_MAX_M, JOINT_MIN_M
+                         _RESPECIATE_ACIDS, _pksp, closed_pH,
+                         weak_species_set)
+from .joint import joint_solve, _solve_ph, JOINT_MAX_M, JOINT_MIN_M
 from .templates import (_redox_pair_static, _redox_templates,
                         _oxide_dissolve_info, _build_static_cands,
                         _gate_species, enumerate_candidates, _gate_check,
@@ -210,7 +212,10 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             # HNO2 等弱酸形态，estimate_pH 仍报酸），真实 OH- 储备 ~1e-10、
             # 无实际限量对象——S 随 pH 下降自限。否则 NO2 歧化类产酸通道被
             # 幻影残差顶成每轮 -He/nu_H 的微步爬行（T78 曾 1500 轮 6.6s）
-            if estimate_pH(ledger, H_excess, V, T, T_K) > 9.0:
+            _cls0 = closed_pH(ledger, H_excess, V, T, T_K)
+            _ph0 = _cls0[0] if _cls0 is not None else estimate_pH(
+                ledger, H_excess, V, T, T_K)
+            if _ph0 > 9.0:
                 x_max = min(x_max, -H_excess / nu_H)
         if x_max <= X_MIN:
             return 0.0, x_max
@@ -250,6 +255,32 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
     # 全套件最大热点）。redox 即使无 H+ 也必须走 estimate_state——
     # 其副产物 led_v 做强酸形态重排（NO3-/HNO3 等），影响 S。
     _need_ph = (c.kind == "redox") or (H_ION in c.r) or (H_ION in c.pr)
+    # 闭式 pH 快路径（v0.4.2 迭代 A，bit 级等价）：无弱组分体系的 pH
+    # 有闭式解（He 直读/纯水 pKw/2），滴定虚拟账本 = 原账本身份（两侧
+    # 堆空）。判定在二分外一次完成：非 changing 物种的量在二分中不变
+    # （floor 翻转不可能），changing 物种可能从无到有（生成型）——一律
+    # 视为弱组分在场（保守方向：宁可走完整路径）。闭式时 f(x) 跳过全套
+    # estimate_state（滴定+分支扫描——二分的最大热点），led_v 直接取
+    # led_work 身份（与完整路径无滴定时的返回身份一致，_logc 缓存衔接）。
+    _ph_closed = None
+    if _need_ph:
+        _cls = closed_pH(ledger, H_excess, V, T, T_K)
+        if _cls is not None:
+            _weak = weak_species_set(T)
+            if any(s in _weak for s, _, _ in changing):
+                _cls = None
+        if _cls is not None:
+            _pKw_c = pKw_of(T_K)
+            _ph_water = -log10(10.0 ** (-_pKw_c / 2))
+            _V_c = V
+
+            def _ph_closed(he: float) -> float:
+                h = he / _V_c
+                if h >= 1e-3:
+                    return max(-1.0, -log10(h))
+                if h <= -1e-3:
+                    return min(_pKw_c + 1.0, _pKw_c + log10(-h))
+                return _ph_water
     # f 求值间的浓度对数缓存：led_work 仅 changing 物种随 x 变化，
     # 其余物种的 log10(c/V) 在整个二分期间不变——按物种记忆、逐次失效
     # changing 条目（值与逐次计算 bit 级一致）
@@ -264,15 +295,19 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             return direction * S_of(c, led_work, V, 7.0, T_K, T, gsup,
                                     p_ext_kpa, gas_escape, _logc)
         if c.kind == "redox":
-            pH_x, led_v, _ = estimate_state(led_work, H_excess + nu_H * x, V, T, T_K,
-                                            _bt_cache, _touch)
+            if _ph_closed is not None:
+                pH_x, led_v = _ph_closed(H_excess + nu_H * x), led_work
+            else:
+                pH_x, led_v, _ = estimate_state(led_work, H_excess + nu_H * x,
+                                                V, T, T_K, _bt_cache, _touch)
             # led_v 是滴定后的虚拟账本：与 led_work 同一对象时（无滴定）
             # 浓度缓存仍有效；新生成的 dict 必须回退逐项计算
             return direction * S_of(c, led_v, V, pH_x, T_K, T, gsup,
                                     p_ext_kpa, gas_escape,
                                     _logc if led_v is led_work else None)
-        pH_x = estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
-                           _bt_cache, _touch)
+        pH_x = (_ph_closed(H_excess + nu_H * x) if _ph_closed is not None
+                else estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
+                                 _bt_cache, _touch))
         return direction * S_of(c, led_work, V, pH_x, T_K, T, gsup,
                                 p_ext_kpa, gas_escape, _logc)
 
@@ -471,6 +506,9 @@ _COND_KEYS = {"V_L", "T_K", "T_C", "c_H", "c_OH", "pH", "p_kpa",
 def judge(substances: list[dict], conditions: dict | None, T: Tables,
          _probe: dict | None = None) -> dict:
     conditions = dict(conditions or {})
+    # 质子化族根表惰性初始化（v0.4.2 触发点③：社区质子交换族数计数）
+    if not _PROTON_ROOTS:
+        _set_proton_roots(T)
     bad = set(conditions) - _COND_KEYS
     if bad:
         # 条件键静默忽略是定义错位的温床（如 T_C 被当 298K 跑），宁可报错
@@ -549,6 +587,12 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 却乒乓 300+ 步把 Fe 溶掉 0.34）。pH 序列用 snaps 懒评估（drain
     # 循环内迭代 pH 不刷新——逐快照重估才可见摆动；每 8 步去抖）。
     hexec: list[bool] = []
+    # 走步画像诊断计数（v0.4.2 探针扩展，纯诊断零行为影响——不进
+    # digest，仅供 converg/慢例分析）：联立尝试/冻结事件/实质微步数；
+    # CHEM_TRACE_WINDOWS=1 时每 32 步窗口导出 (drift, turnover) 标定数据
+    _diag = {"joint_tries": 0, "joint_ok": 0, "freeze_events": 0,
+             "micro_steps": 0, "windows": []}
+    _WINDOWS = bool(_os.environ.get("CHEM_TRACE_WINDOWS"))
 
     def _netkey(c, direction):
         # 净反应键（忽略 H2O/H+ 的 sorted 物种对）——只依赖候选本身，
@@ -561,6 +605,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # nonlocal 绑定。
     def _exec(pick, d, ext, x_max, S, nk):
         nonlocal H_excess, _last_mat_step
+        _diag["micro_steps"] += 1
         rr = pick.r if d > 0 else pick.pr
         pp = pick.pr if d > 0 else pick.r
         for s, nu in rr.items():
@@ -675,6 +720,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                                       [(c, d) for c, d, _S in actives],
                                       V, T_K, T, gsup, p_ext_kpa, gas_escape,
                                       S_of, H_ION, WATER)
+        _diag["joint_tries"] += 1
         if status == "boundary":
             if not freeze_on_boundary or cycle_keys is None:
                 return False
@@ -683,6 +729,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             for k in cycle_keys:
                 frozen_perm.add(k)
                 frozen_perm.add((k[1], k[0]))
+            _diag["freeze_events"] += 1
             if _TRACE:
                 print(f'  [joint-boundary-freeze] {len(cycle_keys)} keys '
                       f'resid={_res:.3f}')
@@ -690,6 +737,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         if status != "ok":
             return False
         _joint_fires += 1
+        _diag["joint_ok"] += 1
         if _TRACE:
             print(f'  [joint] m={len(actives)} resid={_res:.3f} '
                   f'x=[{" ".join(f"{xj:+.4g}" for xj in x)}]')
@@ -714,6 +762,89 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             out.add(k if k <= (k[1], k[0]) else (k[1], k[0]))
         return out
 
+    # ---- 触发点③（v0.4.2 迭代 D）：社区级 pH 一致化联立 ----
+    # 微步窗同①，但社区口径（_joint_collect(None) 全收活性平衡，含近
+    # 平衡者——跳步的耦合约束方程）+ pH 提升为联立变量（_solve_ph 的
+    # 自洽闭合行——快照 pH 机器锚定联立 pH）。张力族（H46 Ag₂O 极限
+    # 环 / N34 草酸阶梯）的"一步数学"。族闸：社区质子交换族数 ≥2 时
+    # pH 闭包只是启发式（E35 型假不动点一枪跳 0.589 mol 凌驾仲裁的
+    # 翻案教训）→ 硬失败，绝不 fall-through 到 legacy joint_solve
+    # （对同样行做同样的坏跳）。boundary 冻结循环键（Ag32 仲裁提前）。
+    # 独立冷却 32 迭代 + 失败签名黑名单（与①互不干扰）。
+    _joint_ph_last = -32
+    _joint_ph_blacklist: set = set()
+
+    def _joint_families(actives) -> set:
+        """社区质子交换族数（族闸）：H⁺ 参与的平衡经其 pKa 共轭酸碱族
+        （真弱酸碱形态——H₂S/HS⁻/S²⁻、NH₃/NH₄⁺ 等）计数。金属/沉淀/
+        配合物物种不计（非质子交换族——H46 的 Ag⁺/Ag₂O 挂侧不是
+        pKa 共轭语义；E35 的判别子是 H₂S+NH₃ 两个真弱酸碱族）。"""
+        fam: set = set()
+        for c, _d, _S in actives:
+            if H_ION in c.r or H_ION in c.pr:
+                for s in list(c.r) + list(c.pr):
+                    if s in (H_ION, WATER):
+                        continue
+                    root = _PROTON_ROOTS.get(s)
+                    if root is not None:
+                        fam.add(root)
+        return fam
+
+    def _joint_fire_ph() -> bool:
+        """触发点③：社区级 pH 一致化联立。返回 True = 状态实质移动。"""
+        nonlocal _joint_fires
+        actives = _joint_collect(None)   # 社区口径：全活性（含近平衡约束）
+        if len(actives) < JOINT_MIN_M:
+            return False
+        if max(abs(S) for _c, _d, S in actives) < 0.02:
+            return False   # 无驱动者（全近平衡）：无事可做
+        fam = _joint_families(actives)
+        if len(fam) >= 2:
+            # 多族 pH 闭包 = 启发式（E35 翻案教训）：硬失败——不跳、
+            # 不 fall-through 到 legacy（同样的坏跳）。黑名单 + 冷却
+            # 由调用方处理（这里只报闸门拦截）
+            _diag["joint_tries"] += 1
+            if _TRACE:
+                print(f'  [joint-ph-gate] {len(fam)} proton families '
+                      f'blocked (community m={len(actives)})')
+            return False
+        status, x, _res = _solve_ph(ledger, H_excess,
+                                    [(c, d) for c, d, _S in actives],
+                                    V, T_K, T, gsup, p_ext_kpa, gas_escape,
+                                    S_of, H_ION, WATER)
+        _diag["joint_tries"] += 1
+        if _TRACE and status != "ok":
+            print(f'  [joint-ph-{status}] m={len(actives)} resid={_res:.3f} '
+                  f'families={sorted(_joint_families(actives))}')
+        if status == "boundary":
+            _ck = _joint_cycle_keys()
+            for k in _ck:
+                frozen_perm.add(k)
+                frozen_perm.add((k[1], k[0]))
+            _diag["freeze_events"] += 1
+            if _TRACE:
+                print(f'  [joint-ph-boundary] {len(_ck)} keys '
+                      f'resid={_res:.3f}')
+            return False
+        if status != "ok":
+            return False
+        _joint_fires += 1
+        _diag["joint_ok"] += 1
+        if _TRACE:
+            print(f'  [joint-ph] m={len(actives)} resid={_res:.3f} '
+                  f'x=[{" ".join(f"{xj:+.4g}" for xj in x)}]')
+        for (c, dj, S_f), xj in zip(actives, x):
+            if abs(xj) < X_MIN:
+                continue
+            dd = dj if xj > 0 else -dj
+            rr_j = c.r if dd > 0 else c.pr
+            x_max_j = min((ledger.get(s, 0.0) / nu for s, nu in rr_j.items()
+                           if s not in (WATER, H_ION)), default=0.0)
+            _exec(c, dd, abs(xj), x_max_j, S_f if xj > 0 else -S_f,
+                  _netkey(c, dd))
+        disabled.clear()   # 状态实质移动：全量解禁让 S 重验（既有自校正）
+        return True
+
     for _sweep_round in range(20):
       seen_sig: dict = {}
       idle = 0   # 连续零执行迭代计数：签名不变 ⇒ disabled/frozen 永不刷新，
@@ -723,8 +854,15 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         _it_total += 1
         _refresh_disabled()
         H_excess = _respeciate_strong_acids(ledger, H_excess, V, T)
-        pH = estimate_pH(ledger, H_excess, V, T, T_K)
-        vled, He_v = _full_speciation(ledger, H_excess, V, T, T_K)
+        # 闭式 pH 快路径（v0.4.2 迭代 A）：无弱组分时 pH/vled/He_v 三合一
+        # 闭式直出（vled = ledger 原身份 → 惰性实现检查天然跳过，与完整
+        # 路径无滴定时的身份语义一致）
+        _cls = closed_pH(ledger, H_excess, V, T, T_K)
+        if _cls is not None:
+            pH, vled, He_v = _cls[0], ledger, _cls[2]
+        else:
+            pH = estimate_pH(ledger, H_excess, V, T, T_K)
+            vled, He_v = _full_speciation(ledger, H_excess, V, T, T_K)
         if vled is not ledger and _virt_redox_gain(ledger, vled, T):
             # 惰性实现酸碱平衡：质子转移远快于氧化还原，强酸/强碱下的自由形态
             # （如 VO3-→VO2+）应直接参与氧化还原竞争——否则 H+/Zn 会在 V(V)
@@ -996,6 +1134,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 for k in window:
                     frozen_perm.add(k)
                     frozen_perm.add((k[1], k[0]))
+                _diag["freeze_events"] += 1
                 if _TRACE: print('  [freeze-limit-cycle]', window)
         else:
             seen_sig[sig_now] = len(hist)
@@ -1010,6 +1149,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         if gross >= 0.05 and abs(ext_fwd - ext_rev) <= 0.1 * gross:
             frozen_perm.add(nk)
             frozen_perm.add(rev)
+            _diag["freeze_events"] += 1
             if _TRACE: print('  [freeze-perm]', nk, 'gross', round(gross, 3))
         # 循环震荡检测：最近若干步为同一短周期（长度 2 或 3）反复且总推进量
         # 低于显著阈值 → 冻结该周期涉及的全部净反应（E35 类阶梯每周期有实质
@@ -1024,6 +1164,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     for k in set(unit):
                         frozen_perm.add(k)
                         frozen_perm.add((k[1], k[0]))
+                    _diag["freeze_events"] += 1
                     if _TRACE: print('  [freeze-cycle]', unit)
 
         # 物种级周转冻结（v0.3.8）：多平衡乒乓（不同净键互为往返——extent
@@ -1048,13 +1189,40 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             if turnover >= 0.05 and drift <= 0.02 * turnover:
                 window = {k for k, _ in hist[-_FW:]}
                 window -= {k for k in window if k in frozen_perm}
+                # v0.4.2 迭代 C：冻结范围升级为整个活性社区——多拼写
+                # 乒乓（同一化学转化的 H⁺/NH₄⁺ 挂侧变体）逐键冻结太慢
+                # （H46 死因②：冻结逐拼写进行），社区级一次止震。
+                # 真爬行（净/毛 > 2%）不触发本检测器，天然不受影响
+                for c, _d, _S in _joint_collect(None):
+                    nk_c = (c.netkey_fwd if c.netkey_fwd <= c.netkey_rev
+                            else c.netkey_rev)
+                    if nk_c not in frozen_perm:
+                        window.add(nk_c)
                 if window:
                     for k in window:
                         frozen_perm.add(k)
                         frozen_perm.add((k[1], k[0]))
+                    _diag["freeze_events"] += 1
                     if _TRACE:
                         print(f'  [freeze-turnover] {len(window)} keys '
                               f'drift/turnover={drift / max(turnover, 1e-9):.4f}')
+
+        # ---- 窗口净移/毛周转标定导出（CHEM_TRACE_WINDOWS=1，纯诊断）----
+        # 每 32 步窗口的 (drift, turnover)：真爬行（净/毛 > 0.5）、螺旋
+        # （~0.2）、纯乒乓（<0.05）的判别数据源——不进 digest、不导出到
+        # converg dump（env 专属，走 probe["windows"] 由单独脚本消费）
+        if _WINDOWS and len(snaps) >= 33 and len(snaps) % 32 == 0:
+            _s0, _ = snaps[-33]
+            _to = 0.0
+            for _i in range(len(snaps) - 32, len(snaps) - 1):
+                _sa, _ = snaps[_i]
+                _sb, _ = snaps[_i + 1]
+                _to += sum(abs(m - _sa.get(s, 0.0)) for s, m in _sb.items()
+                           if not s.startswith("__") and s != WATER)
+            _dr = sum(abs(m - _s0.get(s, 0.0))
+                      for s, m in snaps[-1][0].items()
+                      if not s.startswith("__") and s != WATER)
+            _diag["windows"].append((round(_dr, 9), round(_to, 9)))
 
         # ---- pH 悬崖乒乓冻结（v0.4.0 第五检测器）----
         # J06 型失稳的走步级兜底：pH 机器在 He 跨 1e-3 时跳分支，跨键 H⁺
@@ -1089,6 +1257,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     for k in window:
                         frozen_perm.add(k)
                         frozen_perm.add((k[1], k[0]))
+                    _diag["freeze_events"] += 1
                     if _TRACE:
                         print(f'  [freeze-ph-cliff] {len(window)} keys '
                               f'He-alt {_alt}/{_PHW - 1} '
@@ -1167,6 +1336,19 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 if not _joint_fire(_ck, freeze_on_boundary=True):
                     _joint_blacklist.add(tuple(sorted(_ck)))
 
+        # ---- 联立求解加速·触发点③（社区级 pH 一致化，v0.4.2 迭代 D）----
+        # 与①同微步窗（独立冷却），社区口径 pH 一致化联立（族闸内建：
+        # ≥2 质子族硬失败不跳）。失败签名黑名单防同结构重试
+        if (it >= 64 and len(hist) >= 8
+                and it - _joint_ph_last >= 32
+                and len({k for k, _ in hist[-24:]}) >= 2
+                and max((e for _, e in hist[-24:]), default=1.0) < 0.02):
+            _sig_ph = tuple(sorted(_joint_cycle_keys()))
+            if _sig_ph not in _joint_ph_blacklist:
+                _joint_ph_last = it
+                if not _joint_fire_ph():
+                    _joint_ph_blacklist.add(_sig_ph)
+
       # 不动点收敛后扫气一轮：逸出离账会移动平衡（Le Chatelier），
       # 有新增逸出则再跑一轮不动点；无新增即全局收敛
       _n0 = sum(escaped.values())
@@ -1178,6 +1360,14 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         _probe_exit(_probe, ledger, H_excess, escaped, gsup, V, T_K, T,
                     kinetics, gas_escape, p_ext_kpa, disabled, frozen_perm,
                     _exit_reason, _it_total, len(hist), len(steps))
+        # 走步画像诊断（v0.4.2 探针扩展）：纯诊断字段，不进
+        # _result_digest（digest 键集不含它们），零行为影响
+        _probe["joint_tries"] = _diag["joint_tries"]
+        _probe["joint_ok"] = _diag["joint_ok"]
+        _probe["freeze_events"] = _diag["freeze_events"]
+        _probe["micro_steps"] = _diag["micro_steps"]
+        if _diag["windows"]:
+            _probe["windows"] = _diag["windows"]
     if slow_seen:
         annotations.append("slow")
     return _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
