@@ -447,6 +447,37 @@ def blocked_extent(pick: Cand, direction: int, evals: list, T_K: float, T,
 
 # ========================================================== OVERRIDE（逃生舱）
 
+def _swap_conserves(old: dict, new: dict) -> bool:
+    """账本整体替换的守恒闸门：非 H/O 元素的量不得改变。
+
+    H/O 走水与质子账本（`H_excess`），不纳入；其余元素必须守恒。
+
+    **尺度只取溶质**：首版把溶剂水（55.6 mol）算进 scale，容差被抬到
+    0.056，于是 0.0242 mol 的碳缺口照样放行——"把溶剂混进溶质尺度的
+    判据"是这里最容易犯的错（净方程契约里也踩过同类）。判据尺度必须是
+    **被约束对象的量级**。容差取 max(1e-6, 1e-3 × 溶质尺度)，1e-3 是
+    "呈现上可忽略"的分辨率，与净方程契约同口径。
+    """
+    els: set = set()
+    for sp in list(old) + list(new):
+        if sp != WATER and not sp.startswith("__"):
+            els |= set(elements_of(sp))
+    els -= {"H", "O"}
+    if not els:
+        return True
+    scale = max([abs(v) for s, v in list(old.items()) + list(new.items())
+                 if s != WATER and not s.startswith("__")] or [1.0])
+    tol = max(1e-6, 1e-3 * scale)
+    for el in els:
+        a = sum(elements_of(s).get(el, 0) * v for s, v in old.items()
+                if not s.startswith("__"))
+        b = sum(elements_of(s).get(el, 0) * v for s, v in new.items()
+                if not s.startswith("__"))
+        if abs(a - b) > tol:
+            return False
+    return True
+
+
 def _virt_redox_gain(ledger: dict, vled: dict, T) -> bool:
     """滴定后的虚拟账本是否出现了账本上不存在（或已耗尽）的、且能真正配成
     新氧化还原候选的物种。仅"出现且可配对"方向触发惰性实现：
@@ -870,10 +901,21 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             # 且能配成新电对的氧化还原物种"时才落实为真实账本：全局落实会让
             # 酸碱候选失去诚实的 He 累积（Al3+ 水解酸性被吸回、NH4Ac 解离
             # 幻影循环、半中和 Henderson 失效），故保持惰性。pH 重算保持一致。
-            if _TRACE: print('  [realize]', [sp for sp, m in vled.items()
-                              if m > X_MIN and ledger.get(sp, 0.0) <= X_MIN])
-            ledger, H_excess = vled, He_v
-            pH = estimate_pH(ledger, H_excess, V, T, T_K)
+            #
+            # **守恒闸门（v0.5.0）**：换账本 = 用虚拟形态分布整体替换真实
+            # 账本，必须**元素守恒**才许换。`_buffer_titration` 的多级堆在
+            # 某些体系会漏掉未滴定的族尾（实测 FeCl3+Na2CO3：虚拟账本把
+            # 0.024234 mol CO3^2- 整个丢掉，碳 3.0 → 2.975767），于是净差
+            # 向量本身不平、美化器永远找不到干净整数式（E42/K02 的
+            # `375.187CO3^2- + …` 即此）。非 H/O 元素缺失即拒绝替换——
+            # 留在真实账本上是诚实的质量态，虚拟账本只是形态分布优化。
+            if _swap_conserves(ledger, vled):
+                if _TRACE: print('  [realize]', [sp for sp, m in vled.items()
+                                  if m > X_MIN and ledger.get(sp, 0.0) <= X_MIN])
+                ledger, H_excess = vled, He_v
+                pH = estimate_pH(ledger, H_excess, V, T, T_K)
+            elif _TRACE:
+                print('  [realize-rejected] 虚拟账本不守恒，保留真实账本')
         cands = enumerate_candidates(ledger, H_excess, pH, V, T_K, T, kinetics,
                                      memo=enum_memo)
         evals = []
