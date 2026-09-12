@@ -16795,8 +16795,8 @@
    "BaSO_4": 0.9,
    "TlCl": 0.9
   },
-  "eq": "Ba^{2+} + Cl^- + SO_4^{2-} + Tl^+ -> BaSO_4 + TlCl",
-  "note": "Tl2SO4 + BaCl2 → BaSO4 + 2TlCl (复分解)",
+  "eq": "Ba^{2+} + 2Cl^- + SO_4^{2-} + 2Tl^+ -> BaSO_4 + 2TlCl",
+  "note": "Tl2SO4 + BaCl2 -> BaSO4 + 2TlCl（复分解）。0.4.3 修正：原期望式 'Ba^{2+} + Cl^- + SO_4^{2-} + Tl^+ -> BaSO_4 + TlCl' **质量与电荷均不守恒**（左 1Tl 对右 1Tl 但 Tl2SO4 给 2Tl；左 1Cl 对右 1Cl 但 BaCl2 给 2Cl），是 AI 生成用例的典型失真。引擎在 ex.ions 1:1 记账缺陷修复后给出正确式 2Tl^+ + 2Cl^- + Ba^{2+} + SO_4^{2-} -> 2TlCl + BaSO_4。",
   "changed": true
  },
  {

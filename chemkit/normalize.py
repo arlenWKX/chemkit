@@ -78,8 +78,8 @@ def normalize(substances: list[dict], cond: dict, T,
                 # 供逐轮再平衡求解目标分子池（输出时过滤 "__" 前缀）
                 ledger[f"__tot_{name}"] = ledger.get(f"__tot_{name}", 0.0) + mol
             elif entry["form"] == "ions":
-                for ion in entry["ions"]:
-                    add_species(ion, mol)
+                for ion, nu in _ion_coeffs(name, entry["ions"], T).items():
+                    add_species(ion, nu * mol)
             else:  # molecule / solid / gas 原样入账
                 ledger[name] = ledger.get(name, 0.0) + mol
         elif charge_of(name) == 0:
@@ -133,6 +133,44 @@ def normalize(substances: list[dict], cond: dict, T,
     H_excess = pos - neg
     ledger[WATER] = ledger.get(WATER, 0.0) + WATER_MOL_PER_L * V
     return ledger, H_excess, steps0, unknown
+
+
+def _ion_coeffs(name: str, ions: list, T) -> dict:
+    """`ex["ions"]`（**只列离子种类、不带计量**）→ {离子: 计量}。
+
+    0.4.x 原实现按 1:1 记账（`add_species(ion, mol)`），对化学式非 1:1
+    的盐**凭空破坏电荷与质量守恒**：La(NO₃)₃ → La³⁺ + 1NO₃⁻（净 +2）、
+    Na₂S₂O₃ → Na⁺ + 1S₂O₃²⁻（净 −1）、K₂Cr₂O₇ → K⁺ + 1Cr₂O₇²⁻（净 −1）。
+    `ex` 表里 34 条 form=ions 条目中 **17 条**如此（La/Ce/In/Zr/Pd 的
+    硝酸盐与氯化物、Na₂MoO₄/Na₂WO₄/Na₂S₂O₃/K₂Cr₂O₇/Tl₂SO₄/H₂PtCl₆…）。
+
+    修正口径（**以化学式为唯一依据**，与 `_split_salt` 同源）：
+      1. 优先用 `_split_acid`/`_split_salt` 按化学式配平（它们保证原子
+         与电荷双守恒，且已覆盖注册表 + 元素周期表级兜底）；
+      2. 公式法失败时退回 `ions` 列表并按**整比缩放**使净电荷为零
+         （`ions` 本身就是该盐的离子组成清单，缩放不改变组成）。
+    """
+    parts = _split_acid(name, T) or _split_salt(name, T)
+    if isinstance(parts, dict) and parts:
+        if sum(charge_of(sp) * nu for sp, nu in parts.items()) == 0:
+            return parts
+    # 退回 ex.ions + 整比缩放（正负电荷总量配平）
+    pos: list = []
+    neg: list = []
+    for ion in ions:
+        (pos if charge_of(ion) > 0 else neg).append(ion)
+    q_pos = sum(charge_of(i) for i in pos)
+    q_neg = -sum(charge_of(i) for i in neg)
+    if not pos or not neg or q_pos <= 0 or q_neg <= 0:
+        return {i: 1.0 for i in ions}
+    g = gcd(int(q_pos), int(q_neg))
+    k_pos, k_neg = q_neg // g, q_pos // g
+    out: dict = {}
+    for i in pos:
+        out[i] = out.get(i, 0.0) + k_pos
+    for i in neg:
+        out[i] = out.get(i, 0.0) + k_neg
+    return out
 
 
 def _split_acid(name: str, T) -> dict | None:
