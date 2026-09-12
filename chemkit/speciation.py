@@ -23,6 +23,40 @@ from .normalize import _mol_fraction
 
 # ========================================================== pH 估计器（§3.2，教科书近似）
 
+def _src_h(Ka: float, c: float, He: float) -> float:
+    """弱酸源在残余强酸/强碱背景 He 下的 [H⁺]（mol/L）。
+
+    精确根：h = Ka·c/(Ka+h) + He ⟹ h² + (Ka−He)h − Ka(c+He) = 0。
+      · He = 0：`d = Ka − 0.0`、`c + 0.0` 均为 IEEE 精确恒等 ⟹
+        与原二次式 `(−Ka + sqrt(Ka²+4Ka·c))/2` **逐位同式**；
+      · He > 0（强酸背景）：同离子抑制，h → He + Ka·c/He；
+      · He < 0（强碱背景）：弱酸被拉向解离，h 减小。
+    取非负支；判别式理论非负（可吸收的 He 已被滴定拿走），浮点残差处
+    防御性夹 0。
+    """
+    d = Ka - He
+    disc = d * d + 4.0 * Ka * (c + He)
+    if disc <= 0.0:
+        return 0.0
+    r = (He - Ka + sqrt(disc)) * 0.5
+    return r if r > 0.0 else 0.0
+
+
+def _src_o(Kb: float, c: float, He: float) -> float:
+    """弱碱源在残余强酸/强碱背景 He 下的 [OH⁻]（mol/L）。
+
+    精确根：o = Kb·c/(Kb+o) − He ⟹ o² + (Kb+He)o − Kb(c−He) = 0。
+    He = 0 时与原式 `(−Kb + sqrt(Kb²+4Kb·c))/2` 逐位同式（加法交换 +
+    `*0.5` 与 `/2` 在二进制浮点下精确相等）。
+    """
+    e = Kb + He
+    disc = e * e + 4.0 * Kb * (c - He)
+    if disc <= 0.0:
+        return 0.0
+    r = (sqrt(disc) - e) * 0.5
+    return r if r > 0.0 else 0.0
+
+
 def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
                       multilevel: bool = False, T_K: float = 298.15,
                       cache: dict | None = None,
@@ -287,13 +321,23 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     if tit is not None:
         return tit, ledger, He_res
     He = He_res / V
-    if He >= 1e-3:
-        return max(-1.0, -log10(He)), ledger, He_res
-    if He <= -1e-3:
-        return min(pKw + 1.0, pKw + log10(-He)), ledger, He_res
-    # 4) 缓冲/弱酸弱碱区：取各来源贡献最大者（在滴定后的虚拟账本上评估）
-    h_c = 10.0 ** (-pKw / 2)
-    o_c = h_c
+    # 4) 缓冲/弱酸弱碱区：各来源贡献的**上包络**，且每个源都在残余强酸/
+    #    强碱背景 He 下取精确解（_src_h/_src_o），He 本身作为基线源进入同一
+    #    max。v0.4.5 关键修正：原实现在 |He| 跨 1e-3 处**二选一**（直读 vs
+    #    分支 4），两读数实测可差 3.216 pH（J06 PbCl₂@363K「酸侧悬崖」，
+    #    tools/cliff.py 可复现：He=+9.99e-4 → pH 6.2158，He=+1e-3 → pH 3.0），
+    #    而 estimate_state 是 solve_extent 二分的被积函数 ⟹ 探针在此不可微、
+    #    走步越界即坍缩。改为单一连续表述后无阈值、无跳变。
+    #    bit 级守恒：He == 0 时 `_src_*` 与原二次式逐位同式、`_half` 即原
+    #    `h_c` 初值 ⟹ 中性例（绝大多数）pH 逐位不变。
+    _half = 10.0 ** (-pKw / 2)
+    # 基线取 max(水自解离, |He|)：He 弱于水自身的 [H⁺] 时它不是酸/碱来源
+    # （5e-10 M 强酸的真实 pH 仍 ≈7，而不是 9.3——只把 He 当基线的写法会把
+    # "比水还弱"的酸读成碱。首版实测 33 例 He≈0 的 pH 位移达 2.87，即此坑）。
+    # He == 0 时两支均取 _half ⟹ 与原实现逐位一致。
+    _minus = -He if He < 0.0 else 0.0
+    h_c = He if He > _half else _half
+    o_c = _minus if _minus > _half else _half
 
     # （原 _pka1/_pkapp/_pksp 嵌套定义处——已外提至模块级，T_K 作参数）
     # 分支 4 的静态量（两性资格、各酸第一级 Ka、各碱最强共轭酸 pKa、
@@ -376,14 +420,16 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         Ka, Kb, conj_pair, Kh_qc, amph_v = role
         if Ka is not None:
             if Ka is _STRONG_ACID:
-                h_c = max(h_c, c)
+                # 在账强酸（pKa≤0 的残余形态）：与背景 He 直接相加
+                # （He=0 时 `c + 0.0` 逐位等于 `c`）
+                h_c = max(h_c, c + He if He > 0.0 else max(0.0, c + He))
             else:
-                h_c = max(h_c, (-Ka + sqrt(Ka * Ka + 4 * Ka * c)) / 2)
+                h_c = max(h_c, _src_h(Ka, c, He))
         if Kb is not None:
             if Kb >= 1.0:                                # 水解近完全（S2-、C2^2- 等）
-                o_c = max(o_c, c)
+                o_c = max(o_c, c - He if He < 0.0 else max(0.0, c - He))
             else:
-                o_c = max(o_c, (-Kb + sqrt(Kb * Kb + 4 * Kb * c)) / 2)
+                o_c = max(o_c, _src_o(Kb, c, He))
             # 共轭缓冲对（仅碱在账时检查其共轭酸是否也在账）
             if conj_pair is not None:
                 acid_conj, pka_c = conj_pair
@@ -399,9 +445,11 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 # 会把 Ag+ 类高估 ~1/sqrt(Kh·c) 倍（D26：Ag+ 被估成 pH 3
                 # 的酸，驱动铬酸根幻影质子化死循环）。多价金属分步水解
                 # 经可溶羟基中间体，实测行为近弱酸二次式，保持不变。
-                h_c = max(h_c, Kh * c)
+                # 背景 He 相加（He=0 时 `Kh*c + 0.0` 逐位等于 `Kh*c`）；
+                # 碱背景（He<0）把它推向完全，夹非负。
+                h_c = max(h_c, max(0.0, Kh * c + He))
             else:
-                h_c = max(h_c, (-Kh + sqrt(Kh * Kh + 4 * Kh * c)) / 2)
+                h_c = max(h_c, _src_h(Kh, c, He))
             continue
         if amph_v is not None and c > 1e-6:
             amph.append((c, amph_v))
@@ -521,12 +569,15 @@ def closed_pH(ledger: dict, H_excess: float, V: float, T, T_K: float):
     组分——走 estimate_state 完整路径）。bit 级等价依据：
       · 两侧滴定堆均空（在账弱组分物种集为空 ⊇ heap 判据）→
         _buffer_titration 返回 (None, H_excess, ledger 原身份)；
-      · 分支 4 扫描无角色命中 → h_c=o_c=10^(-pKw/2) 不被推进，
-        amph/buf 空，收尾退化为纯水；
+      · 分支 4 扫描无角色命中 → h_c/o_c 初值不被推进，amph/buf 空，
+        收尾退化为纯水基线 + 残余 He；
       · 收尾/直读公式逐字符复刻（含 -log10(10.0**(-pKw/2)) 的浮点
         路径——与 pKw/2 直写可能有 1 ulp 差，不可化简）。
     量口径取分支 4 的 floor（1e-12·V，两侧堆的 X_MIN 更大）：漏判
-    方向安全（该物种在完整路径同样被跳过）。"""
+    方向安全（该物种在完整路径同样被跳过）。
+
+    v0.4.5：与 estimate_state 同步去掉 ±1e-3 阈值（J06 酸侧悬崖的另一半
+    ——本函数是热路径快路径，阈值在此重复实现会把跳变带回来）。"""
     weak = weak_species_set(T)
     floor_V = 1e-12 * V
     for sp, m in ledger.items():
@@ -534,12 +585,12 @@ def closed_pH(ledger: dict, H_excess: float, V: float, T, T_K: float):
             return None
     pKw = pKw_of(T_K)
     He = H_excess / V
-    if He >= 1e-3:
-        return max(-1.0, -log10(He)), ledger, H_excess
-    if He <= -1e-3:
-        return min(pKw + 1.0, pKw + log10(-He)), ledger, H_excess
-    pH = -log10(10.0 ** (-pKw / 2))
-    return pH, ledger, H_excess
+    _half = 10.0 ** (-pKw / 2)
+    _minus = -He if He < 0.0 else 0.0
+    h_c = He if He > _half else _half
+    o_c = _minus if _minus > _half else _half
+    pH = -log10(h_c) if h_c >= o_c else pKw + log10(o_c)
+    return min(max(pH, -1.0), pKw + 1.0), ledger, H_excess
 
 
 def _full_speciation(ledger: dict, H_excess: float, V: float, T, T_K: float) -> tuple[dict, float]:
