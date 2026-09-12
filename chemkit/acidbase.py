@@ -35,9 +35,16 @@
 状态），`charge_pH` 会给出将其拉回自洽的 pH——这正是可用之处
 （0.4.1 的 `_presentation_He` 做的是同类事，但只覆盖强碱分支）。
 
-**它不是完整解**：真正的热力学态需要"pH ⇌ 族分布 ⇌ 走步"三者联立
-（pH 变化会改变族分布、族分布改变驱动、驱动改变账本）。0.5.x 的
-求解器重构以此为目标，本模块提供其中两块的精确实现。
+**它不是完整解**，两类已实测的反例（tools/phdiag.py 全量对照）：
+  · **强酸条件 `c_H`**：按"只加质子、不带共轭阴离子"记账，须用 `c_H=`
+    参数补回，否则解到碱侧假根；
+  · **Ksp/气相储库控 pH**：账本里的溶解量由储库（Cu(OH)₂ 等）决定，
+    本身与电荷平衡不自洽（L08 的 Cu²⁺ 0.0005 满足 Ksp 的 pH 5.805，
+    却要求 [OH⁻]=0.001）——此时机器的 Ksp 估计比电荷平衡更接近真值。
+
+真正的热力学态需要"pH ⇌ 族分布 ⇌ 走步"三者联立（pH 变化会改变族分布、
+族分布改变驱动、驱动改变账本）。0.5.x 的求解器重构以此为目标，本模块
+提供其中两块的精确实现。
 
 依赖：core（pKw_of/_vant/charge_of）、candidates（WATER/H_ION）——
 与 speciation 同级底层，不反向依赖 engine。
@@ -260,9 +267,20 @@ def dist_charge(pka: tuple, q: tuple, M: float, V: float, pH: float) -> float:
     return M * V * (sz / sw) if V != 1.0 else M * (sz / sw)
 
 
+def ledger_charge(ledger: dict) -> float:
+    """账本净电荷 Σz·n（mol；跳过 `__` 元数据与游离 H⁺/OH⁻ 条目）。
+
+    引擎不变量：`Σz·n + H_excess + c_H = 0`（`c_H` 为 cond 的强酸条件——
+    它按"只加质子、不带共轭阴离子"记账，故必须显式补回）。审计发现该
+    不变量在 1218 例中大部分成立，偏离即账本自身的守恒缺口。
+    """
+    return sum(charge_of(s) * m for s, m in ledger.items()
+               if not s.startswith("__") and s not in (H_ION, OH_ION))
+
+
 def charge_pH(ledger: dict, V: float, T, T_K: float,
               lo: float = PH_LO, hi: float | None = None,
-              H_excess: float = 0.0):
+              c_H: float = 0.0):
     """电荷平衡求解 pH；返回 float 或 None（无括号）。
 
     账本按两轴解读：
@@ -270,14 +288,25 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
         pKa 的严格分布重分配（多级梯一次到位）；
       · **其他物种**：量固定（强电解质离子、配合物、固相、气相……），
         以电荷数直接进入方程——配合物的酸碱再分布由走步的候选另行处理。
-    H⁺/OH⁻ 由 pH 与 pKw 给出，不来自账本。
+    H⁺/OH⁻ 由 pH 与 pKw 给出，**不来自账本**——账本里若残留 H_ION/OH_ION
+    条目它们是被 pH 取代的陈旧副本，计入会与 V·h/V·oh 双重记账。
 
-    `H_excess` 为引擎的带符号游离质子账本（mol）：名义上它等于账本净
-    电荷的相反数（`Σz·n = −H_excess`），但**账本并不总是守恒**——审计
-    1218 例发现 61 例（5.0%）的 `Σz·n + H_excess` 显著偏离零（最大
-    13 eq，见 N09/E51/E12 型）。本函数因此以**实际账本净电荷**为准
-    求解（`H_excess` 只作为可选校验），把"不守恒"如实暴露成解得 pH 的
-    偏移，而不是用不变量把矛盾掩盖掉。
+    `c_H`：cond 的强酸条件量（mol）。`c_H` 按"只加质子、不带共轭阴离子"
+    记账 ⟹ 账本净电荷比真实溶液多 `+c_H`，须从固定电荷中扣除，否则
+    强酸条件用例（E51/E02/E19/N09/E18/E20/35…）会解出 pH 14+ 的碱侧假根。
+    实测：E51（c_H=9）不加此项 → pH 14.96（假）；加 → pH 0.0（真）。
+
+    2026-02 审计作废项：本函数曾有 `H_excess` 形参，把它**加进固定电荷**。
+    那是双重记账——`H_excess` 正是 `V·h − V·oh` 应等于的量，加进 fixed
+    等于把要求解的未知量减掉。J06 因此报 pH 6.216（真值 3.000），TS04 报
+    7.002（真值 1.849）。**账本自身的电荷平衡已足够定 pH，无需 He 输入**；
+    需要校验时用 `ledger_charge` 对照。
+
+    边界（诚实记录）：本函数只解**账本内部**的电荷自洽，不重解固相/气相
+    储库。若 pH 由 Ksp 储库（Cu(OH)₂、Fe(OH)₃ 等）或气相逸度决定，账本里
+    的溶解量本身就与电荷平衡不自洽（L08：Cu²⁺ 0.0005 对 pH 5.805 满足
+    Ksp，却要求 [OH⁻]=0.001）——此时本函数给出的是"把账本拉回自洽"的 pH，
+    而机器的 Ksp 估计更接近真值。两类反例的清单见 tools/phdiag.py。
 
     F(pH) = Σ_{全部物种} z·c(pH) 在 pH 上严格单调减，二分必收敛。
     """
@@ -302,12 +331,9 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
             rec = fam[fid] = [eff_pka(pka, dh, T_K),
                               tuple(charge_of(x) for x in order), 0.0]
         rec[2] += m
-    # 不守恒时的补偿：把差额并入固定电荷（等价于承认账本自身带净电荷），
-    # 使解出的 pH 与账本自洽——否则 5% 的不守恒例会得到完全无意义的 pH。
-    if H_excess:
-        fixed = fixed + H_excess + sum(
-            charge_of(s) * m for s, m in ledger.items()
-            if s == H_ION or s == OH_ION)
+    # 强酸条件的无阴离子记账：从固定电荷中扣除（见 docstring）
+    if c_H:
+        fixed -= c_H
     if not fam:
         return _closed_no_family(fixed, V, pKw)
 
