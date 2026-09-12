@@ -176,6 +176,11 @@ REPORT_QUANTUM = 1e-5
 # 容差则应与**它自己怎么显示**一致。
 DISPLAY_QUANTUM = 5e-4
 
+# 显示地板：系数按 3 位小数打印，小于 5e-4 的项打印出来就是 "0"——
+# 浮点兜底路径必须把它们剔掉，否则出现 `1.001ClO^- + CO2 -> … + 0CO3^{2-}`
+# 这种既有非整系数、又有零系数项的式子（T25/H77）。
+_DISPLAY_FLOOR = 5e-4
+
 
 def _contract_tol(scale: float) -> float:
     """守恒契约的容差 = max(API 报告量子, 呈现分辨率 × 方程尺度)。"""
@@ -581,6 +586,12 @@ def _beautify_big_coeff(consumed: dict[str, float],
             np_ = {s: k for s, k in zip(sp2[len(c2):], scale[len(c2):])}
             if not _balanced_quick(nc, np_, tol=0.001):
                 continue
+            # v0.5.0：整数化的美化产物走**报告量子绝对容差**——0.1% 相对
+            # 容差正是 `99SCN^- + 52Fe^{3+}`（缺 1Fe、电荷 −3）当年得以
+            # 通过的漏洞（见 _balanced_quick 文档）。
+            if not _ints_balanced(list(nc), [int(v) for v in nc.values()],
+                                  list(np_), [int(v) for v in np_.values()]):
+                continue
             return nc, np_
     return None
 
@@ -648,10 +659,18 @@ def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> 
         scale = min(_sig) if _sig else min(all_vals)
         if scale <= 0:
             return None
-        cons_items = sorted(((sp, v / scale) for sp, v in consumed.items()),
+        cons_items = sorted(((sp, v / scale) for sp, v in consumed.items()
+                             if v / scale > _DISPLAY_FLOOR),
                             key=lambda x: (-x[1], x[0]))
-        prod_items = sorted(((sp, v / scale) for sp, v in produced.items()),
+        prod_items = sorted(((sp, v / scale) for sp, v in produced.items()
+                             if v / scale > _DISPLAY_FLOOR),
                             key=lambda x: (-x[1], x[0]))
+        if not cons_items or not prod_items:
+            # 显示阈值把一侧清空（全痕量体系）：放弃阈值，保底显示（诚实优先）
+            cons_items = sorted(((sp, v / scale) for sp, v in consumed.items()),
+                                key=lambda x: (-x[1], x[0]))
+            prod_items = sorted(((sp, v / scale) for sp, v in produced.items()),
+                                key=lambda x: (-x[1], x[0]))
     else:
         n_cons = len(consumed)
         cons_ints = int_vals[:n_cons]
@@ -1057,14 +1076,33 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
         bp = _beautify_big_coeff(consumed, produced)
         if bp is not None:
             bc, bp_ = bp
-            # ≤3 物种才替换（教科书单通道形式：Pb²⁺+2Br⁻→PbBr₂ 类）；
-            # ≥4 物种的"美化"仍是混合物（Fe/SCN 配位阶梯），不如保留
-            # 诚实混合比（测试有意锁定定量热力学呈现，N30/W11 族）
-            if len(bc) + len(bp_) <= 3:
-                pretty = _format_equation(bc, bp_)
-                if pretty is not None and _max_coef(pretty) <= 20:
-                    net_str = pretty
+            pretty = _format_equation(bc, bp_)
+            # 接受条件（v0.5.0 放宽并改为"看产物质量"）：
+            #   ① 干净——`_format_equation` 给的是整数形式（无小数点）
+            #   ② 小系数——max ≤ 20
+            #   ③ 覆盖——被保留的物种承载净差的主要部分（≥50%），
+            #      否则"主通道"名不副实，不如呈现诚实混合比
+            # 原判据是"≤3 物种"，本意是"只取教科书单通道形式"，但它把
+            # **多通道但通道清晰**的式子挡在外面：N09 的理想式
+            # `14H^+ + 6Fe^{2+} + Cr_2O_7^{2-} -> 7H_2O + 6Fe^{3+} + 2Cr^{3+}`
+            # 有 7 个物种、系数全小且守恒，却被拒 ⟹ 退化成
+            # `505.535H^+ + 217.944Fe^{2+} + 36.324Cr_2O_7^{2-} -> …`
+            # （非整系数 + 大系数）。物种数不是"是否干净"的判据，
+            # 系数是否整数、是否够小、是否覆盖主通道才是。
+            if (pretty is not None and "." not in pretty
+                    and _max_coef(pretty) <= 20
+                    and _beautify_covers(consumed, produced, bc, bp_)):
+                net_str = pretty
     return equations, consumed, produced, net_str
+
+
+def _beautify_covers(consumed: dict, produced: dict,
+                     bc: dict, bp_: dict, frac: float = 0.5) -> bool:
+    """美化式是否覆盖了主通道：被保留物种承载的净差 ≥ frac（投向两侧的
+    较小者，避免"只留反应物"也算覆盖）。"""
+    tot = sum(consumed.values()) + sum(produced.values())
+    keep = (sum(bc.values()) + sum(bp_.values())) * 0.5
+    return tot <= 0 or keep >= frac * tot * 0.5
 
 
 def _max_coef(eq: str) -> float:

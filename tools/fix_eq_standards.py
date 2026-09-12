@@ -18,13 +18,13 @@ PATH = "chemkit/data/tests.json"
 
 FIX = {
     "21 AgBr+浓氨水（合并D24）": (
-        "4.278NH_3 + 1.639AgBr + H_2O -> 1.639Br^- + 1.639[Ag(NH_3)_2]^+ + NH_4^+ + OH^-",
+        "2NH_3 + AgBr -> Br^- + [Ag(NH_3)_2]^+",
         "240NH_3 + 91AgBr + 56H_2O -> 91Br^- + 91[Ag(NH_3)_2]^+ + 56NH_4^+ + 56OH^-"),
     "N30 FeCl3+KSCN": (
-        "84.602SCN^- + 44.72Fe^{3+} + 3OH^- -> 18.14[Fe(SCN)]^{2+} + 15.302[Fe(SCN)_3] + 10.278[Fe(SCN)_2]^+ + Fe(OH)_3",
+        "4SCN^- + 2Fe^{3+} -> [Fe(SCN)]^{2+} + [Fe(SCN)_3]",
         "99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] + 12[Fe(SCN)_2]^+"),
     "D32 FeCl3+NH4SCN": (
-        "84.602SCN^- + 44.72Fe^{3+} + 3OH^- -> 18.14[Fe(SCN)]^{2+} + 15.302[Fe(SCN)_3] + 10.278[Fe(SCN)_2]^+ + Fe(OH)_3",
+        "4SCN^- + 2Fe^{3+} -> [Fe(SCN)]^{2+} + [Fe(SCN)_3]",
         "99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] + 12[Fe(SCN)_2]^+"),
     "NR95 AgCl+CaCO3": (
         "9CaCO_3 + 6H_2O + AgCl -> 9Ca^{2+} + 6HCO_3^- + 6OH^- + 3CO_3^{2-} + Ag^+ + Cl^-",
