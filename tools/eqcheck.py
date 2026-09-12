@@ -28,11 +28,13 @@ def parse(side: str) -> dict:
     """'99SCN^- + 52Fe^{3+}' -> {物种: 系数(有理)}"""
     out: dict = {}
     for term in _split_terms(side):
-        m = re.match(r"^(\d+)\s*(.*)$", term)
-        if m:
-            k, sp = F(int(m.group(1))), m.group(2).strip()
+        m = re.match(r"^([0-9]*\.?[0-9]+)\s*(.*)$", term)
+        if m and m.group(1):
+            k, sp = F(m.group(1)), m.group(2).strip()
         else:
             k, sp = F(1), term
+        if not sp:
+            continue
         out[sp] = out.get(sp, F(0)) + k
     return out
 

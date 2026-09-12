@@ -49,6 +49,9 @@ DEFAULT_CASES = os.path.join(DATA_DIR, "tests.json")
 PASS_N = 0
 FAILS: list[str] = []
 TIMES: list[tuple[float, str]] = []   # 逐例计时（秒，用例名）
+# 逐例结构化结果（name/ok/ms/errors/...）——供 `--out` 落盘，
+# 便于完整保留一轮测试结果并随时读取比对（不必重跑）。
+RESULTS: list[dict] = []
 
 
 def load_cases(path: str | None = None) -> list[dict]:
@@ -190,6 +193,14 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
         check_equations(c, Reaction(r), errs)
     if errs:
         FAILS.append(name)
+        RESULTS.append({"index": len(RESULTS) + 1, "name": name, "ok": False,
+                        "ms": round((time.time() - t0) * 1000, 2), "errors": errs,
+                        "note": c.get("note") or "",
+                        "pH": r.get("final_pH"), "degree": r.get("degree"),
+                        "changed": r.get("changed"),
+                        "annotations": list(r.get("annotations") or []),
+                        "net_equation": Reaction(r).net_equation
+                        if ("eq" in c or "eq_has" in c) else None})
         if verbose:
             print(f"[FAIL] {name}  -- {'; '.join(errs)}"
                   + (f"  ({c['note']})" if c.get("note") else ""))
@@ -199,6 +210,13 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
                   "| ann:", r["annotations"])
         return False
     PASS_N += 1
+    RESULTS.append({"index": len(RESULTS) + 1, "name": name, "ok": True,
+                    "ms": round((time.time() - t0) * 1000, 2), "errors": [],
+                    "note": c.get("note") or "",
+                    "pH": r.get("final_pH"), "degree": r.get("degree"),
+                    "changed": r.get("changed"),
+                    "annotations": list(r.get("annotations") or []),
+                    "net_equation": None})
     if verbose:
         print(f"[PASS] {name}" + (f"  ({c['note']})" if c.get("note") else ""))
     return True
@@ -487,14 +505,112 @@ def case_api() -> None:
             FAILS.append(tag)
 
 
-def main(cases_path: str | None = None) -> int:
+# 性能分界线（ms）——README「性能」节的 5 档固定口径，改动需同步文档
+PERF_EDGES = (10.0, 20.0, 50.0, 100.0, 500.0)
+
+
+def _perf_buckets(ms: list[float]) -> dict:
+    """5 档性能分布（口径与 README 性能表一致）+ 分位数。"""
+    n = max(len(ms), 1)
+    srt = sorted(ms)
+    return {
+        "edges_ms": list(PERF_EDGES),
+        "counts": {f">{e:g}ms": sum(1 for v in ms if v > e) for e in PERF_EDGES},
+        "pct": {f">{e:g}ms": round(sum(1 for v in ms if v > e) / n * 100, 1)
+                for e in PERF_EDGES},
+        "mean_ms": round(sum(ms) / n, 2),
+        "p50_ms": round(srt[n // 2], 2),
+        "p90_ms": round(srt[int(n * 0.9)], 2),
+        "max_ms": round(srt[-1], 2),
+        "total_ms": round(sum(ms), 1),
+    }
+
+
+def write_report(path: str, extra: dict | None = None) -> str:
+    """把本轮测试结果**结构化落盘**（JSON），供保留与离线读取比对。
+
+    结构：
+      meta     版本/时间/规模/总墙钟
+      summary  pass/fail + 5 档性能分布（含 >100ms 档的逐例编号）
+      cases    逐例：index/name/ok/ms/errors/note/pH/degree/changed/
+               annotations/net_equation
+      checks   附加检查（T 区间/API/环闭合）结果
+    """
+    ms = [t * 1000.0 for t, _ in TIMES]
+    perf = _perf_buckets(ms)
+    over100 = [{"index": i + 1, "name": r["name"], "ms": r["ms"]}
+               for i, r in enumerate(RESULTS) if r["ms"] > PERF_EDGES[3]]
+    over100.sort(key=lambda x: -x["ms"])
+    doc = {
+        "meta": {
+            "at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "version": _version(),
+            "cases": len(RESULTS),
+            "elapsed_s": round(sum(t for t, _ in TIMES), 2),
+        },
+        "summary": {
+            "pass": PASS_N, "fail": len(FAILS),
+            "total": PASS_N + len(FAILS),
+            "failed_names": list(FAILS),
+            "perf": perf,
+            "over_100ms": over100,
+        },
+        "cases": RESULTS,
+        "checks": extra or {},
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(doc, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+    return path
+
+
+def _version() -> str:
+    try:
+        from . import __version__
+        return __version__
+    except Exception:            # noqa: BLE001
+        return "?"
+
+
+def _perf_report() -> None:
+    """性能分档统计（5 档）+ >100ms 档的用例编号。
+
+    口径与 README 性能表一致（>10/20/50/100/500 ms），便于跨版本对照。
+    **>100 ms 档给出编号**：这一档是个位数到几十例的量级，逐例可追踪
+    （回归时点名即可定位）；>10/20/50 档只给计数与占比（量大，逐例列出
+    无信息量）。编号 = 用例在全量清单中的序号（1 起）+ 用例名。
+    """
+    if not TIMES:
+        return
+    ms = [t * 1000.0 for t, _ in TIMES]
+    n = len(ms)
+    print("\n---- 性能分界（5 档，单例墙钟）----")
+    print(f"  {'分界线':>9s} {'用例数':>7s} {'占比':>8s}")
+    for e in PERF_EDGES:
+        k = sum(1 for v in ms if v > e)
+        print(f"  {'> ' + format(e, 'g') + ' ms':>9s} {k:7d} {k / n * 100:7.1f}%")
+    srt = sorted(ms)
+    print(f"  均值 {sum(ms) / n:.1f} ms；中位 {srt[n // 2]:.1f} ms；"
+          f"P90 {srt[int(n * 0.9)]:.1f} ms；最值 {srt[-1]:.1f} ms")
+    over = [(v, i + 1, nm) for i, ((_t, nm), v) in enumerate(zip(TIMES, ms))
+            if v > PERF_EDGES[3]]
+    if over:
+        over.sort(reverse=True)
+        print(f"  >100 ms 档（{len(over)} 例，编号＝清单序号）：")
+        for v, idx, nm in over:
+            print(f"    #{idx:<5d} {v:9.1f} ms  {nm}")
+
+
+def main(cases_path: str | None = None, out_path: str | None = None) -> int:
     T = load_tables()
     judge([{"name": "NaCl", "mol": 0.1}], {"V_L": 1.0}, T)   # 预热：模板/缓存冷启动不计入首例
     TIMES.clear()
+    RESULTS.clear()
+    FAILS.clear()
     for c in load_cases(cases_path):
         run_case(c, T)
-    case_T_range(T)
-    case_api()
+    ok_T = case_T_range(T)
+    ok_api = case_api()
     total = PASS_N + len(FAILS)
     print(f"\n===== {PASS_N}/{total} PASS =====")
     if FAILS:
@@ -506,16 +622,30 @@ def main(cases_path: str | None = None) -> int:
         for t, n in reversed(slow):
             print(f"  {t:6.2f}s {n}")
     print(f"总耗时 {sum(t for t, _ in TIMES):.1f}s")
+    _perf_report()
     dH_coverage(T)
 
     print("\n---- 环闭合检查 ----")
     cfail = consistency(T)
     if cfail:
         print("\n".join(cfail))
-        return 1
-    print("全部环闭合检查通过。")
-    return 0 if not FAILS else 1
+    else:
+        print("全部环闭合检查通过。")
+    if out_path:
+        p = write_report(out_path, extra={
+            "T_range_ok": ok_T, "api_ok": ok_api,
+            "consistency_fail": cfail,
+        })
+        print(f"\n结构化结果已写入 {p}"
+              f"（cases/summary/checks；summary.perf 为 5 档性能分布）")
+    return 0 if (not FAILS and not cfail) else 1
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else None))
+    args = sys.argv[1:]
+    out = None
+    if "--out" in args:
+        i = args.index("--out")
+        out = args[i + 1]
+        args = args[:i] + args[i + 2:]
+    sys.exit(main(args[0] if args else None, out))

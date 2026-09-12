@@ -20,6 +20,10 @@ from .core import elements_of, charge_of
 from .data import Tables, load_tables
 from .candidates import WATER, H_ION, X_MIN
 
+# 净方程守恒的绝对容差 = 报告量子：consumption/production 由 round(x, 6)
+# 产出，每个系数误差 ≤5e-7；含物种数与电荷项余量后取 1e-5。
+_EQ_TOL_ABS = 1e-5
+
 # ---------- 数据表预加载（import chemkit 时执行，全程序仅一次磁盘 I/O）----------
 # 方程式装配层的表依赖常量（固态酸 pKa 等静态提取）用默认表构建；
 # system 层再导出同一单例（interfaces.TABLES）
@@ -120,7 +124,7 @@ def _balance_h_o(consumed: dict[str, float], produced: dict[str, float]
 # ============================================================ H+ 正则形 → OH- 还原
 
 def _restore_oh(consumed: dict[str, float], produced: dict[str, float],
-                trace: float) -> tuple[dict[str, float], dict[str, float]]:
+                trace: float, allow: bool = True) -> tuple[dict[str, float], dict[str, float]]:
     """把引擎的 H+ 正则形还原为化学习惯的 OH- 写法，并抵消跨侧 H+/OH-。
 
     两步：
@@ -130,7 +134,18 @@ def _restore_oh(consumed: dict[str, float], produced: dict[str, float],
     只有"H2O 在反应物侧 + H+ 在产物侧"这一种挂侧可以还原为 OH-；
     跨侧 H+/OH- 抵消（H+ 左 OH- 右，或反之）在数学上不等价于生成
     H2O（净向量差 2H+ 或 2OH-），会破坏配平，故不做。
+
+    v0.4.5 试行后撤回：曾按"终态 pH > 7 才算碱性"给还原加闸，想让
+    FeCl₃+KSCN（pH 1.45）写成 `… + 3H2O -> … + Fe(OH)_3 + 3H^+`。实测
+    **95 例翻红**——语料自身的呈现惯例是**一律**把 `H2O(左)+H^+(右)` 写成
+    OH⁻（如 `CO2 + OH^- -> HCO3^-`、`Al^{3+} + 3OH^- -> Al(OH)_3`，即便
+    这些体系并未投加强碱，OH⁻ 记为水自电离来源）。该惯例是既定语义，
+    改动属于呈现层的全库重写，不是缺陷修复。故保留无条件还原。
     """
+    if not allow:
+        consumed = {sp: v for sp, v in consumed.items() if v > trace}
+        produced = {sp: v for sp, v in produced.items() if v > trace}
+        return consumed, produced
     w = consumed.get(WATER, 0.0)
     h = produced.get(H_ION, 0.0)
     if w > trace and h > trace:
@@ -147,6 +162,73 @@ def _restore_oh(consumed: dict[str, float], produced: dict[str, float],
     return consumed, produced
 
 
+# ============================================================ 净方程守恒契约
+
+# 报告量子（mol）：`_finalize_result` 用 round(x, 6) 产出 consumption/
+# production，API 的呈现精度是 1e-6。
+REPORT_QUANTUM = 1e-5
+
+# 呈现分辨率（相对方程尺度）：项的系数被归一化后按 3 位小数打印，故
+# 小于 5e-4 × 尺度 的项在**呈现上不可见**。守恒契约的容差必须取这个，
+# 而不是 API 舍入量子——首版拿 1e-5 当契约容差，把"反应未走满"的
+# 2.2e-5 残差（E45：账本 HCO₃⁻ 0.999978 而方程写 1）判成越界，闸门
+# 因此拒绝一切合法改写 ⟹ 全库 111 例翻红。契约应约束"方程承诺的原子"，
+# 容差则应与**它自己怎么显示**一致。
+DISPLAY_QUANTUM = 5e-4
+
+
+def _contract_tol(scale: float) -> float:
+    """守恒契约的容差 = max(API 报告量子, 呈现分辨率 × 方程尺度)。"""
+    return max(REPORT_QUANTUM, DISPLAY_QUANTUM * max(scale, 0.0))
+
+
+def _side_totals(side: dict, els: set) -> dict:
+    return {el: sum(elements_of(s).get(el, 0) * v for s, v in side.items())
+            for el in els}
+
+
+def _drop_budget_ok(base_c: dict, base_p: dict,
+                    c: dict, p: dict) -> bool:
+    """**唯一的守恒闸门**：化简是否仍在守恒契约内。
+
+    设计意图（v0.5.0 重构）：`_build_equations` 里有六个依次改数的启发式
+    化简（质子噪声对消、水解对消、痕量过滤×2、共轭对对齐、H/O 补配平），
+    此前**各自为政**——每个都能破坏守恒，没有任何一处对"真实净差"负责，
+    容差又是 3% 相对值，于是 2.3% 的 Fe(OH)₃ 被删掉也照样通过并被固化成
+    4 条测试标准。现在化简只是**候选**，唯一裁决在此。
+
+    **判据（唯一一条）**：呈现出来的方程**自身必须配平**——非 H/O 元素与
+    电荷两侧守恒到呈现分辨率 `_contract_tol`。H 与 O 不受约束（溶剂水的
+    组成，由 `_balance_h_o` 用 H₂O/H⁺/OH⁻ 补齐，水活度 1、体相量级）。
+
+    两次错误设计的记录（都实测过，别再走回去）：
+      · 首版把 H/O 也纳入 → 把合法的补配平判成违规，`2H2S + SO2 -> 3S`
+        连 `2H2O` 都丢了，近百例翻红；
+      · 次版加"每侧元素总量相对 base（真值）不得漂移"的预算 → 但化简
+        启发式（共轭对**对齐**、对消）**本来就会改量**，于是 T07
+        `HCO3^- + OH^- -> CO3^{2-}` 这类完全正确的式子因"C 偏离真值
+        0.014"被拒，浓硫酸/亚硝酸族同理，47 例翻红。
+      **契约只约束"方程是不是一个配平的化学方程式"，不约束它等于账本的
+      哪一部分**——后者是启发式（呈现选择）的职责，不是守恒的职责。
+    真错误仍会被抓：Fe(OH)₃ 被水解对消删掉时，Fe 两侧差 0.528 ⟹ 拒绝。
+    """
+    els: set = set()
+    for sp in list(c) + list(p):
+        els |= set(elements_of(sp))
+    els -= {"H", "O"}
+    scale = max([abs(v) for v in list(base_c.values()) + list(base_p.values())]
+                or [0.0])
+    tol = _contract_tol(scale)
+    for el in els:
+        lhs = sum(elements_of(s).get(el, 0) * v for s, v in c.items())
+        rhs = sum(elements_of(s).get(el, 0) * v for s, v in p.items())
+        if abs(lhs - rhs) > tol:
+            return False
+    qc = sum(charge_of(s) * v for s, v in c.items())
+    qp = sum(charge_of(s) * v for s, v in p.items())
+    return abs(qc - qp) <= tol
+
+
 # ============================================================ 系数有理化
 
 def _fmt_term(nu: float, species: str) -> str:
@@ -161,7 +243,57 @@ def _fmt_term(nu: float, species: str) -> str:
     return f"{nu:.3f}".rstrip("0").rstrip(".") + species
 
 
-def _rationalize(vals: list[float]) -> list[int] | None:
+def _balanced_upto(consumed: dict, produced: dict) -> bool:
+    """元素/电荷守恒判据，**恒用报告量子绝对容差**（不因系数恰为整数而改走
+    精确档）。
+
+    用途：校验"整数化会丢掉哪些痕量"。整数形式把 1e-6 级的痕量四舍五入为
+    0 是**正当**的（该量低于 API 的 6 位小数报告精度），此时整数向量相对
+    浮点向量天然差一个痕量；零容差会把这种正当舍入判成"不守恒"，于是所有
+    含痕量的体系全退回浮点式（v0.4.5 实测：D11 出现 `7.999H^+`、
+    D12 出现 `8.001H^+`，断言 2→18）。
+    真正的错解（如 99:52 缺 1 个 Fe、电荷差 3）量级在 1 mol 尺度上，远大于
+    1e-5，仍被拦下。
+    """
+    species = list(consumed) + list(produced)
+    if not species:
+        return True
+    els: set = set()
+    for sp in species:
+        els |= set(elements_of(sp))
+    for el in els:
+        lhs = sum(elements_of(s).get(el, 0) * v for s, v in consumed.items())
+        rhs = sum(elements_of(s).get(el, 0) * v for s, v in produced.items())
+        if abs(lhs - rhs) > _EQ_TOL_ABS:
+            return False
+    return abs(sum(charge_of(s) * v for s, v in consumed.items())
+               - sum(charge_of(s) * v for s, v in produced.items())) \
+        <= _EQ_TOL_ABS
+
+
+def _ints_balanced(names_c: list, ints_c: list,
+                   names_p: list, ints_p: list) -> bool:
+    """整数系数向量的元素与电荷守恒检查（零容差，精确整数算术）。
+
+    用于**整数 snap** 路径——那里的系数本身就是化学计量整数，没有"近似
+    配平"的余地（99:52 缺 1Fe、电荷 −3 即此档漏网并被固化成 4 条标准）。
+    但 `_rationalize` 的整数化不同：它会把低于报告精度的痕量舍入为 0，
+    那种情况用 `_balanced_upto`（见其文档）。
+    """
+    els: set = set()
+    for s in names_c + names_p:
+        els |= set(elements_of(s))
+    for el in els:
+        d = (sum(k * elements_of(s).get(el, 0) for s, k in zip(names_p, ints_p))
+             - sum(k * elements_of(s).get(el, 0)
+                   for s, k in zip(names_c, ints_c)))
+        if d:
+            return False
+    return (sum(k * charge_of(s) for s, k in zip(names_p, ints_p))
+            == sum(k * charge_of(s) for s, k in zip(names_c, ints_c)))
+
+
+def _rationalize(vals: list[float], validate=None) -> list[int] | None:
     """浮点系数列表 → 最简整数比列表。
 
     两档精度逐级尝试（按最小值归一化后）：
@@ -171,17 +303,36 @@ def _rationalize(vals: list[float]) -> list[int] | None:
       2. 粗档：limit_denominator(2)（整数/半整数），相对误差 ≤5%——
          用于噪声更大的近边界体系。
     两档都失败返回 None（调用方退化为浮点系数）。
+
+    v0.4.5：新增 `validate`（整数向量 → 是否接受）。独立逐项近似会破坏
+    浮点向量的守恒性（见 `_ints_balanced`），故由调用方传入守恒校验，
+    **只接受守恒的整数向量**；两档都不守恒则返回 None，调用方退化为
+    浮点系数（诚实呈现优于不守恒的"漂亮"整数）。
     """
     pos_vals = [v for v in vals if v > 0]
     if not pos_vals:
         return None
-    min_v = min(pos_vals)
+    mx_v = max(pos_vals)
+    # 归一化基准取**非痕量**的最小值：若按全局最小值归一化，而最小值恰好是
+    # 一个痕量（D11 的 Cr(OH)₃ 3.3e-4 对 H⁺ 7.999），主系数会被放大到数万，
+    # `limit_denominator(8)` 只能给出 24021 这类巨型整数，调用方按
+    # `max(int_vals) > 1000` 拒绝 ⟹ 全体系退回浮点式（`7.999H^+`）。
+    _sig = [v for v in pos_vals if v >= 1e-3 * mx_v]
+    min_v = min(_sig) if _sig else min(pos_vals)
     norm = [v / min_v for v in vals]
     for den_max, tol in ((8, 0.02), (2, 0.05)):
         fracs = []
         ok = True
-        for v in norm:
+        for v, raw in zip(norm, vals):
             if v <= 0:
+                fracs.append(Fraction(0))
+                continue
+            # 痕量（< 0.1% 峰值）不参与"能否有理化"的判据：它们在任何整数
+            # 形式里都必然被舍入为 0，而 `limit_denominator` 对 3e-6 这类
+            # 相对量只能给出 0（相对误差 100%）⟹ 整档被判失败 ⟹ 全体系退回
+            # 浮点式（实测 D11 出现 `7.999H^+`、D12 出现 `8.001H^+`）。
+            # 舍入为 0 是否可接受，由 `validate`（守恒到报告量子）判定。
+            if raw < 1e-3 * mx_v:
                 fracs.append(Fraction(0))
                 continue
             f = Fraction(v).limit_denominator(den_max)
@@ -202,7 +353,10 @@ def _rationalize(vals: list[float]) -> list[int] | None:
         g = reduce(gcd, [v for v in int_vals if v > 0], 0)
         if g == 0:
             return None
-        return [v // g for v in int_vals]
+        int_vals = [v // g for v in int_vals]
+        if validate is not None and not validate(int_vals):
+            continue          # 本档整数比不守恒 → 试下一档
+        return int_vals
     return None
 
 
@@ -455,7 +609,13 @@ def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> 
             all_vals = list(consumed.values()) + list(produced.values())
 
     # ① 整数 snap 优先（最干净的化学计量比，处理 equilibrium 残差）
+    #    v0.4.5：整数化产物必须**精确守恒**才接受（见 _ints_balanced）
+    _cn, _pn = list(consumed), list(produced)
+    _nc = len(_cn)
     snap_ints = _try_integer_snap(consumed, produced)
+    if snap_ints is not None and not _ints_balanced(
+            _cn, snap_ints[:len(_cn)], _pn, snap_ints[len(_cn):]):
+        snap_ints = None
     if snap_ints is not None:
         n_cons = len(consumed)
         cons_ints = snap_ints[:n_cons]
@@ -468,11 +628,24 @@ def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> 
         rhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in prod_items)
         return f"{lhs}{_ARROW}{rhs}"
 
-    # ② _rationalize 分数有理化（真实非整数比，如 1:2:1.5）
-    int_vals = _rationalize(all_vals)
+    # ② _rationalize 分数有理化（真实非整数比，如 1:2:1.5）——
+    #    只接受**守恒**的整数向量（独立逐项近似会破坏守恒，见 _ints_balanced）
+    def _ok_ints(iv: list) -> bool:
+        c = {s: v for s, v in zip(_cn, iv[:_nc]) if v > 0}
+        p = {s: v for s, v in zip(_pn, iv[_nc:]) if v > 0}
+        return _balanced_upto(c, p)
+
+    int_vals = _rationalize(all_vals, validate=_ok_ints)
     if int_vals is None or max(int_vals) > 1000:
         # ③ 浮点系数兜底（真实非化学计量混合，如 Fe→Fe2+/Fe3+ 混合价态）
-        scale = min(all_vals)
+        # 归一化用**稳健尺度**：取"显示显著"物种（≥0.1% 峰值）的最小值，
+        # 而不是全局最小值。全局 min 一旦落在阈值边界的痕量物种上
+        # （如 round(x,6) 恰好留下的 1e-6），整式会被放大约 10⁶ 倍——
+        # v0.4.5 首轮试修即此：D12 出现 `941116.647H^+`、T78 出现
+        # `31123.319H^+`，断言 2→20 全红。系数比不变 ⟹ 守恒性不受影响。
+        _mx = max(all_vals)
+        _sig = [v for v in all_vals if v >= 1e-3 * _mx]
+        scale = min(_sig) if _sig else min(all_vals)
         if scale <= 0:
             return None
         cons_items = sorted(((sp, v / scale) for sp, v in consumed.items()),
@@ -483,10 +656,12 @@ def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> 
         n_cons = len(consumed)
         cons_ints = int_vals[:n_cons]
         prod_ints = int_vals[n_cons:]
-        cons_items = sorted(zip(consumed.keys(), cons_ints),
-                            key=lambda x: (-x[1], x[0]))
-        prod_items = sorted(zip(produced.keys(), prod_ints),
-                            key=lambda x: (-x[1], x[0]))
+        # 零系数不显示（整数化/抵消后会出现 0，如 D12 的 `0MnCO_3`、
+        # T78 的 `0NO_2^-`）——snap 路径本来就有 `if v > 0`，此处补齐
+        cons_items = sorted([(s, v) for s, v in zip(consumed.keys(), cons_ints)
+                             if v > 0], key=lambda x: (-x[1], x[0]))
+        prod_items = sorted([(s, v) for s, v in zip(produced.keys(), prod_ints)
+                             if v > 0], key=lambda x: (-x[1], x[0]))
     lhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in cons_items)
     rhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in prod_items)
     return f"{lhs}{_ARROW}{rhs}"
@@ -810,6 +985,29 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
     if has_complex_product and net_total < 0.005 * feed_total and net_total < 5e-3:
         return equations, {}, {}, None
 
+    # ============================================================
+    # 守恒契约（v0.5.0 重构）
+    # ------------------------------------------------------------
+    # 到此处为止的 `consumed/produced`（账本净差 + 质子账本 + 中和步记账）
+    # 就是**真实净差**——它的元素与电荷守恒由引擎账本保证。下面所有"化简"
+    # 都只是**候选**：每一步算出的结果都要过唯一闸门 `_gate`，闸门以本快照
+    # 为基准算**累计**偏差（不是逐步偏差），超过报告量子即整步回退。
+    # 于是"丢项"只会发生在呈现精度之内，方程永远不会少一个原子。
+    # ============================================================
+    base_c, base_p = dict(consumed), dict(produced)
+
+    def _gate(cur_c: dict, cur_p: dict, prev_c: dict, prev_p: dict):
+        """唯一裁决：候选相对真值的累计偏差在报告量子内则采纳，否则回退。"""
+        if cur_c and cur_p and _drop_budget_ok(base_c, base_p, cur_c, cur_p):
+            return cur_c, cur_p
+        return prev_c, prev_p
+
+    def _step(fn, cur_c: dict, cur_p: dict, *a, **kw):
+        tc, tp = fn(dict(cur_c), dict(cur_p), *a, **kw)
+        tc = {s: v for s, v in tc.items() if v > 1e-9}
+        tp = {s: v for s, v in tp.items() if v > 1e-9}
+        return _gate(tc, tp, cur_c, cur_p)
+
     consumed, produced = _cancel_minor_protonation(consumed, produced)
     consumed, produced = _cancel_minor_hydrolysis(consumed, produced)
     # 同物种跨侧抵消（浓酸分子化/再电离等记账形态转换会在两侧各留一份）
@@ -822,34 +1020,32 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
     if not consumed or not produced:
         return equations, {}, {}, None
     # 痕量过滤 → 共轭酸碱对质量平衡调整 → 配平 → OH- 还原 → 终过滤
-    raw_c, raw_p = dict(consumed), dict(produced)
-    fc, fp = _filter_trace(consumed, produced)
-    if not fc or not fp:
-        # 过滤把一侧清空（全小量体系，如痕量溶解）：放弃过滤
-        fc, fp = dict(consumed), dict(produced)
+    # 全部走同一个闸门 `_step`（相对 base 的累计偏差 ≤ REPORT_QUANTUM）。
+    # 各化简的**内在启发式**（阈值、配对规则）保持不变——它们只是候选生成器；
+    # 是否允许落地由闸门说了算，不再各自带一套私有守卫。
+    consumed, produced = _step(
+        lambda c, p: _filter_trace(c, p, balanced=True), consumed, produced)
     # 共轭酸碱对不平衡调整：过滤掉 [Ag(NH3)2]+ (痕量) 后，消耗侧 NH3 残留
     # 与产物侧 NH4+ 不等（差额来自被过滤的产物）。化学事实上被过滤的产物
     # 是由共轭碱+其他离子形成的（如 2NH3 + Ag+ → [Ag(NH3)2]+），差额
     # 残留在共轭碱侧。同步调整较小者到较大者以恢复化学计量比。
-    fc, fp = _align_conjugate_pair(fc, fp)
-    consumed, produced = fc, fp
+    consumed, produced = _step(_align_conjugate_pair, consumed, produced)
     c2, p2 = _balance_h_o(dict(consumed), dict(produced))
-    if (H_ION in c2 and H_ION not in consumed) or (H_ION in p2 and H_ION not in produced):
-        consumed, produced = raw_c, raw_p
-        c2, p2 = _balance_h_o(dict(consumed), dict(produced))
-    consumed, produced = c2, p2
-    consumed, produced = _restore_oh(consumed, produced, 1e-9)
+    consumed, produced = _gate({s: v for s, v in c2.items() if v > 1e-9},
+                               {s: v for s, v in p2.items() if v > 1e-9},
+                               consumed, produced)
+    consumed, produced = _restore_oh(consumed, produced, 1e-9, allow=True)
     # 配平兜底可能在对侧补出 H+：再做一次跨侧抵消
     for sp in set(consumed) & set(produced):
         x = min(consumed[sp], produced[sp])
         consumed[sp] -= x
         produced[sp] -= x
-    # 终过滤（5%）：过滤后必须仍配平，否则退回未过滤版本
+    # 终过滤（5%）：同样过闸
     consumed = {s: v for s, v in consumed.items() if v > 1e-9}
     produced = {s: v for s, v in produced.items() if v > 1e-9}
-    fc, fp = _filter_trace(consumed, produced, frac=0.05)
-    if fc and fp and _balanced_quick(fc, fp):
-        consumed, produced = fc, fp
+    consumed, produced = _step(
+        lambda c, p: _filter_trace(c, p, frac=0.05, balanced=True),
+        consumed, produced)
     if not consumed or not produced:
         return equations, {}, {}, None
     net_str = _format_equation(consumed, produced)
@@ -879,16 +1075,27 @@ def _max_coef(eq: str) -> float:
     return max(list(rr.values()) + list(pp.values()))
 
 
-def _balanced_quick(consumed: dict, produced: dict, tol: float = 0.03) -> bool:
+def _balanced_quick(consumed: dict, produced: dict,
+                    tol: float | None = None) -> bool:
     """配平验证：元素与电荷两侧相等。
 
-    **整数系数走精确整数算术，非整数走相对容差**——这是"配平硬保证"的
-    真正落点。0.4.x 一律用相对容差（默认 3%、美化路径 0.1%），容差被
-    最大系数放大：对整数化的美化产物（最大系数 ~500）可达 0.1–15 eq，
-    于是 `99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] +
+    **整数系数走精确整数算术；浮点系数走"报告量子"绝对容差**。
+
+    0.4.x 一律用**相对**容差（默认 3%、美化路径 0.1%），容差被最大系数
+    放大：对整数化的美化产物（最大系数 ~500）可达 0.1–15 eq，于是
+    `99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] +
     12[Fe(SCN)_2]^+`（缺 1Fe、电荷 −3）与银氨族（缺 6H/2N）照样通过，
-    被固化成测试标准。整数候选没有"近似配平"的余地（系数本身就是
-    化学计量），故零容差；浮点候选（真实非化学计量混合比）保留容差。
+    被固化成测试标准。
+
+    但**只把整数档改成精确还不够**：本函数的浮点档还被用作"痕量过滤是否
+    允许"的守卫（L489/L903），3% 相对容差会让 2.3% 的真实失衡通过——
+    FeCl₃+KSCN 的 `_filter_trace(frac=0.05)` 删掉 `Fe(OH)₃ 0.0118 mol`
+    （占 Fe 的 2.3%）后守卫放行，净方程就少了 1 个 Fe
+    （`8.231SCN^- + 4.351Fe^{3+} -> …`，Fe 差 0.097）。
+    非整数档的正确容差是**报告量子**：`consumption/production` 由
+    `round(x, 6)` 产出，每个系数误差 ≤5e-7，故绝对容差 `_EQ_TOL_ABS`
+    （1e-5，含物种数余量）才是"守恒到打印精度"的判据。
+    显式传 `tol` 的调用点（整数 snap / 美化投影）保持原相对口径。
     """
     species = list(consumed) + list(produced)
     if not species:
@@ -908,28 +1115,55 @@ def _balanced_quick(consumed: dict, produced: dict, tol: float = 0.03) -> bool:
         return (sum(charge_of(s) * int(n) for s, n in consumed.items())
                 == sum(charge_of(s) * int(n) for s, n in produced.items()))
     mx = max(vals, default=1.0)
+    lim = (tol * mx) if tol is not None else _EQ_TOL_ABS
     els = set()
     for sp in species:
         els |= set(elements_of(sp))
     for el in els:
         lhs = sum(elements_of(s).get(el, 0) * n for s, n in consumed.items())
         rhs = sum(elements_of(s).get(el, 0) * n for s, n in produced.items())
-        if abs(lhs - rhs) > tol * mx:
+        if abs(lhs - rhs) > lim:
             return False
     lhs = sum(charge_of(s) * n for s, n in consumed.items())
     rhs = sum(charge_of(s) * n for s, n in produced.items())
-    return abs(lhs - rhs) <= tol * mx
+    return abs(lhs - rhs) <= lim
 
 
 def _filter_trace(consumed: dict, produced: dict,
-                  frac: float = 0.02) -> tuple[dict, dict]:
-    """过滤净差中的痕量物种：< 2% × 最大物种量视为噪声（纯相对阈值，
-    稀体系（1e-4 M 级别）的小量反应不被绝对地板误杀）。"""
+                  frac: float = 0.02,
+                  balanced: bool = False) -> tuple[dict, dict]:
+    """过滤净差中的痕量物种：< frac × 最大物种量视为噪声。
+
+    `frac` 是**相对**阈值（稀体系（1e-4 M 级别）的小量反应不被绝对地板
+    误杀）。但"小于 2% 峰值"不等于"可删"——删项破坏元素守恒，而守恒是
+    净方程的硬要求。实测 FeCl₃+KSCN 的 `Fe(OH)₃ 0.0118 mol` 占峰值 1.2%
+    却在 Fe 上占 2.3%，整批删掉后净方程少 1 个 Fe
+    （`8.231SCN^- + 4.351Fe^{3+} -> …`），并被固化成 4 条测试标准。
+
+    `balanced=True` 时改为**逐项守恒感知删除**：把候选按量升序逐个试删，
+    删后仍满足守恒（`_EQ_TOL_ABS`，即报告量子）才真删；否则保留。
+    于是 1e-6 级的真噪声照删，而 0.0118 的 Fe(OH)₃ 被留下——既清噪又不破坏守恒。
+    """
     mx = max(list(consumed.values()) + list(produced.values()), default=0.0)
     thr = max(1e-6, frac * mx)
-    return ({s: v for s, v in consumed.items() if v > thr},
-            {s: v for s, v in produced.items() if v > thr})
-
+    if not balanced:
+        return ({s: v for s, v in consumed.items() if v > thr},
+                {s: v for s, v in produced.items() if v > thr})
+    cands: list[tuple[float, str, bool]] = []      # (量, 物种, 是否在消耗侧)
+    for s, v in consumed.items():
+        if v <= thr:
+            cands.append((v, s, True))
+    for s, v in produced.items():
+        if v <= thr:
+            cands.append((v, s, False))
+    c2, p2 = dict(consumed), dict(produced)
+    for _v, s, in_cons in sorted(cands):
+        c3, p3 = dict(c2), dict(p2)
+        side = c3 if in_cons else p3
+        side.pop(s, None)
+        if _balanced_quick(c3, p3):
+            c2, p2 = c3, p3
+    return c2, p2
 
 def _cancel_minor_hydrolysis(consumed: dict, produced: dict,
                              frac: float = 0.05) -> tuple[dict, dict]:
@@ -937,7 +1171,15 @@ def _cancel_minor_hydrolysis(consumed: dict, produced: dict,
     出现时整体消去（FeCl2+Cl2 中 1% 的 Fe3+ 水解副反应不属于净方程）。
     对消后 H/O 差额由 balance_h_o 的 H2O 补齐，恰好回到教科书形式。
     仅当两者都相对主物种微量（<5%）时才消——纯水解体系（AlCl3 溶液）
-    的水解本身就是主反应，不动。"""
+    的水解本身就是主反应，不动。
+
+    v0.4.5 守恒守卫：对消掉 `x` mol 氢氧化物固体等于从方程里删掉 `x` mol
+    金属，**只在 x 低于报告量子时才允许**（否则方程少一个金属）。
+    实测 FeCl₃+KSCN 的 `Fe(OH)₃ 0.0118 mol`（占 Fe 的 2.3%）被这里对消，
+    净方程少 1 个 Fe（`8.231SCN^- + 4.351Fe^{3+} -> …`），并被固化成 4 条
+    标准；round-4 曾误判为 `_filter_trace` 所致（过滤器的**输入**已缺该项，
+    真凶在这一层）。
+    """
     mx = max(list(consumed.values()) + list(produced.values()), default=0.0)
     if mx <= 0:
         return consumed, produced
@@ -956,15 +1198,24 @@ def _cancel_minor_hydrolysis(consumed: dict, produced: dict,
                 continue
             y = side_ion.get(ion, 0.0)
             if y < limit and abs(y - n * x) <= 0.25 * max(n * x, 1e-9):
-                side_solid.pop(solid, None)
+                tc, tp = dict(consumed), dict(produced)
+                t_solid = tc if side_solid is consumed else tp
+                t_ion = tc if side_ion is consumed else tp
+                t_solid.pop(solid, None)
                 rest = y - n * x
                 if rest > 1e-9:
-                    side_ion[ion] = rest
+                    t_ion[ion] = rest
                 else:
-                    side_ion.pop(ion, None)
+                    t_ion.pop(ion, None)
                     if rest < -1e-9:      # H+ 不足配比：差额挂到对侧
-                        other = produced if side_ion is consumed else consumed
+                        other = tp if side_ion is consumed else tc
                         other[ion] = other.get(ion, 0.0) + (-rest)
+                if not _balanced_quick(tc, tp):
+                    continue              # 对消会破坏守恒 → 保留该固相
+                consumed.clear()
+                consumed.update(tc)
+                produced.clear()
+                produced.update(tp)
                 break
     return consumed, produced
 
