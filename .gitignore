@@ -3,3 +3,5 @@ __pycache__/
 .pytest_cache/
 converg-new.json
 *.zip
+.tmp_*
+_new_*.json
