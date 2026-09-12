@@ -41,8 +41,8 @@ def show(prefixes: list[str], verbose: bool = False) -> None:
         led = probe["ledger"]
         He = probe["H_excess"]
         p_m = probe["pH"]
-        p_c = charge_pH(led, V, T, T_K, H_excess=He)
-        p_c2 = charge_pH(led, V, T, T_K, H_excess=0.0)
+        p_c = charge_pH(led, V, T, T_K, c_H=float(cond.get("c_H", 0.0) or 0.0))
+        p_c2 = charge_pH(led, V, T, T_K)
         print(f"  机器 pH={p_m}  charge_pH(He)={p_c}  charge_pH(no He)={p_c2}"
               f"  pKw={pKw_of(T_K):.3f}")
         net = sum(charge_of(s) * m for s, m in led.items())
