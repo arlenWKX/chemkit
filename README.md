@@ -457,6 +457,32 @@ N08/H25/UO02 三例跨进程掷骰子）。
   被放大数千倍（`1 HCl+NaOH(1:1)` dump 记 5746→7776 ms，单测 **1.5 ms**）。
   逐例判读必须用 `iters`（`bench.py` 已用 repeats+中位数处理）。
   本轮"纯性能 1182 例"即此噪声，实际只有 14 例迭代数变化。
+- **收敛质量口径在报假警（见 architecture.md §7 I）**：三个具名难题里
+  **TS04 不成立**——它的 `resid_live = 17.975` 全部来自 meta
+  `slow: True` 的**幻影硫酸盐通道**（couples 里 `SO₄²⁻/S₂O₃²⁻` 的
+  `closed_with_red` 已动力学封闭），walk 从未打算执行；断言一直通过。
+  同类假警还有膜封锁的金属-水通道（E24 156.12）与**痕量方向**
+  （D38 33.4 来自 PbO₂ 2.9e-06 / Cr³⁺ 1.9e-06 mol——`|S|` 大 ≠ 会反应）。
+  新口径：`resid_live = max|S| over 两侧在场 ∧ ¬frozen ∧ ¬slow ∧
+  ¬blocked ∧ ext_max ≥ ANN_MIN_EXTENT`（`ANN_MIN_EXTENT` 是引擎自己
+  的显著程度判据，slow 标注同用）；`disabled` 仍计入（J06 型真实病灶）。
+  四类被排除者的 max|S| 单列 `resid_frozen/slow/blocked/trace`——
+  **不统计但必须看得见**，防止口径变遮羞布。
+  ```
+                     旧口径      新口径
+  resid_p90          1.596  →   0.064    (25×)
+  resid_max        159.408  →  10.246
+  n(|S|>1)            143   →    74
+  iters_total       12651   = 12651     digest 逐位不变（口径不动引擎）
+  ```
+  ⟹ **旧口径下 77% 的"欠收敛"是假警**；此前基于 `resid_live` 的取舍
+  结论（"深水区 91 例"、"resid 债"）须重估。
+- **三个具名难题结算**：**H46 已解**；**TS04 不成立**（假警）；
+  **J06 未解**（在分支 `rework/ph-continuity`，需 ④ 完备性判据一起
+  验收）。剩 **74 例真实 `|S|>1`** 是收敛债务真实规模：磷酸银/磷酸钙
+  （Y03/DR16 10.25、N23/U12 8.28）、Se33、Zn-FeSO₄、Fe-水族（6.18）。
+- **施工顺序 ② 完成**：`converg-baseline.json` 按新口径重采（旧文件是
+  更早 worktree 快照，digest `2b9c67b8` 与 HEAD 不符）。
 - **"charge_pH 替换 pH 机器"证伪**（`tools/phdiag.py` 全量对照，
   1187 例）：76%（902）本就逐位一致；215 例分歧**全部**落在两可解释
   类且都是"机器对、电荷平衡错"——①强酸条件 `c_H` 的无阴离子记账

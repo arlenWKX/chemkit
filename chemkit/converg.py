@@ -27,6 +27,7 @@ import os
 import sys
 import time
 
+from .candidates import ANN_MIN_EXTENT
 from .data import load_tables
 from .engine import judge
 from .testsuit import load_cases, DEFAULT_CASES
@@ -44,6 +45,50 @@ def _result_digest(r: dict) -> str:
     blob = json.dumps(core, sort_keys=True, ensure_ascii=False,
                       separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
+def _live(active: list, only: str | None = None) -> float:
+    """质量残差 = **值得解且 walk 会解**的两侧平衡的最大 |S|。
+
+    口径原则（不是"调到好看"，而是"只统计求解器承诺要解的东西"）：
+
+    **第一层：|S| 大 ≠ 欠收敛。** `S = logK − logQ` 是 log 尺度驱动力，
+    痕量物种对可以有巨大的 S 而只能走 ~1e-6 mol——那是"无关"而非"没
+    收敛"。实测：D38 Pb(NO3)2+K2CrO4 的 `resid_live` 长期报 **33.398**，
+    来自 PbO₂ 2.9e-06 / Cr³⁺ 1.9e-06 mol 的一对（PbCrO₄ 已沉 0.99996）。
+    引擎自身的"显著程度"判据是 `ANN_MIN_EXTENT`（slow 标注同用：
+    "仅当慢反应可达显著程度才标注"），故口径取
+    `ext_max ≥ ANN_MIN_EXTENT`（ext_max = 驱动方向反应物的化学计量上限）。
+
+    **第二层：引擎既定语义不算欠收敛。** walk 的候选评估循环对下列三类
+    直接 `continue`，它们**从未进入求解承诺**：
+      · `frozen`  —— 引擎宣告平衡止震（极限环/实测仲裁）；
+      · `slow`    —— 动力学层判定永不执行、只作标注；
+      · `blocked` —— 致密膜抑制溶剂氧化通道（钝化模型）。
+    实测代价（旧口径只排除 frozen）：TS04 报 **17.975**（实为
+    `SO_4^{2-}/S_2O_3^{2-}` 已动力学封闭的幻影硫酸盐通道）、
+    E24 Al+NaOH 报 **156.12**（膜封锁的 Al/H₂O 通道）。
+
+    `disabled` 仍**计入**（J06 型欠收敛正是"微步禁用把仍有驱动的平衡
+    锁死"），这是已知真实病灶，不能被口径优化掉。
+
+    `only` 给类别名时改报**该类被排除者**的 |S|（透明化：不统计，但
+    必须看得见）。行末 `ext_max` 恒为真，故对 trace 类用 `only="trace"`。
+    """
+    def _ok(a: dict) -> bool:
+        return (a["two_sided"] and not a["frozen"]
+                and not a.get("slow") and not a.get("blocked")
+                and a.get("ext_max", float("inf")) >= ANN_MIN_EXTENT)
+
+    def _pick(a: dict) -> bool:
+        if only == "trace":
+            return (a["two_sided"] and not a["frozen"]
+                    and not a.get("slow") and not a.get("blocked")
+                    and a.get("ext_max", float("inf")) < ANN_MIN_EXTENT)
+        return bool(a["two_sided"] and a.get(only))
+
+    f = _pick if only is not None else _ok
+    return round(max((abs(a["S"]) for a in active if f(a)), default=0.0), 3)
 
 
 def run_all(cases_path: str | None = None, with_probe: bool = True) -> list[dict]:
@@ -67,10 +112,15 @@ def run_all(cases_path: str | None = None, with_probe: bool = True) -> list[dict
             rec["exit"] = probe["exit"]
             rec["iters"] = probe["iters"]
             rec["resid"] = round(probe["max_abs_S"], 3)
-            # 质量口径：非冻结两侧平衡的最大 |S|（冻结=宣告平衡，语义豁免）
-            rec["resid_live"] = round(
-                max((abs(a["S"]) for a in probe["active"]
-                     if a["two_sided"] and not a["frozen"]), default=0.0), 3)
+            # 质量口径：**值得解且 walk 会解**的两侧平衡最大 |S|
+            # （|S| 大而可达程度 < ANN_MIN_EXTENT 的痕量方向不算欠收敛；
+            #  frozen/slow/blocked 三类既定语义排除）。下列各项把每类
+            # 被排除者的最大 |S| 单列——不统计，但必须看得见。
+            rec["resid_live"] = _live(probe["active"])
+            rec["resid_frozen"] = _live(probe["active"], "frozen")
+            rec["resid_slow"] = _live(probe["active"], "slow")
+            rec["resid_blocked"] = _live(probe["active"], "blocked")
+            rec["resid_trace"] = _live(probe["active"], "trace")
         out.append(rec)
     return out
 
