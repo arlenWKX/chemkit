@@ -44,7 +44,7 @@ def _key(eq: str) -> tuple:
     return (left, right) if repr(left) <= repr(right) else (right, left)
 
 
-def profile(r: dict) -> dict:
+def profile(r: dict, p: dict) -> dict:
     steps = [s for s in r.get("steps", []) if s.get("kind") != "neutralize"]
     keys = [_key(s["equation"]) for s in steps]
     cnt = Counter(keys)
@@ -53,12 +53,25 @@ def profile(r: dict) -> dict:
     zig = sum(1 for i in range(1, len(steps))
               if keys[i] == keys[i - 1]
               and steps[i]["equation"] != steps[i - 1]["equation"])
+    # 出口残差（质量口径：两侧在场 ∧ ¬frozen ∧ ¬slow ∧ ¬blocked ∧ 显著）
+    live = None
+    act = p.get("active") or []
+    vals = [abs(a["S"]) for a in act
+            if a.get("two_sided") and not a.get("frozen")
+            and not a.get("slow") and not a.get("blocked")
+            and a.get("ext_max", 0.0) >= 1e-3]
+    if act:
+        live = max(vals, default=0.0)
     return {
         "n_steps": len(steps),
         "n_key": len(cnt),
         "max_rep": max(cnt.values(), default=0),
         "rep_ge3": sum(1 for v in cnt.values() if v >= 3),
         "zig": zig,
+        "live": live,
+        "frozen": p.get("frozen_n"),
+        "iters": p.get("iters"),
+        "exit": p.get("exit"),
     }
 
 
@@ -76,12 +89,13 @@ def main() -> int:
     for c in load_cases(None):
         if pre and not c["name"].startswith(pre):
             continue
+        p: dict = {}
         r = judge([{"name": n, "mol": m} for n, m in c["subs"]],
-                  c.get("cond") or {"V_L": 1.0}, T)
-        p = profile(r)
-        p["name"] = c["name"]
-        rows.append(p)
-        e = p["n_steps"]
+                  c.get("cond") or {"V_L": 1.0}, T, _probe=p)
+        prof = profile(r, p)
+        prof["name"] = c["name"]
+        rows.append(prof)
+        e = prof["n_steps"]
         hist["1" if e <= 1 else "2-3" if e <= 3 else "4-6" if e <= 6
              else "7-10" if e <= 10 else "11-20" if e <= 20
              else "21-50" if e <= 50 else "51+"] += 1
@@ -94,6 +108,20 @@ def main() -> int:
           f"（占 {100.0 * len(z) / max(len(rows), 1):.1f}%）")
     print(f"总步数 {sum(r['n_steps'] for r in rows)}；"
           f"最多步 {max(r['n_steps'] for r in rows)}")
+    # ---- 关键切分：反复逼近的体系里，谁**收敛了**、谁是**数据张力** ----
+    # 收敛了（live≈0）⟹ 只是慢，联立解/更好触发能救（杠杆在算法）；
+    # 残差大 ⟹ 该平衡集**没有同时根**，走步冻结才是正解（杠杆在判据）。
+    ok = [r for r in z if (r["live"] or 0.0) <= 0.05]
+    bad = [r for r in z if (r["live"] or 0.0) > 0.05]
+    print(f"  其中出口残差 live ≤ 0.05（已收敛、只是慢）：{len(ok)} 例"
+          f"  ⟸ 联立/触发杠杆")
+    print(f"        live > 0.05（欠收敛/数据张力）：{len(bad)} 例"
+          f"  ⟸ 冻结/判据杠杆")
+    if bad:
+        print("  张力例（live 降序）：")
+        for r in sorted(bad, key=lambda r: -(r["live"] or 0))[:12]:
+            print(f"     live={r['live']:8.3f} 冻结{r['frozen']:3d} "
+                  f"步{r['n_steps']:4d} 退出={r['exit']:9s} {r['name'][:44]}")
     print(f"\n== 最差 {top_n} 例（按 锯齿数+重复度 排序）==")
     rows.sort(key=lambda r: -(r["zig"] * 3 + r["rep_ge3"] * 2 + r["n_steps"]))
     for r in rows[:top_n]:
