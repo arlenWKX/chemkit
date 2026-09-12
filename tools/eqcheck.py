@@ -39,7 +39,8 @@ def parse(side: str) -> dict:
     return out
 
 
-def check(eq: str) -> None:
+def check(eq: str) -> list[str]:
+    """返回违规列表（空 = 守恒）。"""
     if "->" in eq:
         lhs, rhs = eq.split("->")
     else:
@@ -59,20 +60,37 @@ def check(eq: str) -> None:
     if dq:
         bad.append(f"q{float(dq):+g}")
     print(f"  {'守恒 ✓' if not bad else '不守恒 ✗ ' + ', '.join(bad)}   {eq[:88]}")
+    return bad
 
 
-def main(argv: list[str]) -> None:
+def main(argv: list[str]) -> int:
+    """无参数 = 审计**整个用例库**的 eq/eq_has（非零退出 = 有违规）。
+
+    这两种用法是审计的基本要求：默认模式必须覆盖全库（首版默认什么都不查，
+    P10 的 `4H^+ + Fe(OH)_3 -> 3H_2O + Fe^{3+}`（电荷 +4≠+3）因此长期躺在
+    标准里没被抓到），且**违规必须反映到退出码**（否则 CI/批量审计拿不到
+    信号）。"""
+    n_bad = 0
     if argv and argv[0] == "--cases":
         from chemkit.testsuit import load_cases
         want = tuple(argv[1:])
         for c in load_cases(None):
-            if c["name"].startswith(want) and c.get("eq"):
+            if want and not c["name"].startswith(want):
+                continue
+            if c.get("eq"):
                 print(f"## {c['name']}")
-                check(c["eq"])
-        return
+                n_bad += bool(check(c["eq"]))
+            for e in (c.get("eq_has") or []):
+                if check(e):
+                    n_bad += 1
+        print(f"\n合计违规 {n_bad} 条")
+        return 1 if n_bad else 0
+    if not argv:
+        return main(["--cases"])
     for e in argv:
-        check(e)
+        n_bad += bool(check(e))
+    return 1 if n_bad else 0
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))

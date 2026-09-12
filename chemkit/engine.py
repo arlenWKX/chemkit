@@ -1764,10 +1764,27 @@ def _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
         initial_dict[H_ION] = round(H_excess0, 6)
     elif H_excess0 < -1e-6:
         initial_dict["OH^-"] = round(-H_excess0, 6)
+    # 精确净差（只给方程式装配吃；公开 consumption/production 仍是 1e-6
+    # 报告口径）。**为什么必须分开**：迹量反应的整条净差可以小于报告阈
+    # （P10：Fe(OH)₃ 1.172e-6 mol），报告口径的 `> 1e-6` 阈会把真实项
+    # （NH₃ 4e-7）整块删掉 ⟹ 净差本身电荷不平 ⟹ **任何**呈现都无法配平，
+    # 最后印出 `4H^+ + Fe(OH)_3 -> Fe^{3+}`（电荷 +4≠+3）这种伪方程。
+    # 方程式是化学事实的呈现，必须吃精确量；目录式摘要才吃报告口径。
+    _nx_c = {s: initial[s] - ledger.get(s, 0.0) for s in initial
+             if s != WATER and not s.startswith("__")
+             and initial[s] - ledger.get(s, 0.0) > 0.0}
+    _nx_p = {s: ledger.get(s, 0.0) - initial.get(s, 0.0) for s in ledger
+             if s != WATER and not s.startswith("__")
+             and ledger.get(s, 0.0) - initial.get(s, 0.0) > 0.0}
+    for s, m in escaped.items():          # 逸出气体计入净生成（同 esc_list 口径）
+        if m > 0.0:
+            _nx_p[s] = _nx_p.get(s, 0.0) + m
+    net_exact = {"c": _nx_c, "p": _nx_p, "He_i": H_excess0, "He_f": H_excess}
     return {
         "changed": changed, "reacted": chemical and changed,
         "degree": degree, "annotations": annotations,
         "consumption": consumption, "production": production, "final": final,
+        "net_exact": net_exact,
         "initial": [{"name": s, "mol": m} for s, m in initial_dict.items()],
         "escaped": esc_list,
         "ionize": _ionize_map(

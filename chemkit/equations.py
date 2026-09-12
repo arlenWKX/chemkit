@@ -182,9 +182,21 @@ DISPLAY_QUANTUM = 5e-4
 _DISPLAY_FLOOR = 5e-4
 
 
+# 迹量档的相对保真下限：绝对报告量子只许"占反应自身尺度的一小部分"。
+# 判据 `max(DISPLAY_QUANTUM·scale, min(REPORT_QUANTUM, _REL_FLOOR·scale))`：
+# 尺度 ≥ 1e-4 时与旧口径逐字相同（报告量子 1e-5 生效）；尺度更小时容差按
+# 比例收紧。**为什么必须有这一条**：报告量子是**绝对**的（API 把 mol 舍入到
+# 1e-6，容差留 10 倍余量），而净差可以是迹量级的——P10 的整条反应只有
+# 1.17e-6 mol，1e-5 的容差比它大 10 倍，于是闸门允许把 Fe(OH)₃/Fe³⁺ 整块
+# 删掉，剩下的 {H⁺ 4e-6} → {H₂O 3e-6} 归一化后印成 `1.333H^+ -> H_2O`
+# ——一个连电荷都不平的"方程式"。相对保真闸把它挡在 10% 以内。
+_REL_FLOOR = 0.1
+
+
 def _contract_tol(scale: float) -> float:
-    """守恒契约的容差 = max(API 报告量子, 呈现分辨率 × 方程尺度)。"""
-    return max(REPORT_QUANTUM, DISPLAY_QUANTUM * max(scale, 0.0))
+    """守恒契约的容差 = max(呈现分辨率 × 尺度, min(报告量子, 10% × 尺度))。"""
+    s = max(scale, 0.0)
+    return max(DISPLAY_QUANTUM * s, min(REPORT_QUANTUM, _REL_FLOOR * s))
 
 
 def _side_totals(side: dict, els: set) -> dict:
@@ -938,8 +950,16 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
                 equations.append(eq)
 
     # ---- 净方程（账本净差路径）----
-    consumed: dict[str, float] = {e["name"]: e["mol"] for e in r.get("consumption", [])}
-    produced: dict[str, float] = {e["name"]: e["mol"] for e in r.get("production", [])}
+    # 优先吃**精确净差**（`net_exact`，不 round/不设阈）：迹量反应在 1e-6
+    # 报告口径下会丢真实项（P10 的 NH₃ 4e-7），净差因此电荷不平，任何呈现
+    # 都配不平。没有该字段时（外部构造的 r）退回报告口径。
+    _nx = r.get("net_exact")
+    if _nx:
+        consumed: dict[str, float] = {k: v for k, v in _nx["c"].items() if v > 0.0}
+        produced: dict[str, float] = {k: v for k, v in _nx["p"].items() if v > 0.0}
+    else:
+        consumed = {e["name"]: e["mol"] for e in r.get("consumption", [])}
+        produced = {e["name"]: e["mol"] for e in r.get("production", [])}
     # 分子态 → 离子形（单一数据源：engine ionize 图——浓酸分子形态 HNO3 →
     # H+ + NO3-、高溶解度盐 NaHCO3 → Na+ + HCO3- 等），让旁观离子自然抵消
     for sp, ions in r.get("ionize", {}).items():
@@ -958,8 +978,8 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
     #     以 OH- 形态书写更自然（H+ 源自水自发电离，OH- 是真实形态）；
     #   - 含中和步（即强酸强碱滴定）：H+ 是真实反应物（来自 HCl/H2SO4 等），
     #     保持 H+ 形态——化学习惯酸碱滴定方程用 H+ 不用 OH-。
-    He_i = r.get("H_excess_initial", 0.0)
-    He_f = r.get("H_excess", 0.0)
+    He_i = _nx["He_i"] if _nx else r.get("H_excess_initial", 0.0)
+    He_f = _nx["He_f"] if _nx else r.get("H_excess", 0.0)
     pH_f = r.get("final_pH")
     basic = pH_f is not None and pH_f > 7.0
     has_neutralize = any(st.get("kind") == "neutralize" for st in steps)
