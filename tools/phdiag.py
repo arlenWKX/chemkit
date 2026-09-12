@@ -34,10 +34,14 @@ def main() -> int:
     ap.add_argument("--cases", default=None)
     ap.add_argument("--only", default=None, help="逗号分隔的用例名前缀")
     ap.add_argument("--tol", type=float, default=0.05)
+    ap.add_argument("--classify", action="store_true",
+                    help="对 |ΔpH| ≥ 1 的分歧按「质子条件前提」分类")
     args = ap.parse_args()
 
     T = load_tables()
     fams = build_families(T)
+    # 金属水解阳离子（Ksp 对里阴离子为 OH^-）：机器的 hyd_map 快捷通道
+    hyd_cats = {e["pair"][0] for e in T.ksp if e["pair"][1] == "OH^-"}
     cases = load_cases(args.cases)
     if args.only:
         pre = tuple(x.strip() for x in args.only.split(",") if x.strip())
@@ -45,6 +49,12 @@ def main() -> int:
 
     rows = []
     none_n = 0
+    # 储库物种集合：Ksp 的阳/阴离子对 + 气相物种——账本里出现它们意味着
+    # pH 可能由 Ksp/逸度（外部储库）决定，而不是账本内部的质子条件。
+    res_sp: set = set()
+    for e in T.ksp:
+        res_sp.update(e["pair"])
+    res_sp |= set(getattr(T, "gases", ()) or ())
     for c in cases:
         subs = [{"name": n, "mol": m} for n, m in c["subs"]]
         cond = c.get("cond") or {"V_L": 1.0}
@@ -66,12 +76,19 @@ def main() -> int:
         net = sum(charge_of(s) * m for s, m in led.items()
                   if not s.startswith("__") and s not in ("H^+", "OH^-"))
         fam_hit = sum(1 for s in led if s in fams)
+        # 分类用画像
+        solid_n = sum(1 for s, m in led.items()
+                      if m > 1e-6 and s in T.solids)
+        gas_n = sum(1 for s, m in led.items()
+                    if m > 1e-6 and s in res_sp and s not in T.solids)
+        hyd_n = sum(1 for s, m in led.items() if m > 1e-6 and s in hyd_cats)
         rows.append({
             "name": c["name"], "V": V, "T_K": T_K, "He": He, "c_H": c_H,
             "machine": p_m, "charge": p_c,
             "d": None if p_c is None else round(p_c - p_m, 3),
             "families": fam_hit, "nsp": len(led),
             "cons": abs(net + He + c_H),
+            "solid": solid_n, "gas": gas_n, "hyd": hyd_n,
             "note": (c.get("note") or "")[:70],
         })
 
@@ -95,10 +112,67 @@ def main() -> int:
     for r in big[:args.n]:
         print(f"  Δ{r['d']:+8.3f}  机器 {r['machine']:6.2f} → 电荷 {r['charge']:6.2f} "
               f" He={r['He']:+10.6f} 族{r['families']}/物种{r['nsp']:3d}  {r['name'][:52]}")
+    if args.classify:
+        _classify(got, args.n)
     print(f"\n== 一致例（|Δ|<0.01）样例 ==")
     for r in [x for x in got if abs(x["d"]) < 0.01][:args.n]:
         print(f"  pH {r['machine']:6.2f}  He={r['He']:+10.6f}  {r['name'][:56]}")
     return 0
+
+
+# 分歧分类：判定"精确质子条件在哪些用例上根本无资格发言"。
+# 记账（§7 N-5/N-6）：质子条件的成立前提是**账本是闭系、电中性、
+# 且 pH 相关物种全部落在 pKa 族里**。三条前提各自对应一类分歧：
+BUCKETS = (
+    ("B1 账本不守恒", "|Σz·n+He+c_H| > 1e-6：投料本身不电中性（裸离子）"
+                      "或记账户型不一致——质子条件无对象"),
+    ("B2 无族可分配", "账本里没有 pKa 族成员：质子条件没有可再分配的形态，"
+                      "pH 只能由水解/两性/缓冲启发式或外部储库给"),
+    ("B3 族且无储库", "有 pKa 族、无固相/水解阳离子/气相：**质子条件唯一"
+                      "有资格的档**——这里的分歧必须逐条判化学对错"),
+    ("B4 族+储库·直读档", "有族也有储库，且 |He| ≥ 1e-3：机器应走自由强酸/"
+                          "强碱直读（pH 只由 He 定）"),
+    ("B5 族+储库·缓冲档", "有族也有储库，He 小：机器走水解/两性/缓冲启发式，"
+                          "储库（Ksp/逸度）不在账本的质子条件里"),
+)
+
+
+def _bucket(r: dict) -> str:
+    if r["cons"] > 1e-6:
+        return "B1 账本不守恒"
+    if r["families"] == 0:
+        return "B2 无族可分配"
+    if not (r["solid"] or r["hyd"] or r["gas"]):
+        return "B3 族且无储库"
+    if abs(r["He"]) >= 1e-3:
+        return "B4 族+储库·直读档"
+    return "B5 族+储库·缓冲档"
+
+
+def _classify(got: list, n: int) -> None:
+    """按"质子条件的前提"给分歧分档，并给两档阈值的计数表。
+
+    这张表就是"精确 pH 闭环能不能入联立求解器"的判据来源：**只有当
+    B3（族且无储库）在分歧里有实质占比时，替换 pH 定义才有收益**——
+    否则分歧全部落在质子条件**无资格**的档（非电中性账本 / 外部储库）。
+    """
+    soft = [r for r in got if abs(r["d"]) > 0.05]
+    hard = [r for r in got if abs(r["d"]) >= 1.0]
+    print(f"\n== 分歧分类（>0.05：{len(soft)} 例；≥1：{len(hard)} 例）==")
+    print(f"  {'档':22s} {'>0.05':>7s} {'≥1':>7s}   含义")
+    for name, desc in BUCKETS:
+        ns = sum(1 for r in soft if _bucket(r) == name)
+        nh = sum(1 for r in hard if _bucket(r) == name)
+        print(f"  {name:22s} {ns:7d} {nh:7d}   {desc}")
+    for name, _desc in BUCKETS:
+        sub = [r for r in hard if _bucket(r) == name]
+        if not sub:
+            continue
+        print(f"\n  --- [{name}] ≥1 档 {len(sub)} 例 ---")
+        for r in sorted(sub, key=lambda r: -abs(r["d"]))[:n]:
+            print(f"     Δ{r['d']:+8.3f} 机器 {r['machine']:6.2f} → 电荷 "
+                  f"{r['charge']:6.2f}  He={r['He']:+9.5f} 族{r['families']} "
+                  f"固{r['solid']} 水解{r['hyd']} 气{r['gas']}  {r['name'][:44]}")
 
 
 if __name__ == "__main__":
