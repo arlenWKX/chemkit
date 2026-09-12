@@ -274,7 +274,7 @@
   "ligand": "Br^-",
   "nu": 4,
   "logb": 21.5,
-  "note": "四溴合汞(II)酸根；NIST logβ4≈21.5"
+  "note": "四溴合汞(II)酸根；NIST logβ4≈21.5；四溴合汞酸根；NIST logβ4≈21.5"
  },
  {
   "complex": "[Hg(CN)_4]^{2-}",
@@ -290,7 +290,7 @@
   "ligand": "SCN^-",
   "nu": 4,
   "logb": 21.0,
-  "note": "四硫氰合汞(II)酸根；NIST logβ4≈21.0；Fe3+ 检 SCN- 须先除 Hg2+"
+  "note": "四硫氰合汞(II)酸根；NIST logβ4≈21.0；Fe3+ 检 SCN- 须先除 Hg2+；四硫氰合汞酸根；NIST logβ4≈21.0；利比锡测 Cl- 经典指示剂"
  },
  {
   "complex": "[BiCl_4]^-",
@@ -298,7 +298,7 @@
   "ligand": "Cl^-",
   "nu": 4,
   "logb": 5.5,
-  "note": "四氯合铋(III)酸根；NIST logβ4≈5.5"
+  "note": "四氯合铋(III)酸根；NIST logβ4≈5.5；四氯合铋酸根；NIST logβ4≈5.5"
  },
  {
   "complex": "[BiI_4]^-",
@@ -322,7 +322,7 @@
   "ligand": "I^-",
   "nu": 3,
   "logb": 4.0,
-  "note": "三碘合镉(II)酸根；NIST logβ3≈4.0"
+  "note": "三碘合镉(II)酸根；NIST logβ3≈4.0；三碘合镉酸根；NIST logβ3≈4.0"
  },
  {
   "complex": "[CdI_4]^{2-}",
@@ -330,7 +330,7 @@
   "ligand": "I^-",
   "nu": 4,
   "logb": 6.0,
-  "note": "四碘合镉(II)酸根；NIST logβ4≈6.0"
+  "note": "四碘合镉(II)酸根；NIST logβ4≈6.0；四碘合镉酸根；NIST logβ4≈6.0"
  },
  {
   "complex": "[PbI_3]^-",
@@ -338,7 +338,7 @@
   "ligand": "I^-",
   "nu": 3,
   "logb": 3.6,
-  "note": "三碘合铅(II)酸根；NIST logβ3≈3.6（弱稳定，仅在浓 I- 中形成）"
+  "note": "三碘合铅(II)酸根；NIST logβ3≈3.6（弱稳定，仅在浓 I- 中形成）；三碘合铅酸根；NIST logβ3≈3.6"
  },
  {
   "complex": "[HgI_3]^-",
@@ -346,7 +346,7 @@
   "ligand": "I^-",
   "nu": 3,
   "logb": 25.0,
-  "note": "三碘合汞(II)酸根；NIST/S&M logβ3≈25.0；[HgI4]2- 在稀 I- 中分级解离的中间形态"
+  "note": "三碘合汞(II)酸根；NIST/S&M logβ3≈25.0；[HgI4]2- 在稀 I- 中分级解离的中间形态；三碘合汞酸根；NIST logβ3≈25.0"
  },
  {
   "complex": "[AlF]^{2+}",
@@ -579,62 +579,6 @@
   "nu": 2,
   "logb": 5.25,
   "note": "二氯合银酸根；NIST logβ2≈5.25"
- },
- {
-  "complex": "[HgI_3]^-",
-  "center": "Hg^{2+}",
-  "ligand": "I^-",
-  "nu": 3,
-  "logb": 25.0,
-  "note": "三碘合汞酸根；NIST logβ3≈25.0"
- },
- {
-  "complex": "[HgBr_4]^{2-}",
-  "center": "Hg^{2+}",
-  "ligand": "Br^-",
-  "nu": 4,
-  "logb": 21.5,
-  "note": "四溴合汞酸根；NIST logβ4≈21.5"
- },
- {
-  "complex": "[Hg(SCN)_4]^{2-}",
-  "center": "Hg^{2+}",
-  "ligand": "SCN^-",
-  "nu": 4,
-  "logb": 21.0,
-  "note": "四硫氰合汞酸根；NIST logβ4≈21.0；利比锡测 Cl- 经典指示剂"
- },
- {
-  "complex": "[BiCl_4]^-",
-  "center": "Bi^{3+}",
-  "ligand": "Cl^-",
-  "nu": 4,
-  "logb": 5.5,
-  "note": "四氯合铋酸根；NIST logβ4≈5.5"
- },
- {
-  "complex": "[PbI_3]^-",
-  "center": "Pb^{2+}",
-  "ligand": "I^-",
-  "nu": 3,
-  "logb": 3.6,
-  "note": "三碘合铅酸根；NIST logβ3≈3.6"
- },
- {
-  "complex": "[CdI_3]^-",
-  "center": "Cd^{2+}",
-  "ligand": "I^-",
-  "nu": 3,
-  "logb": 4.0,
-  "note": "三碘合镉酸根；NIST logβ3≈4.0"
- },
- {
-  "complex": "[CdI_4]^{2-}",
-  "center": "Cd^{2+}",
-  "ligand": "I^-",
-  "nu": 4,
-  "logb": 6.0,
-  "note": "四碘合镉酸根；NIST logβ4≈6.0"
  },
  {
   "complex": "[Ag(SCN)_2]^-",

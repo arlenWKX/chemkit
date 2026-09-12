@@ -585,18 +585,43 @@ def _redox_mix_ok(a: dict, b: dict, a_ox: str, r: dict, pr: dict,
 def _ksp_xy(e: dict) -> tuple[int, int]:
     """Ksp 溶解反应的化学计量 (x 阳离子, y 阴离子)。
 
-    以固相分子式中阳离子元素计数为准（Ag2O → x=2），阴离子数由电中性
-    推出（y = x·q_cat/q_an）；纯电荷 gcd 只对 M(OH)n 型 1:n 盐正确，
-    对 Ag2O 这类 2:1 固体会配出 Ag2O + H+ -> Ag+ 这种不守恒方程。
-    分子式缺失/不整除时退回电荷 gcd。
+    在**元素空间**精确求解：找最小正整数 x，使
+        solid + w·H2O  ==  x·cat + y·an
+    逐元素成立（y 由电中性定，w 由 O 平衡定；H/O 一并复核）。
+
+    v0.5.0 修：原实现取"固相分子式中阳离子**元素**计数"当 x（Ag2O → 2）。
+    那对单核阳离子正确，对**多核阳离子**会把阳离子自身的原子数也数进去：
+    `Hg_2Cl_2`（pair 为 Hg_2^{2+}/Cl^-）的 Hg 计数是 2，于是配成
+    `2Hg_2^{2+} + 4Cl^-`（Hg 4≠2），而正确解是 x=1,y=2
+    （`Hg_2Cl_2 -> Hg_2^{2+} + 2Cl^-`）。x/y 是 Ksp 表达式的**指数**，
+    错一档即整个溶度积错（甘汞/汞盐族全线受影响）。
+    同族受影响的还有 Fe_3[Fe(CN)_6]_2（Fe 同时出现在阳离子与配阴离子中）
+    与 K_2Na_2[Fe(CN)_6]（Na⁺ 未进 pair，元素空间无解——属数据缺口，
+    由 tools/data_audit.py 报出）。扫描无解时退回电荷 gcd（旧口径兜底）。
     """
     cat, an = e["pair"]
     qc, qa = charge_of(cat), -charge_of(an)
+    es = dict(elements_of(e["solid"]))
+    ec, ea = dict(elements_of(cat)), dict(elements_of(an))
+    els = set(es) | set(ec) | set(ea)
+    for x in range(1, 13):
+        if qa <= 0 or (x * qc) % qa:
+            continue
+        y = x * qc // qa
+        if y <= 0:
+            continue
+        # O 平衡定 w（water 系数，可负=右侧出水）
+        w = x * ec.get("O", 0) + y * ea.get("O", 0) - es.get("O", 0)
+        ok = True
+        for el in els:
+            lhs = es.get(el, 0) + w * (2 if el == "H" else 1 if el == "O" else 0)
+            rhs = x * ec.get(el, 0) + y * ea.get(el, 0)
+            if lhs != rhs:
+                ok = False
+                break
+        if ok:
+            return x, y
     g = gcd(qc, qa)
-    el = next(iter(elements_of(cat)))
-    x = elements_of(e["solid"]).get(el, 0)
-    if x > 0 and (x * qc) % qa == 0:
-        return x, x * qc // qa
     return qa // g, qc // g
 
 
