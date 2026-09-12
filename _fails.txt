@@ -1,0 +1,6 @@
+F33 Na[Ga(OH)4]+CO2适量
+H39 CO2 过量+NaOH
+H89 Ca(HCO3)2+Ca(OH)2
+P10 Fe(OH)3 不溶 NH4Cl
+P11 PbSO4+Na2CO3->PbCO3
+V16 SO2+CaCl2溶液 仅溶出不沉淀

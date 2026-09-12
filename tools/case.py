@@ -67,6 +67,13 @@ def show(prefixes: list[str], verbose: bool = False) -> None:
         print("  has:", json.dumps(c.get("has") or c.get("has_range") or {},
                                   ensure_ascii=False))
         print("  has_not:", json.dumps(c.get("has_not") or {}, ensure_ascii=False))
+        if c.get("ph"):
+            lo, hi = c["ph"]
+            ok_m = lo <= r.get("final_pH", -99) <= hi
+            ok_c = p_c is not None and lo <= p_c <= hi
+            print(f"  ph 期望 [{lo}, {hi}]：机器 {r.get('final_pH')} "
+                  f"{'✓' if ok_m else '✗'}  电荷 {None if p_c is None else round(p_c, 3)} "
+                  f"{'✓' if ok_c else '✗'}")
 
 
 if __name__ == "__main__":

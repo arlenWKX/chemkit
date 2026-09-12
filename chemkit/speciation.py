@@ -29,16 +29,21 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
                       touch: frozenset | None = None) -> tuple:
     """He>0：强酸被在账弱碱（Kb 大者先）吸收 B+H+→HB；He<0：强碱被在账弱酸
     （Ka 大者先）吸收 HA+OH-→A-+H2O。全吸收 → Henderson 定 pH（返回）；
-    残余超过 1e-3 mol/L → None（交回直读分支）；无储备 → None。"""
-    # solve_extent 级堆条目缓存（v0.3.9+ 性能债，bit 级等价）：二分内
-    # led_work 仅 touch（本平衡 changing）物种的量变化，其余物种的堆
-    # 条目（强度、cnt、量、角色）完全不变——缓存复用。平局序守护：
-    # cnt 恒为首次构建序（旧实现每次重建亦按同一 ledger.items() 序
-    # 分配同一 cnt，两侧等价）；touch 物种 m 跨 X_MIN 过滤状态翻转
-    # （生成型物种从无到有）→ 缓存作废全量重建（该次 cnt 重排与旧
-    # 实现逐次重建完全一致）。cache=None 走无缓存旧路径（joint/
-    # S_of/主循环等键序或量集不稳定的调用方）。
-    """返回 (pH|None, 残余He, 虚拟账本)。滴定在虚拟账本上真实记账（base→acid
+    残余超过 1e-3 mol/L → None（交回直读分支）；无储备 → None。
+
+    **守恒纪律（0.5.0 重构，architecture §7 L）**：堆只负责"谁先被滴定"的
+    强度定序，**量一律从活账本读**，每一步都是增量移动（−take/+take）。
+    旧实现在弹出时做绝对写 `ledger2[base] = m − take`，而 m 只是该条目入堆
+    时的局部量；多级模式下产物按部分量重新入堆，再次弹出就把账本里同名
+    物种的其余量整块抹掉（FeCl₃+Na₂CO₃：碳 3.000000 → 2.975767，pH 3.09
+    虚低到 2.1）。族总量是质子化梯的基本不变量，重构后任何时刻可断言
+    （tools/titr.py 逐调用对账）。
+
+    pH 同步改为**从滴定后的账本导出**（该对的 ledger2[碱]/ledger2[酸]），
+    不再读循环局部量：分布由守恒决定、pH 由分布决定，两者不再共用一个
+    变量——只改记账不改 pH 的两次修复尝试都因此失败（L-2 实测表）。
+
+    返回 (pH|None, 残余He, 虚拟账本)。滴定在虚拟账本上真实记账（base→acid
     或 acid→base 转化），全吸收后分支 4 必须用虚拟账本评估残余酸碱性——
     否则强酸恰好中和全部弱碱时，原账本里的弱碱会虚报碱性（pH 11 假象）。
     pH 非 None：缓冲对 Henderson 定 pH；pH=None 且残余≈0：落分支4（用虚拟账本）。"""
@@ -97,172 +102,184 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
     _bases, _acids, _beta_pka, _bases_map, _acids_map, _heap_role = T._titr_static
 
     # 有效 pKa/配离子储备强度只依赖 T_K——按温度缓存，避免每次调用对
-    # 全部储备条目重算 _pka_eff/logK_T（_buffer_titration 是最大热点）
+    # 全部储备条目重算 _pka_eff/logK_T（_buffer_titration 是最大热点）。
+    # b_entries/a_entries 是堆条目的静态模板 {物种: (堆键, 角色)}：
+    # 角色与键都只依赖 T_K，逐次调用重建纯属白开销（重构前每次全账扫描
+    # 现算 key/role）。
     eff_cache = getattr(T, "_titr_eff", None)
     if eff_cache is None:
         eff_cache = T._titr_eff = {}
     eff = eff_cache.get(T_K)
     if eff is None:
-        eff = ({b: _pka_eff(p, d, T_K) for p, d, b, a in _bases},
-               {a: _pka_eff(p, d, T_K) for p, d, a, b in _acids},
-               {c: logK_T(dc, T_K) / nh for c, dc, nh in _beta_pka},
-               {c: (dc, nh) for c, dc, nh in _beta_pka})
+        _beff = {b: _pka_eff(p, d, T_K) for p, d, b, a in _bases}
+        _aeff = {a: _pka_eff(p, d, T_K) for p, d, a, b in _acids}
+        _ceff = {c: logK_T(dc, T_K) / nh for c, dc, nh in _beta_pka}
+        _cmap = {c: (dc, nh) for c, dc, nh in _beta_pka}
+        # 碱分支：pKa(共轭酸) 越大 Kb 越大 → 堆键取负；配离子按 νH+ 折算容量
+        b_entries = {}
+        for sp, role in _heap_role.items():
+            if role[0] == 'b':
+                b_entries[sp] = (-_beff[sp], role[1])
+            else:
+                b_entries[sp] = (-_ceff[sp], ("__complex__", role[1], role[2]))
+        a_entries = {sp: (_aeff[sp], info[2]) for sp, info in _acids_map.items()}
+        eff = (_beff, _aeff, _ceff, _cmap, b_entries, a_entries)
         eff_cache[T_K] = eff
-    _beff, _aeff, _ceff, _cmap = eff
+    _beff, _aeff, _ceff, _cmap, _b_entries, _a_entries = eff
     # 延迟拷贝：仅当 heap 非空、确实需要修改账本时才 dict(ledger)。
     # heap 为空（强酸/强碱+盐等无弱组分场景）直接返回原账本——judge 中
     # `vled is not ledger` 身份检查据此跳过 _virt_redox_gain（无滴定=无虚拟增益）
     ledger2: dict | None = None
     he = H_excess
-    # 多级（多元）滴定用堆：快照在账量入堆，转化产物若本身仍可继续
-    # 质子化/去质子化（HVO3→VO2+、H2PO4-→HPO4^2-…）则按自身 pKa 重新入堆，
-    # 一次调用沿质子化梯走到底——快照式单级实现会把中间形态（如 HVO3）
-    # 滞留为假象，后续氧化还原竞争因此看不到真实自由形态（VO2+）
+    # 缓冲对的下限：两侧都必须在**痕量线以上**才算"定 pH 的对"。产物侧
+    # 只查 > 0 会被收尾的碎屑弹出骗到——滴定恰好吸收完时 he 残 1e-17，
+    # 最后一个储备条目仍满足 take < avail，若拿它的微量产物算 Henderson，
+    # pH 直接崩到 −1（实测 AB05：Na2HPO4 区被算成 pH −1.0）。碎屑对必须
+    # 交给分支 4（在滴定后的完整分布上评估）。
+    _floor = max(X_MIN, 1e-9 * V)
+    # 多级（多元）滴定用堆：转化产物若本身仍可继续质子化/去质子化
+    # （HVO3→VO2+、H2PO4-→HPO4^2-…）则按自身 pKa 重新入堆，一次调用沿
+    # 质子化梯走到底——快照式单级实现会把中间形态（如 HVO3）滞留为假象，
+    # 后续氧化还原竞争因此看不到真实自由形态（VO2+）
     if he > 0:   # 弱碱吸收：pKa(共轭酸) 越大 Kb 越大，先中和
-        heap = []
-        cnt = 0
         # 遍历在账物种（通常 ~15 个）而非全储备表（~50 条），热点降载；
         # 配离子作为碱储备（beta_pka 派生：complex + νH+ -> center + ν共轭酸）：
         # 沉淀等步骤释放的 H+ 实际由配离子解离吸收（如 [Cu(NH3)4]2+），
         # 不纳入会使 solve_extent 内部 pH 崩塌、反应假停滞（Cu2+ + 少量氨水）
-        # 角色查一次解析（碱储备优先于配离子，与原分支顺序一致）
-        heappush = heapq.heappush
-        _hit = False
-        if cache is not None:
-            _ent = cache.get("b")
-            if _ent is not None and _ent[0] == tuple(ledger) and all(
-                    (ledger.get(sp, 0.0) > X_MIN) == _ent[1][sp][1]
-                    for sp in _ent[2]):
-                # 命中：通过条目预排序表直接重建堆（循环 3-4 项而非
-                # 全账 15 项）；非 touch 条目整 tuple 复用（量与过滤
-                # 状态均不变），touch 条目按当前量重建（强度/cnt/不变）
-                for sp, _e in _ent[3]:
-                    if touch is not None and sp in touch:
-                        m_now = ledger[sp]
-                        if _e[4][0] == "__complex__":
-                            heappush(heap, (_e[0], _e[1], sp,
-                                            m_now * _e[4][2], _e[4]))
-                        else:
-                            heappush(heap, (_e[0], _e[1], sp, m_now, _e[4]))
-                    else:
-                        heappush(heap, _e)
-                _hit = True
-                cnt = len(heap)   # 与全量重建后的运行计数对齐（仅
-                # multilevel 重入堆消费 cnt；当前调用方不传 cache+multilevel
-                # 组合，防御性对齐）
-        if not _hit:
-            store: dict = {}
-            plist = []
-            for sp, m in ledger.items():
-                role = _heap_role.get(sp)
-                if role is None:
-                    continue
-                if role[0] == 'b':
-                    _e = (-_beff[sp], cnt, sp, m, role[1])
-                else:
-                    _tag, dc, nu_h = role
-                    _e = (-_ceff[sp], cnt, sp, m * nu_h,
-                          ("__complex__", dc, nu_h))
-                store[sp] = (_e, m > X_MIN)
-                if m > X_MIN:
-                    heappush(heap, _e)
-                    plist.append((sp, _e))
-                    cnt += 1
-            if cache is not None:
-                cache["b"] = (tuple(ledger), store,
-                              tuple(sp for sp in (touch or ())
-                                    if sp in store),
-                              tuple(plist))
+        heap, cnt = _titration_heap(ledger, _b_entries, cache, "b", touch)
         if not heap:
             return None, he, ledger   # 无弱碱储备：直接返回原账本（避免无谓拷贝）
         ledger2 = dict(ledger)
+        heappush = heapq.heappush
+        plateau = None
+        # 多级模式下产物（共轭酸）可能仍可继续质子化，按自身强度重新入堆；
+        # 同物种只留一个条目（量从活账本读，重复条目只是白弹堆）
+        pushed = {e[2] for e in heap} if multilevel else None
         while heap and he > 0.0:
-            neg_pka, _, base, m, acid = heapq.heappop(heap)
-            pka = -neg_pka
-            take = min(he, m)
-            he -= take
+            neg_pka, _cnt, base, acid = heapq.heappop(heap)
+            avail = ledger2.get(base, 0.0)
+            if avail <= 0.0:
+                continue
             if isinstance(acid, tuple):
                 # 配离子储备：按派生方程转化，不提供 Henderson 对、不再入堆
                 _, dc, nu_h = acid
+                take = min(he, avail * nu_h)
+                if take <= 0.0:
+                    continue
+                he -= take
                 dx = take / nu_h
-                ledger2[base] = ledger2.get(base, 0.0) - dx
+                ledger2[base] = avail - dx
                 for sp2, nu2 in dc.pr.items():
                     if sp2 != WATER:
                         ledger2[sp2] = ledger2.get(sp2, 0.0) + nu2 * dx
                 continue
-            b_rest = m - take
-            hb = ledger2.get(acid, 0.0) + take
-            ledger2[base] = b_rest
-            ledger2[acid] = hb
-            if b_rest > max(X_MIN, 1e-9 * V) and hb > 0.0:
+            take = min(he, avail)
+            he -= take
+            ledger2[base] = avail - take
+            ledger2[acid] = ledger2.get(acid, 0.0) + take
+            if take < avail:
+                # 未滴完 ⟹ he 已归零，本对即"定 pH 的缓冲对"（部分滴定至多
+                # 一次，必为最后一次），留到循环后按账本量算 Henderson
+                plateau = (-neg_pka, base, acid)
+            elif multilevel and take > 0.0 and acid not in pushed:
+                nxt = _bases_map.get(acid)
+                if nxt is not None:
+                    pushed.add(acid)
+                    heappush(heap, (-_beff[acid], cnt, acid, nxt[2]))
+                    cnt += 1
+        if plateau is not None:
+            pka, base, acid = plateau
+            b_rest = ledger2.get(base, 0.0)
+            hb = ledger2.get(acid, 0.0)
+            if b_rest > _floor and hb > _floor:
                 pH = pka + log10(b_rest / hb)
                 return min(max(pH, -1.0), pKw + 1.0), he, ledger2
-            nxt = _bases_map.get(acid) if multilevel else None
-            # 产物仍是碱（可再质子化）→ 重新入堆（仅多级模式；单级模式与
-            # 历史快照语义一致，pH 估计的全部既有行为不变）
-            if nxt is not None and take > 0.0:
-                heapq.heappush(heap, (-_beff[acid], cnt, acid, take,
-                                      nxt[2])); cnt += 1
         return None, he, ledger2   # 全吸收（he≈0）→ 分支4；有残余 → 直读
     else:        # 弱酸吸收强碱：pKa 越小 Ka 越大，先中和
         he = -he
-        heap = []
-        cnt = 0
-        _hit = False
-        if cache is not None:
-            _ent = cache.get("a")
-            if _ent is not None and _ent[0] == tuple(ledger) and all(
-                    (ledger.get(sp, 0.0) > X_MIN) == _ent[1][sp][1]
-                    for sp in _ent[2]):
-                for sp, _e in _ent[3]:
-                    if touch is not None and sp in touch:
-                        heapq.heappush(heap, (_e[0], _e[1], sp,
-                                              ledger[sp], _e[4]))
-                    else:
-                        heapq.heappush(heap, _e)
-                _hit = True
-        if not _hit:
-            store: dict = {}
-            plist = []
-            for sp, m in ledger.items():
-                ainfo = _acids_map.get(sp)
-                if ainfo is None:
-                    continue
-                peff = _aeff[sp]
-                if peff > pKw + 2:
-                    store[sp] = (None, m > X_MIN)
-                    continue   # 名义酸（NH3 pKa≈105）：水溶液中不可能给出质子
-                _e = (peff, cnt, sp, m, ainfo[2])
-                store[sp] = (_e, m > X_MIN)
-                if m > X_MIN:
-                    heapq.heappush(heap, _e)
-                    plist.append((sp, _e))
-                    cnt += 1
-            if cache is not None:
-                cache["a"] = (tuple(ledger), store,
-                              tuple(sp for sp in (touch or ())
-                                    if sp in store),
-                              tuple(plist))
+        heap, cnt = _titration_heap(ledger, _a_entries, cache, "a", touch,
+                                    nominal=pKw + 2)
         if not heap:
             return None, -he, ledger
         ledger2 = dict(ledger)
+        heappush = heapq.heappush
+        plateau = None
+        pushed = {e[2] for e in heap} if multilevel else None
         while heap and he > 0.0:
-            pka, _, acid, m, base = heapq.heappop(heap)
-            take = min(he, m)
-            a_rest = m - take
-            b = ledger2.get(base, 0.0) + take
+            pka, _cnt, acid, base = heapq.heappop(heap)
+            avail = ledger2.get(acid, 0.0)
+            if avail <= 0.0:
+                continue
+            take = min(he, avail)
             he -= take
-            ledger2[acid] = a_rest
-            ledger2[base] = b
-            if a_rest > max(X_MIN, 1e-9 * V) and b > 0.0:
+            ledger2[acid] = avail - take
+            ledger2[base] = ledger2.get(base, 0.0) + take
+            if take < avail:
+                plateau = (pka, acid, base)
+            elif multilevel and take > 0.0 and base not in pushed:
+                # 产物仍是酸（可再去质子化）→ 重新入堆（仅多级模式）
+                nxt = _acids_map.get(base)
+                if nxt is not None:
+                    pushed.add(base)
+                    heappush(heap, (_aeff[base], cnt, base, nxt[2]))
+                    cnt += 1
+        if plateau is not None:
+            pka, acid, base = plateau
+            a_rest = ledger2.get(acid, 0.0)
+            b = ledger2.get(base, 0.0)
+            if a_rest > _floor and b > _floor:
                 pH = pka + log10(b / a_rest)
                 return min(max(pH, -1.0), pKw + 1.0), -he, ledger2
-            nxt = _acids_map.get(base) if multilevel else None
-            # 产物仍是酸（可再去质子化）→ 重新入堆（仅多级模式）
-            if nxt is not None and take > 0.0:
-                heapq.heappush(heap, (_aeff[base], cnt, base, take,
-                                      nxt[2])); cnt += 1
         return None, -he, ledger2
+
+
+def _titration_heap(ledger: dict, entries: dict, cache: dict | None, ckey: str,
+                    touch: frozenset | None,
+                    nominal: float | None = None) -> tuple:
+    """滴定强度堆 → `(heap, cnt)`；条目 `(堆键, cnt, 物种, 角色)`。
+
+    **量不入条目**：滴定量从活账本读（守恒纪律，见 `_buffer_titration`）。
+    堆只回答"谁先被滴定"——`entries` 是 {物种: (键, 角色)} 的静态模板
+    （每 T_K 构建一次），键序即强度序。
+
+    `nominal`：酸分支的"名义酸"阈值——pKa_eff > pKw+2 的物种水溶液中不可能
+    给出质子（NH3 pKa≈105），不入堆。
+
+    缓存协议（solve_extent 二分内复用，与逐次重建等价）：
+      · 击中 = 账本键序一致 + touch 物种的在场性（> X_MIN）未翻转；
+      · 命中按预排序表 heapify 重建——弹堆序由 (键, cnt) 唯一决定
+        （cnt 全局唯一 ⟹ 无同键并列），与逐次 push 完全一致；
+      · touch 物种跨阈值翻转即作废全量重建：生成型物种从无到有，漏掉它
+        等于漏掉一个滴定储备；cnt 恒为首次构建序，两侧等价。"""
+    ent = cache.get(ckey) if cache is not None else None
+    if ent is not None and ent[0] == tuple(ledger) and all(
+            (ledger.get(sp, 0.0) > X_MIN) == ent[1][sp] for sp in ent[2]):
+        heap = list(ent[3])
+        heapq.heapify(heap)
+        return heap, ent[4]
+    rows = []
+    presence: dict = {}
+    cnt = 0
+    for sp, m in ledger.items():
+        e = entries.get(sp)
+        if e is None:
+            continue
+        presence[sp] = pres = m > X_MIN
+        if nominal is not None and e[0] > nominal:
+            continue
+        if pres:
+            rows.append((e[0], cnt, sp, e[1]))
+            cnt += 1
+    if cache is not None:
+        cache[ckey] = (tuple(ledger), presence,
+                       tuple(sp for sp in (touch or ()) if sp in presence),
+                       tuple(rows), cnt)
+    # 两条路径都必须返回**真堆**：弹堆序由 (键, cnt) 唯一决定，与旧实现
+    # 逐次 heappush 完全一致；漏了 heapify 就退化成账本序——强度序失效，
+    # 滴定会先动弱储备（实测 F35：H2PO4- 抢在 H3PO4 前被滴定，pH 4.65→1.23，
+    # 走步据此把 H2PO4- + H+ → H3PO4 跑到 0.5 mol 的幻影碱态）
+    heapq.heapify(rows)
+    return rows, cnt
 
 
 def estimate_pH(ledger: dict, H_excess: float, V: float, T, T_K: float,

@@ -1067,6 +1067,11 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
         consumed, produced)
     if not consumed or not produced:
         return equations, {}, {}, None
+    # H/O 未配平的净差（隐式水档）：先整数化再补水的候选。浮点档补水必然
+    # 引入 H+/OH- 而被闸门拒（见 _stoichiometric_net），呈现只能退化成
+    # 既非整数、又缺水的浮点式——本步把它换成教科书整数式。
+    if not _h_o_balanced(consumed, produced):
+        consumed, produced = _step(_stoichiometric_net, consumed, produced)
     net_str = _format_equation(consumed, produced)
     # ---- 大系数美化（v0.3.8）：浮点系数或 max>20 的混合通道净差 →
     # 主通道呈现（移除次要物种 + 平衡子空间投影 + 小整数比；配平硬保证，
@@ -1165,6 +1170,90 @@ def _balanced_quick(consumed: dict, produced: dict,
     lhs = sum(charge_of(s) * n for s, n in consumed.items())
     rhs = sum(charge_of(s) * n for s, n in produced.items())
     return abs(lhs - rhs) <= lim
+
+
+def _h_o_balanced(c: dict, p: dict) -> bool:
+    """浮点净差的 H/O 是否已配平（显式水档 vs 隐式水档的判据）。"""
+    for el in ("H", "O"):
+        lhs = sum(elements_of(s).get(el, 0) * v for s, v in c.items())
+        rhs = sum(elements_of(s).get(el, 0) * v for s, v in p.items())
+        if abs(lhs - rhs) > _EQ_TOL_ABS:
+            return False
+    return True
+
+
+def _stoichiometric_net(c: dict, p: dict) -> tuple[dict, dict]:
+    """净差 → 整数化学计量 + 隐式水补齐（H/O 未配平的净差专用候选）。
+
+    **为什么必须"先整数化再补水"**：账本净差的 H/O 由溶剂水承担（守恒契约
+    只管非 H/O 元素 + 电荷），所以浮点净差通常**无法**同时满足"H/O 配平 +
+    电荷配平"——比例里带 6e-4 残差时，补 H₂O 必然还要补 H⁺，电荷随即破契约
+    （N15 实测：补水候选要求 H⁺ 0.001215 > 契约容差 1e-3 ⟹ 闸门拒绝），
+    呈现于是退化成 `1.999CO_2 + SiO_3^{2-} -> 1.999HCO_3^- + H_2SiO_3`：
+    既不是整数、也没有水，还差 6e-4 个电荷——正是"呈现把误差藏起来"的样子。
+
+    整数向量在非 H/O 元素 + 电荷上是**精确**守恒的（这是化学方程式的硬
+    条件，比任何容差都强），此时补水恰好是若干个 H₂O（不引入 H⁺/OH⁻），
+    于是得到教科书形式 `2CO_2 + 2H_2O + SiO_3^{2-} -> 2HCO_3^- + H_2SiO_3`。
+
+    候选生成器的自我约束（闸门之外）：每个整数系数必须落在原浮点值的
+    **呈现量子** `_contract_tol` 内（最小二乘拟合尺度），否则说明"这不是
+    同一个方程"，原样返回。系数上限 40（超过即放弃整数化，诚实呈现浮点）。
+    """
+    names_c, names_p = list(c), list(p)
+    vals = [c[s] for s in names_c] + [p[s] for s in names_p]
+    pos = [v for v in vals if v > 0.0]
+    if not pos:
+        return c, p
+    mx = max(pos)
+    sig = [v for v in pos if v >= 1e-3 * mx]
+    scale0 = min(sig) if sig else min(pos)
+    tol = _contract_tol(mx)
+    ints: list[int] = []
+    for v in vals:
+        k = int(round(v / scale0))
+        if k > 40:
+            return c, p
+        ints.append(max(k, 0))
+    if not any(ints[:len(names_c)]) or not any(ints[len(names_c):]):
+        return c, p
+    # 最小二乘尺度：s = Σ(v·k)/Σ(k²)；逐系数偏差必须落在呈现量子内
+    num = sum(v * k for v, k in zip(vals, ints))
+    den = sum(k * k for k in ints)
+    if den == 0:
+        return c, p
+    s = num / den
+    if s <= 0.0 or any(abs(v - s * k) > tol for v, k in zip(vals, ints)):
+        return c, p
+    # 精确整数守恒：非 H/O 元素 + 电荷（化学方程式的硬条件）
+    els: set = set()
+    for sp in names_c + names_p:
+        els |= set(elements_of(sp))
+    els -= {"H", "O"}
+    for el in els:
+        lhs = sum(k * elements_of(s).get(el, 0)
+                  for s, k in zip(names_c, ints[:len(names_c)]))
+        rhs = sum(k * elements_of(s).get(el, 0)
+                  for s, k in zip(names_p, ints[len(names_c):]))
+        if lhs != rhs:
+            return c, p
+    if (sum(k * charge_of(s) for s, k in zip(names_c, ints[:len(names_c)]))
+            != sum(k * charge_of(s)
+                   for s, k in zip(names_p, ints[len(names_c):]))):
+        return c, p
+    c2 = {s: float(k) for s, k in zip(names_c, ints[:len(names_c)]) if k > 0}
+    p2 = {s: float(k) for s, k in zip(names_p, ints[len(names_c):]) if k > 0}
+    # 隐式水补齐（整数向量已电荷守恒 ⟹ 只需 H₂O；仍走通用补配平并回验）
+    c3, p3 = _balance_h_o(dict(c2), dict(p2))
+    c3 = {s: v for s, v in c3.items() if abs(v) > 1e-9}
+    p3 = {s: v for s, v in p3.items() if abs(v) > 1e-9}
+    if not c3 or not p3:
+        return c, p
+    if any(abs(v - round(v)) > 1e-6 for v in list(c3.values()) + list(p3.values())):
+        return c, p                      # 补配平引入了分数 ⟹ 不是干净计量式
+    if not (_h_o_balanced(c3, p3) and _balanced_quick(c3, p3)):
+        return c, p
+    return c3, p3
 
 
 def _filter_trace(consumed: dict, produced: dict,
