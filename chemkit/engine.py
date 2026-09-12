@@ -44,7 +44,7 @@ from .normalize import (normalize, _mol_fraction, _split_acid,
 from .speciation import (_buffer_titration, estimate_pH, estimate_state,
                          _respeciate_strong_acids, _full_speciation,
                          _RESPECIATE_ACIDS, _pksp, closed_pH,
-                         weak_species_set)
+                         weak_species_set, exact_proton_pH)
 from .joint import joint_solve, _solve_ph, JOINT_MAX_M, JOINT_MIN_M
 from .templates import (_redox_pair_static, _redox_templates,
                         _oxide_dissolve_info, _build_static_cands,
@@ -1455,6 +1455,22 @@ def _presentation_He(ledger: dict, H_excess: float, V: float, T,
     return H_excess
 
 
+def presentation_pH(ledger: dict, H_excess: float, V: float, T,
+                    T_K: float) -> float:
+    """**呈现层 pH**（冷路径，每次判定只算一次）：B3 档走精确质子条件，
+    其余档走 pH 机器（architecture §7 O-4 的接线决定）。
+
+    为什么只在这里接：分支 4 的两性中点式/缓冲对加权在 B3 档有实测误差
+    （AB03 10.50 vs 精确 9.84；Q05 的 1:1 H₂S/HS⁻ 缓冲对被当成纯两性盐
+    给 10.50，真值 = pKa₁ = 7.00；H88 7.246 vs 7.005），而精确解进二分
+    探针要 +16% 墙钟（§7 O-2/O-3）。呈现层不在探针里 ⟹ 零成本，
+    且改的正是用户直接看到的那个数（`final_pH` / 探针画像 / 质量口径）。
+    储库档（固相 / 水解阳离子）与账本不自洽的档由 `exact_proton_pH`
+    的判据自动排除，机器的既有行为在那两档原样保留。"""
+    p = exact_proton_pH(ledger, H_excess, V, T, T_K)
+    return estimate_pH(ledger, H_excess, V, T, T_K) if p is None else p
+
+
 def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
                 gsup: frozenset, V: float, T_K: float, T, kinetics: bool,
                 gas_escape: bool, p_ext_kpa: float, disabled: dict,
@@ -1476,7 +1492,7 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
     led = dict(ledger)   # 副本隔离：respeciate 会原地改账本（探针零副作用）
     H_excess = _respeciate_strong_acids(led, H_excess, V, T)
     H_excess = _presentation_He(led, H_excess, V, T, T_K)
-    pH_f = estimate_pH(led, H_excess, V, T, T_K)
+    pH_f = presentation_pH(led, H_excess, V, T, T_K)
     cands_f = _enum(led, H_excess, pH_f, V, T_K, T, kinetics)
     active = []
     logc: dict = {}
@@ -1764,7 +1780,7 @@ def _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
         "pool_nu": {e["complex"]: (e["ligand"], e["nu"])
                     for e in T.beta if e["complex"] in T.pools},
         "steps": steps, "unknown": unknown,
-        "final_pH": round(estimate_pH(ledger, H_excess, V, T, T_K), 2),
+        "final_pH": round(presentation_pH(ledger, H_excess, V, T, T_K), 2),
         "H_excess": round(H_excess, 6),
         "H_excess_initial": round(H_excess0, 6),
         "override": None,

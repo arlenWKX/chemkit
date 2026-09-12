@@ -20,6 +20,7 @@ from .data import Tables
 from .candidates import (Cand, logK_T, build_derived, WATER, H_ION, X_MIN,
                          _STRONG_ACID, _ksp_xy, STRONG_MOLECULAR_ACIDS)
 from .normalize import _mol_fraction
+from .acidbase import build_families, charge_pH
 
 # ========================================================== pH 估计器（§3.2，教科书近似）
 
@@ -557,6 +558,51 @@ def closed_pH(ledger: dict, H_excess: float, V: float, T, T_K: float):
         return min(pKw + 1.0, pKw + log10(-He)), ledger, H_excess
     pH = -log10(10.0 ** (-pKw / 2))
     return pH, ledger, H_excess
+
+
+def exact_proton_pH(ledger: dict, H_excess: float, V: float, T,
+                    T_K: float) -> float | None:
+    """B3 档的**精确质子条件 pH**；非 B3 档返回 None（呈现层冷路径专用）。
+
+    判据（architecture §7 N-6 三条前提，全库分类验证过）：
+      ① 账本**电中性自洽**：`|Σz·n + He| ≤ 1e-6`（投料本身不电中性的
+         裸离子体系、以及带 c_H 的强酸条件体系都落在这一条之外）；
+      ② **无储库物种**在场：无固相、无 Ksp-OH 水解阳离子——这些体系的
+         pH 由 Ksp/逸度（账本之外的自由度）决定，账本内部的质子条件
+         看不到它们（L08 型：机器 5.80 由 Cu(OH)₂ 的 Ksp 定，质子条件
+         只会把残余 +0.001 电荷拉平到 pH 11，错的）；
+      ③ 至少有一个**可再分配**的质子化族成员。
+    满足三条时 `charge_pH` 是权威解（族逐级严格分布 + 水自电离 +
+    固定离子电荷平衡，12/12 教科书锚点 + 80/80 条目自洽）。
+
+    **只许在冷路径调用**（`final_pH` / 收敛探针 / 质量口径各一次）：
+    分支 4 的两条启发式在 B3 档有实测误差（两性中点式 AB03 10.50 vs 9.84、
+    Q05 1:1 缓冲对 10.50 vs pKa₁ 7.00、缓冲对加权 H88 7.246 vs 7.005），
+    但精确解进二分探针要 +16% 墙钟（§7 O-2/O-3），故热路径维持启发式。
+    """
+    b3 = getattr(T, "_b3_static", None)
+    if b3 is None:
+        b3 = T._b3_static = (
+            frozenset(T.solids) | frozenset(e["pair"][0] for e in T.ksp
+                                            if e["pair"][1] == "OH^-"),
+            frozenset(build_families(T)))
+    res_set, fam_set = b3
+    net = 0.0
+    nfam = 0
+    for sp, m in ledger.items():
+        if m <= 0.0 or sp == WATER or sp.startswith("__"):
+            continue
+        if m > X_MIN and sp in res_set:
+            # 痕量（≤ X_MIN）固相不构成储库：引擎全局把 X_MIN 以下的量视为
+            # 噪声（D33 的 Al(OH)₃ 1.3e-7 曾因此挡住精确解，而 1e-7 的固相
+            # 定不了 pH）。储库判据必须与引擎自己的痕量线一致。
+            return None
+        net += charge_of(sp) * m
+        if sp in fam_set:
+            nfam += 1
+    if not nfam or abs(net + H_excess) > 1e-6:
+        return None
+    return charge_pH(ledger, V, T, T_K, fast=True)
 
 
 def _full_speciation(ledger: dict, H_excess: float, V: float, T, T_K: float) -> tuple[dict, float]:
