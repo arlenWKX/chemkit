@@ -804,7 +804,16 @@ def build_derived(T) -> list[Cand]:
         cell = T.ksp_by_pair.get((b["center"], "OH^-"))
         if cell is None:
             continue
-        n_OH = charge_of(b["center"])
+        # 沉淀项的 pKw 系数必须用**固相分子式里的 OH 数 y**，不是中心离子
+        # 电荷。两者只在 M(OH)_z 型（x=1, y=z）相等；M₂O 型（Ag₂O 的
+        # x=2,y=2 而 z=1）会少减一个 pKw。
+        # v0.4.5 修：原 `charge_of(b["center"])` 使 4 条 beta_ksp:…/Ag_2O
+        # 派生候选的 logK 整偏 +14.000（= PKW_298）——用 tools/hess_audit.py
+        # 对 12971 条派生候选做 Hess 自洽审计，只有这 4 条不自洽，Δ 逐一
+        # 等于 +14.000。这正是 H46「Hess 派生行秩亏」的病根：派生行是基行的
+        # 线性组合，秩检查看不出问题，但系数错 1 个 pKw 后方程自相矛盾，
+        # 该方向永远无法收敛（H46 的 S=+13.298 冻结候选即此）。
+        n_OH = _ksp_xy(cell)[1]
         for pe in T.pka_base.get(b["ligand"], []):
             if pe["n"] != 1:
                 continue
