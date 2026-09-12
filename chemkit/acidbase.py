@@ -299,7 +299,7 @@ def ledger_charge(ledger: dict) -> float:
 
 def charge_pH(ledger: dict, V: float, T, T_K: float,
               lo: float = PH_LO, hi: float | None = None,
-              c_H: float = 0.0):
+              c_H: float = 0.0, tol: float = 0.0, fast: bool = False):
     """电荷平衡求解 pH；返回 float 或 None（无括号）。
 
     账本按两轴解读：
@@ -328,6 +328,15 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
     而机器的 Ksp 估计更接近真值。两类反例的清单见 tools/phdiag.py。
 
     F(pH) = Σ_{全部物种} z·c(pH) 在 pH 上严格单调减，二分必收敛。
+
+    `tol`：区间宽度收敛阈（0 = 跑到浮点分辨率，90 次上限）。引擎内层
+    调用（speciation 的 B3 档）用 `tol=1e-9` 配紧括号——探针是热路径，
+    浮点分辨率的最后几十次迭代纯属白跑。
+
+    `fast`：改用**阻尼 Newton**（`_FD` 给出闭式导数：族分布是 pH 的指数族，
+    导数 = −ln10·Cov_w(q, c)），典型 4-6 次求值 vs 二分的 ~34 次。用于
+    引擎热路径（每判定上万次调用）与全量对照工具。数值上与二分同根
+    （同一 F、同一括号），失败时回退二分。
     """
     fams = build_families(T)
     pKw = pKw_of(T_K)
@@ -368,12 +377,66 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
             tot += dist_charge(ek, q, M, V, pH, sg)
         return tot
 
+    def _FD(pH: float) -> tuple[float, float]:
+        """(F, dF/dpH)。族分布的 pH 导数有闭式：权重是 pH 的指数族，
+        `dlogw_i/dpH = −Σ_{k<i} sgn_k ≡ −c_i`（常数）⟹
+        `d⟨q⟩/dpH = −ln10·Cov_w(q, c)`（一次扫描），水项导数 `−ln10·V·(h+oh)`。
+        F 单调递减 ⟹ 导数恒负，Newton 步长方向天然正确。
+        """
+        ln10 = 2.302585092994046
+        h = 10.0 ** (-pH)
+        oh = 10.0 ** (pH - pKw)
+        tot = V * h - V * oh + fixed
+        der = -ln10 * V * (h + oh)
+        for ek, q, M, sg in fam.values():
+            n = len(ek) + 1
+            logw = [0.0]
+            cs = [0.0]
+            acc = 0.0
+            cacc = 0.0
+            for k in range(n - 1):
+                acc += (ek[k] - pH) * sg[k]
+                logw.append(acc)
+                cacc += sg[k]
+                cs.append(cacc)
+            mx = max(logw)
+            ws = [10.0 ** (v - mx) for v in logw]
+            sw = sum(ws)
+            mq = sum(q[i] * ws[i] for i in range(n)) / sw
+            mc = sum(cs[i] * ws[i] for i in range(n)) / sw
+            tot += M * V * mq
+            der -= ln10 * M * V * (sum(q[i] * cs[i] * ws[i] for i in range(n))
+                                   / sw - mq * mc)
+        return tot, der
+
     if _F(lo) < 0.0:
         return lo                     # 全域为负：下界即解
     if _F(hi) > 0.0:
         return None                   # 全域为正：无根（超强酸/浓碱域外）
+    if fast:
+        # 阻尼 Newton（导数恒负、F 单调 ⟹ 有根时步长必落在括号内，越界即
+        # 折半回退）——典型 4-6 次求值收敛到 1e-12，替代二分的 ~34 次。
+        # 引擎若要在热路径用精确质子条件，这一步是前提（性能实测见 §7 O）。
+        x = 0.5 * (lo + hi)
+        for _ in range(40):
+            fx, dx = _FD(x)
+            if fx > 0.0:
+                lo = x
+            else:
+                hi = x
+            if dx >= 0.0:
+                break                 # 导数非负 = 数值异常，交回二分
+            nx = x - fx / dx
+            if not (lo < nx < hi):
+                nx = 0.5 * (x + (hi if fx > 0.0 else lo))
+            if abs(nx - x) <= (tol if tol > 0.0 else 1e-12):
+                return nx
+            x = nx
+        # 收敛慢/异常：用已收窄的括号跑二分（此时区间通常已很小）
     a, b = lo, hi
     for _ in range(90):
+        if tol > 0.0 and b - a <= tol:
+            break
         mid = 0.5 * (a + b)
         if mid <= a or mid >= b:
             break

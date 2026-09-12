@@ -70,7 +70,9 @@ def main() -> int:
         c_H = float(cond.get("c_H", 0.0) or 0.0)
         # 正确口径：账本自身电荷平衡定 pH（H_excess 是待求量的另一半，
         # 传进去即双重记账）；c_H 是无阴离子的强酸条件量，须补回。
-        p_c = charge_pH(led, V, T, T_K, c_H=c_H)
+        # fast=True：阻尼 Newton（与二分同根，tools/phcmp.py 全量对拍
+        # 最大 |ΔpH| < 1e-12）——本工具要扫全库，省掉二分的一半时间。
+        p_c = charge_pH(led, V, T, T_K, c_H=c_H, fast=True)
         if p_c is None:
             none_n += 1
         net = sum(charge_of(s) * m for s, m in led.items()
@@ -128,7 +130,7 @@ BUCKETS = (
                       "或记账户型不一致——质子条件无对象"),
     ("B2 无族可分配", "账本里没有 pKa 族成员：质子条件没有可再分配的形态，"
                       "pH 只能由水解/两性/缓冲启发式或外部储库给"),
-    ("B3 族且无储库", "有 pKa 族、无固相/水解阳离子/气相：**质子条件唯一"
+    ("B3 族且无储库", "有 pKa 族、无固相/水解阳离子：**质子条件唯一"
                       "有资格的档**——这里的分歧必须逐条判化学对错"),
     ("B4 族+储库·直读档", "有族也有储库，且 |He| ≥ 1e-3：机器应走自由强酸/"
                           "强碱直读（pH 只由 He 定）"),
@@ -136,13 +138,21 @@ BUCKETS = (
                           "储库（Ksp/逸度）不在账本的质子条件里"),
 )
 
+# 储库判据**只算固相与水解阳离子**，不算"气体"：
+# 溶解态 CO₂/H₂S/SO₂/NH₃/H₂Se 既是 T.gases 成员、也是 pKa 族成员，它们
+# **在账本里**（量由走步与逸出步决定），是质子条件的一等公民。首版分类把
+# "账本里有气体"当外部储库，误把 175 例碳酸/硫化物缓冲体系排除在 B3 之外
+# （本轮自查发现——分类器自己就是一处"近似掩盖问题"）。真正在账本之外的
+# 自由度只有两个：固相持有质量、金属阳离子的水解由 Ksp 定（hyd_map）。
+RESERVOIR_SP = "T.solids ∪ Ksp-OH 阳离子"
+
 
 def _bucket(r: dict) -> str:
     if r["cons"] > 1e-6:
         return "B1 账本不守恒"
     if r["families"] == 0:
         return "B2 无族可分配"
-    if not (r["solid"] or r["hyd"] or r["gas"]):
+    if not (r["solid"] or r["hyd"]):
         return "B3 族且无储库"
     if abs(r["He"]) >= 1e-3:
         return "B4 族+储库·直读档"
@@ -173,6 +183,12 @@ def _classify(got: list, n: int) -> None:
             print(f"     Δ{r['d']:+8.3f} 机器 {r['machine']:6.2f} → 电荷 "
                   f"{r['charge']:6.2f}  He={r['He']:+9.5f} 族{r['families']} "
                   f"固{r['solid']} 水解{r['hyd']} 气{r['gas']}  {r['name'][:44]}")
+    print(f"\n  --- [B3 族且无储库] >0.05 档全列（唯一有资格的档）---")
+    for r in sorted((r for r in soft if _bucket(r) == "B3 族且无储库"),
+                    key=lambda r: -abs(r["d"])):
+        print(f"     Δ{r['d']:+8.3f} 机器 {r['machine']:6.2f} → 电荷 "
+              f"{r['charge']:6.2f}  He={r['He']:+9.5f} 族{r['families']} "
+              f"物种{r['nsp']:3d}  {r['name'][:48]}")
 
 
 if __name__ == "__main__":
