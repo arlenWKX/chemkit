@@ -1359,7 +1359,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     if _probe is not None:
         _probe_exit(_probe, ledger, H_excess, escaped, gsup, V, T_K, T,
                     kinetics, gas_escape, p_ext_kpa, disabled, frozen_perm,
-                    _exit_reason, _it_total, len(hist), len(steps))
+                    _exit_reason, _it_total, len(hist), len(steps),
+                    blocked_solids)
         # 走步画像诊断（v0.4.2 探针扩展）：纯诊断字段，不进
         # _result_digest（digest 键集不含它们），零行为影响
         _probe["joint_tries"] = _diag["joint_tries"]
@@ -1416,12 +1417,19 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
                 gsup: frozenset, V: float, T_K: float, T, kinetics: bool,
                 gas_escape: bool, p_ext_kpa: float, disabled: dict,
                 frozen_perm: set, exit_reason: str, it_total: int,
-                hist_len: int, steps_len: int) -> None:
+                hist_len: int, steps_len: int,
+                blocked_solids: set = frozenset()) -> None:
     """收敛质量探针（只读诊断，v0.3.8）：walk 退出点上的平衡残差画像。
 
     对最终账本重新枚举候选，记录"两侧均在场"的平衡的 S = logK − logQ
     （热力学上应全部为零；|S| 大 = 欠收敛）。联立求解器的验收基准
-    （converg.py dump/diff）与触发判据的数据源。不改任何求解行为。"""
+    （converg.py dump/diff）与触发判据的数据源。不改任何求解行为。
+
+    v0.5.0：每条 active 记录带**逐方向 disabled**、`slow`、`blocked`
+    （膜封锁）三个"引擎既定语义"标记。质量口径必须只统计 walk **真正
+    会考虑**的平衡——否则指标会去追引擎明确拒绝的方向（实测：TS04 的
+    `resid_live` 长期被幻影硫酸盐慢通道顶到 17.975，E24 被膜封锁的
+    金属-水通道顶到 156.12）。"""
     from .templates import enumerate_candidates as _enum
     led = dict(ledger)   # 副本隔离：respeciate 会原地改账本（探针零副作用）
     H_excess = _respeciate_strong_acids(led, H_excess, V, T)
@@ -1444,21 +1452,44 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
             continue
         S_f = S_of(c, led, V, pH_f, T_K, T, gsup, p_ext_kpa,
                    gas_escape, logc)
+        # 逐方向 disabled：walk 的评估循环按"该方向未禁用"才入选
+        # （engine L903/905），只看双向同时禁用会漏报——TS04 的三条
+        # S≈+17.6 候选正是**单向**禁用，旧口径报 dis=0 造成"walk 看不见
+        # 仍有驱动的候选"的假象。
+        df, dr = (c.key, 1) in disabled, (c.key, -1) in disabled
+        sl = bool(c.meta.get("slow") or 1 in c.meta.get("slow_dirs", ())
+                  or -1 in c.meta.get("slow_dirs", ()))
+        # 膜封锁（与 walk L892 同口径）：致密膜只抑制溶剂氧化通道
+        bl = bool(c.kind == "redox" and c.meta.get("ox_couple") == H_ION
+                  and any(s in blocked_solids
+                          for s in list(c.r) + list(c.pr)
+                          if s not in (WATER, H_ION)))
+        # 可达程度上界（化学计量上限，无需求解）：|S| 大 ≠ 会反应——
+        # 痕量物种对可以有巨大的 log 驱动力而只能走 ~1e-6 mol。
+        # D38 即此：PbO₂ 2.9e-06 / Cr³⁺ 1.9e-06 mol 给出 S=+33.4。
+        # 引擎自身的"显著程度"判据是 ANN_MIN_EXTENT（slow 标注同用），
+        # 质量口径据此区分"欠收敛"与"无关的痕量方向"。
+        _dr = c.r if S_f > 0 else c.pr
+        _lim = [led.get(s, 0.0) / nu for s, nu in _dr.items()
+                if s not in (WATER, H_ION) and nu > 0]
+        ex = min(_lim) if _lim else float("inf")
         if not (pres_r and pres_p):
             # 单侧在场：驱动属正常（反应物耗尽/产物未生）；仅记录不判残差
             active.append({"kind": c.kind, "eq": _peq(c),
                            "S": round(S_f, 3), "two_sided": False,
                            "frozen": c.netkey_fwd in frozen_perm
                                      or c.netkey_rev in frozen_perm,
-                           "disabled": ((c.key, 1) in disabled
-                                        and (c.key, -1) in disabled)})
+                           "slow": sl, "blocked": bl, "ext_max": round(ex, 9),
+                           "dis_fwd": df, "dis_rev": dr,
+                           "disabled": df and dr})
             continue
         active.append({"kind": c.kind, "eq": _peq(c), "S": round(S_f, 3),
                        "two_sided": True,
                        "frozen": c.netkey_fwd in frozen_perm
                                  or c.netkey_rev in frozen_perm,
-                       "disabled": ((c.key, 1) in disabled
-                                    and (c.key, -1) in disabled)})
+                       "slow": sl, "blocked": bl, "ext_max": round(ex, 9),
+                       "dis_fwd": df, "dis_rev": dr,
+                       "disabled": df and dr})
     probe.clear()
     probe.update({
         "exit": exit_reason, "iters": it_total, "hist": hist_len,
