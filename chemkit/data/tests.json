@@ -1754,7 +1754,8 @@
    "CaCO_3": 0.95
   },
   "eq": "CO_3^{2-} + Ca^{2+} -> CaCO_3",
-  "changed": true
+  "changed": true,
+  "note": "CaCO3 白色沉淀"
  },
  {
   "name": "E39 BaSO4 不溶于盐酸（合并T69）",
@@ -1910,7 +1911,8 @@
    6.0
   ],
   "eq": "HCO_3^- + H^+ -> CO_2 + H_2O",
-  "changed": true
+  "changed": true,
+  "note": "碳酸氢钠 + 酸 → CO2"
  },
  {
   "name": "E46 Na2CO3+1HCl->NaHCO3",
@@ -2633,7 +2635,8 @@
    "H_2PO_4^-": 0.8
   },
   "eq": "HPO_4^{2-} + H^+ -> H_2PO_4^-",
-  "changed": true
+  "changed": true,
+  "note": "磷酸氢二钠 + 酸 → 磷酸二氢钠"
  },
  {
   "name": "N26 Fe(OH)2+O2",
@@ -2726,7 +2729,7 @@
    ]
   ],
   "has": {},
-  "note": "血红色；化学事实（配位平衡产物，引擎按定量热力学给出）",
+  "note": "血红色；化学事实（配位平衡产物，引擎按定量热力学给出）；Fe3+ 检验；血红色；化学事实（配位平衡产物，引擎按定量热力学给出）",
   "eq": "99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] + 12[Fe(SCN)_2]^+",
   "changed": true
  },
@@ -2839,8 +2842,9 @@
    13.0,
    14.5
   ],
-  "note": "S2- 强水解",
-  "eq": "H_2O + S^{2-} -> HS^- + OH^-"
+  "note": "S2- 强水解；S2- 强烈水解为 HS- 和 OH-",
+  "eq": "H_2O + S^{2-} -> HS^- + OH^-",
+  "changed": true
  },
  {
   "name": "N37 NH4Cl溶液（合并T76/J07）",
@@ -2854,8 +2858,9 @@
    4.4,
    4.8
   ],
-  "note": "NH4+ 水解（1M pH≈4.6）；无净离子方程——水解/形态平衡由 pH 区间定量验证",
-  "eq": null
+  "note": "NH4+ 水解（1M pH≈4.6）；无净离子方程——水解/形态平衡由 pH 区间定量验证；NH4+ 水解使溶液显酸性",
+  "eq": null,
+  "changed": false
  },
  {
   "name": "N38 NaHS+HCl",
@@ -2870,10 +2875,11 @@
    ]
   ],
   "has": {
-   "H_2S": 0.8
+   "H_2S": 0.9
   },
   "eq": "HS^- + H^+ -> H_2S",
-  "changed": true
+  "changed": true,
+  "note": "硫氢化钠 + 酸 → H2S"
  },
  {
   "name": "N39 Ca(OH)2+CO2（合并T103）",
@@ -3599,7 +3605,7 @@
   "has": {
    "PbCrO_4": 0.9
   },
-  "note": "铬黄颜料",
+  "note": "铬黄颜料；PbCrO4 黄色沉淀；铬黄颜料",
   "eq": "CrO_4^{2-} + Pb^{2+} -> PbCrO_4",
   "eq_has": [
    "3OH^- + Pb^{2+} -> [Pb(OH)_3]^-",
@@ -3621,8 +3627,11 @@
     0.03
    ]
   },
-  "note": "溶解度 (Ksp/4)^(1/3)=0.016 M",
-  "eq": "PbCl_2 -> 2Cl^- + Pb^{2+}"
+  "note": "溶解度 (Ksp/4)^(1/3)=0.016 M；PbCl2 Ksp 模型 s≈16mM（活度效应使真实溶解度更大）",
+  "eq": "PbCl_2 -> 2Cl^- + Pb^{2+}",
+  "has": {
+   "Pb^{2+}": 0.014
+  }
  },
  {
   "name": "D25 AgCl+Na2S2O3 定影",
@@ -3943,7 +3952,7 @@
   "has": {
    "CdS": 0.9
   },
-  "note": "II 组：自产酸也不回溶（pKa2=14 复现）",
+  "note": "II 组：自产酸也不回溶（pKa2=14 复现）；CdS 黄色沉淀；H2S 组",
   "eq": "Cd^{2+} + H_2S -> 2H^+ + CdS",
   "changed": true
  },
@@ -3981,7 +3990,8 @@
    "BaCrO_4": 0.9
   },
   "eq": "Ba^{2+} + CrO_4^{2-} -> BaCrO_4",
-  "changed": true
+  "changed": true,
+  "note": "BaCrO4 黄色沉淀"
  },
  {
   "name": "D46 SrSO4 微溶",
@@ -4266,12 +4276,15 @@
     0.25
    ]
   },
-  "note": "碱金属中唯一难溶碳酸盐（类 Mg，对角线规则）",
+  "note": "碱金属中唯一难溶碳酸盐（类 Mg，对角线规则）；Li2CO3 微溶（区别于其他碱金属碳酸盐）",
   "eq": "Li_2CO_3 -> 2Li^+ + CO_3^{2-}",
   "eq_has": [
    "H^+ + Li_2CO_3 -> 2Li^+ + HCO_3^-",
    "HCO_3^- -> CO_3^{2-} + H^+"
-  ]
+  ],
+  "has": {
+   "Li^+": 0.1
+  }
  },
  {
   "name": "F08 K+FeCl3 先与水反应",
@@ -4454,7 +4467,8 @@
    14.5
   ],
   "eq": "2H_2O + Sr -> 2OH^- + H_2 + Sr^{2+}",
-  "changed": true
+  "changed": true,
+  "note": "碱土金属溶水（Ba/Ca 之间）；Sr(OH)2 溶解度中等"
  },
  {
   "name": "F13 Ba+水",
@@ -4506,7 +4520,8 @@
    "SrCO_3": 0.9
   },
   "eq": "CO_3^{2-} + Sr^{2+} -> SrCO_3",
-  "changed": true
+  "changed": true,
+  "note": "SrCO3 白色沉淀"
  },
  {
   "name": "F16 Ca(OH)2 微溶",
@@ -4606,7 +4621,7 @@
   "has": {
    "H_2": 0.9
   },
-  "note": "NH4+ 酸性溶解 Mg（放出 H2）",
+  "note": "NH4+ 酸性溶解 Mg（放出 H2）；NH4+ 水解酸驱动 Mg 放氢；Mg(OH)2+2NH4+⇌Mg2++2NH3 的 K≈0.02，故部分溶解（引擎定量自洽）",
   "eq": "6H_2O + 4Mg + 2NH_4^+ -> 4H_2 + 3Mg(OH)_2 + 2NH_3 + Mg^{2+}",
   "eq_has": [
    "2H_2O + Mg -> H_2 + Mg(OH)_2",
@@ -4754,7 +4769,8 @@
    "Br^-": 1.9
   },
   "eq": "2I^- + Br_2 -> 2Br^- + I_2",
-  "changed": true
+  "changed": true,
+  "note": "Br2 置换 I-"
  },
  {
   "name": "F26 I2+热NaOH歧化",
@@ -5100,10 +5116,11 @@
    ]
   ],
   "has": {
-   "Na^+": 1.9
+   "Na^+": 1.9,
+   "OH^-": 0.8
   },
   "ph": [
-   13.0,
+   13.5,
    14.5
   ],
   "eq": "H_2O + O^{2-} -> 2OH^-",
@@ -5461,7 +5478,7 @@
    ]
   ],
   "has": {},
-  "note": "血红色 [Fe(SCN)]2+（Fe3+ 检验）；可逆配合，SCN- 过量推动；化学事实（配位平衡产物，引擎按定量热力学给出）",
+  "note": "血红色 [Fe(SCN)]2+（Fe3+ 检验）；可逆配合，SCN- 过量推动；化学事实（配位平衡产物，引擎按定量热力学给出）；Fe3+ + SCN- → [Fe(SCN)]2+；血红色；化学事实（配位平衡产物，引擎按定量热力学给出）",
   "eq": "3SCN^- + Fe^{3+} -> [Fe(SCN)_3]",
   "changed": true
  },
@@ -5885,13 +5902,17 @@
    "S^{2-}": 0.3,
    "HS^-": 0.5
   },
-  "note": "课本写 Na2S；1M 下 S2- 水解 Kb=1（pKa2=14）→ S2-/HS- 约 4:6 共存",
+  "note": "课本写 Na2S；1M 下 S2- 水解 Kb=1（pKa2=14）→ S2-/HS- 约 4:6 共存；pKa2(H2S)≈14：2eq NaOH 下 S2-/HS- 约 4:6 共存（引擎定量自洽）",
   "eq": "4OH^- + 3H_2S -> 4H_2O + 2HS^- + S^{2-}",
   "eq_has": [
    "H_2S -> 2H^+ + S^{2-}",
    "H^+ + S^{2-} -> HS^-"
   ],
-  "changed": true
+  "changed": true,
+  "has": {
+   "HS^-": 0.5,
+   "S^{2-}": 0.3
+  }
  },
  {
   "name": "T65 氢硫酸+O2 久置浑浊",
@@ -6171,7 +6192,8 @@
    9.8
   ],
   "eq": null,
-  "note": "无净离子方程——水解/形态平衡由 pH 区间定量验证"
+  "note": "无净离子方程——水解/形态平衡由 pH 区间定量验证；Ac- 水解使溶液显碱性",
+  "changed": false
  },
  {
   "name": "T89 Na2CO3 溶液碱性",
@@ -6185,7 +6207,9 @@
    11.5,
    12.5
   ],
-  "eq": "CO_3^{2-} + H_2O -> HCO_3^- + OH^-"
+  "eq": "CO_3^{2-} + H_2O -> HCO_3^- + OH^-",
+  "changed": true,
+  "note": "CO3^2- 水解使溶液显强碱性"
  },
  {
   "name": "T91 NaHSO3 溶液酸性",
@@ -8183,7 +8207,7 @@
    6.0,
    8.0
   ],
-  "note": "硫酸氢盐 ex 注册（与 H2SO4 全电离约定一致）",
+  "note": "硫酸氢盐 ex 注册（与 H2SO4 全电离约定一致）；NaHSO4 二级电离；与碱中和",
   "eq": "H^+ + OH^- -> H_2O",
   "changed": true
  },
@@ -13601,25 +13625,6 @@
   "changed": false
  },
  {
-  "name": "NR161 CO2+NaCl",
-  "subs": [
-   [
-    "CO_2",
-    1
-   ],
-   [
-    "NaCl",
-    1
-   ]
-  ],
-  "cond": {
-   "V_L": 1.0
-  },
-  "eq": "CO_2 + OH^- -> HCO_3^-",
-  "note": "",
-  "changed": false
- },
- {
   "name": "NR163 CO2+Na2SO4",
   "subs": [
    [
@@ -13793,28 +13798,6 @@
   "eq": null,
   "note": "中性无酸性,NO3-不氧化Cu",
   "changed": false
- },
- {
-  "name": "X01 Mg+NH4Cl溶液 放氢",
-  "subs": [
-   [
-    "Mg",
-    1
-   ],
-   [
-    "NH_4Cl",
-    2
-   ]
-  ],
-  "has": {
-   "H_2": 0.8
-  },
-  "note": "NH4+ 水解酸驱动 Mg 放氢；Mg(OH)2+2NH4+⇌Mg2++2NH3 的 K≈0.02，故部分溶解（引擎定量自洽）",
-  "eq_has": [
-   "2H_2O + Mg -> H_2 + Mg(OH)_2",
-   "NH_4^+ -> H^+ + NH_3"
-  ],
-  "changed": true
  },
  {
   "name": "X02 Zn+NaOH溶液",
@@ -14189,20 +14172,6 @@
   "changed": true
  },
  {
-  "name": "X21 Sr+水",
-  "subs": [
-   [
-    "Sr",
-    1
-   ]
-  ],
-  "has": {
-   "H_2": 0.8
-  },
-  "note": "碱土金属溶水（Ba/Ca 之间）；Sr(OH)2 溶解度中等",
-  "changed": true
- },
- {
   "name": "Y01 Pb(NO3)2+KI 黄沉",
   "subs": [
    [
@@ -14251,10 +14220,11 @@
    ]
   ],
   "has": {
-   "Ag_3PO_4": 0.8
+   "Ag_3PO_4": 0.9
   },
   "eq": "3Ag^+ + PO_4^{3-} -> Ag_3PO_4",
-  "changed": true
+  "changed": true,
+  "note": "Ag3PO4 黄色沉淀"
  },
  {
   "name": "Y04 AgNO3+Na2CO3 黄沉",
@@ -14317,24 +14287,6 @@
   "changed": true
  },
  {
-  "name": "Y07 FeS+盐酸 溶解",
-  "subs": [
-   [
-    "FeS",
-    1
-   ],
-   [
-    "HCl",
-    2
-   ]
-  ],
-  "has": {
-   "H_2S": 0.8
-  },
-  "eq": "2H^+ + FeS -> Fe^{2+} + H_2S",
-  "changed": true
- },
- {
   "name": "Y08 ZnS+盐酸 溶解",
   "subs": [
    [
@@ -14366,24 +14318,6 @@
   ],
   "eq": null,
   "changed": false
- },
- {
-  "name": "Y10 CO2+NaOH 1:1 酸式盐",
-  "subs": [
-   [
-    "CO_2",
-    1
-   ],
-   [
-    "NaOH",
-    1
-   ]
-  ],
-  "has": {
-   "HCO_3^-": 0.8
-  },
-  "eq": "CO_2 + OH^- -> HCO_3^-",
-  "changed": true
  },
  {
   "name": "Y11 CO2+过量NaOH 正盐",
@@ -14477,24 +14411,6 @@
   "changed": true
  },
  {
-  "name": "Y16 Al2O3+NaOH 溶解",
-  "subs": [
-   [
-    "Al_2O_3",
-    1
-   ],
-   [
-    "NaOH",
-    2
-   ]
-  ],
-  "has": {
-   "[Al(OH)_4]^-": 1.5
-  },
-  "eq": "4OH^- + 2H^+ + Al_2O_3 + H_2O -> 2[Al(OH)_4]^-",
-  "changed": true
- },
- {
   "name": "Y17 ZnO+NaOH 溶解",
   "subs": [
    [
@@ -14546,43 +14462,6 @@
    0.5
   ],
   "changed": false
- },
- {
-  "name": "Y20 Na2O+水 成碱",
-  "subs": [
-   [
-    "Na_2O",
-    1
-   ]
-  ],
-  "has": {
-   "OH^-": 0.8
-  },
-  "ph": [
-   13.5,
-   14.5
-  ],
-  "eq": "H_2O + O^{2-} -> 2OH^-",
-  "changed": true
- },
- {
-  "name": "Y21 Fe3O4+盐酸 混合价溶解",
-  "subs": [
-   [
-    "Fe_3O_4",
-    1
-   ],
-   [
-    "HCl",
-    8
-   ]
-  ],
-  "has": {
-   "Fe^{2+}": 0.9,
-   "Fe^{3+}": 1.8
-  },
-  "eq": "8H^+ + Fe_3O_4 -> 4H_2O + 2Fe^{3+} + Fe^{2+}",
-  "changed": true
  },
  {
   "name": "Y22 Cu2O+稀硫酸 歧化",
@@ -14906,29 +14785,6 @@
   "changed": true
  },
  {
-  "name": "Z14 H2S+2NaOH 正盐",
-  "subs": [
-   [
-    "H_2S",
-    1
-   ],
-   [
-    "NaOH",
-    2
-   ]
-  ],
-  "has": {
-   "HS^-": 0.5,
-   "S^{2-}": 0.3
-  },
-  "note": "pKa2(H2S)≈14：2eq NaOH 下 S2-/HS- 约 4:6 共存（引擎定量自洽）",
-  "eq_has": [
-   "H_2S -> 2H^+ + S^{2-}",
-   "H^+ + S^{2-} -> HS^-"
-  ],
-  "changed": true
- },
- {
   "name": "Z15 H2S+NaOH 1:1 酸式盐",
   "subs": [
    [
@@ -14944,24 +14800,6 @@
    "HS^-": 0.8
   },
   "eq": "H_2S + OH^- -> HS^- + H_2O",
-  "changed": true
- },
- {
-  "name": "Z16 CaCl2+NaF 沉淀",
-  "subs": [
-   [
-    "CaCl_2",
-    1
-   ],
-   [
-    "NaF",
-    2
-   ]
-  ],
-  "has": {
-   "CaF_2": 0.9
-  },
-  "eq": "2F^- + Ca^{2+} -> CaF_2",
   "changed": true
  },
  {
@@ -15000,28 +14838,11 @@
    ]
   ],
   "has": {
-   "SO_2": 0.7
+   "SO_2": 0.8
   },
   "eq": "HSO_3^- + H^+ -> H_2O + SO_2",
-  "changed": true
- },
- {
-  "name": "Z21 Cu+Hg(NO3)2 置换",
-  "subs": [
-   [
-    "Cu",
-    1
-   ],
-   [
-    "Hg(NO_3)_2",
-    1
-   ]
-  ],
-  "has": {
-   "Hg": 0.8
-  },
-  "eq": "Cu + Hg^{2+} -> Cu^{2+} + Hg",
-  "changed": true
+  "changed": true,
+  "note": "亚硫酸氢钠 + 酸 → SO2"
  },
  {
   "name": "Z22 Ba(OH)2+Na2SO4",
@@ -15097,24 +14918,6 @@
    "H_2PO_4^- -> HPO_4^{2-} + H^+",
    "HPO_4^{2-} -> H^+ + PO_4^{3-}"
   ],
-  "changed": true
- },
- {
-  "name": "Z26 FeO+盐酸 溶解",
-  "subs": [
-   [
-    "FeO",
-    1
-   ],
-   [
-    "HCl",
-    2
-   ]
-  ],
-  "has": {
-   "Fe^{2+}": 0.9
-  },
-  "eq": "2H^+ + FeO -> Fe^{2+} + H_2O",
   "changed": true
  },
  {
@@ -15354,23 +15157,6 @@
   "changed": true
  },
  {
-  "name": "W11 FeCl3+KSCN 显色",
-  "subs": [
-   [
-    "FeCl_3",
-    1
-   ],
-   [
-    "KSCN",
-    1
-   ]
-  ],
-  "has": {},
-  "eq": "99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] + 12[Fe(SCN)_2]^+",
-  "note": "；化学事实（配位平衡产物，引擎按定量热力学给出）",
-  "changed": true
- },
- {
   "name": "W12 FeCl3+过量NaF 掩蔽",
   "subs": [
    [
@@ -15386,25 +15172,8 @@
    "[FeF_6]^{3-}": 0.8
   },
   "eq": "6F^- + Fe^{3+} -> [FeF_6]^{3-}",
-  "changed": true
- },
- {
-  "name": "W13 AlCl3+过量NaF",
-  "subs": [
-   [
-    "AlCl_3",
-    1
-   ],
-   [
-    "NaF",
-    6
-   ]
-  ],
-  "has": {
-   "[AlF_6]^{3-}": 0.8
-  },
-  "eq": "6F^- + Al^{3+} -> [AlF_6]^{3-}",
-  "changed": true
+  "changed": true,
+  "note": "Fe3+ + 6F- → [FeF6]3-；无色"
  },
  {
   "name": "W14 Hg(NO3)2+过量KI 溶解",
@@ -15609,28 +15378,6 @@
    "BaSO_4": 0.8
   },
   "eq": "2OH^- + Ba^{2+} + Mg^{2+} + SO_4^{2-} -> BaSO_4 + Mg(OH)_2",
-  "changed": true
- },
- {
-  "name": "W25 Na+CuSO4溶液 先与水",
-  "subs": [
-   [
-    "Na",
-    2
-   ],
-   [
-    "CuSO_4",
-    1
-   ]
-  ],
-  "has": {
-   "H_2": 0.8,
-   "Cu(OH)_2": 0.5
-  },
-  "eq_has": [
-   "2H^+ + 2Na -> 2Na^+ + H_2",
-   "2OH^- + Cu^{2+} -> Cu(OH)_2"
-  ],
   "changed": true
  },
  {
@@ -16334,7 +16081,7 @@
   "has": {
    "CaCO_3": 0.9
   },
-  "note": "纯碱沉淀钙（E37 已有 CaCl2+Na2CO3，此为反向投料）",
+  "note": "纯碱沉淀钙（E37 已有 CaCl2+Na2CO3，此为反向投料）；CaCO3 白色沉淀",
   "eq": "CO_3^{2-} + Ca^{2+} -> CaCO_3",
   "changed": true
  },
@@ -16409,28 +16156,6 @@
    "SO_4^{2-}": 0.8
   },
   "eq": "2Fe^{3+} + OH^- + SO_3^{2-} -> 2Fe^{2+} + H^+ + SO_4^{2-}",
-  "changed": true
- },
- {
-  "name": "U06 NH4Cl+Ca(OH)2 加热制氨",
-  "subs": [
-   [
-    "NH_4Cl",
-    2
-   ],
-   [
-    "Ca(OH)_2",
-    1
-   ]
-  ],
-  "cond": {
-   "V_L": 1.0,
-   "T_K": 350.0
-  },
-  "has": {
-   "NH_3": 1.5
-  },
-  "eq": "2NH_4^+ + Ca(OH)_2 -> 2H_2O + 2NH_3 + Ca^{2+}",
   "changed": true
  },
  {
@@ -16525,24 +16250,6 @@
    "Fe^{2+}": 1.6
   },
   "eq": "2Fe^{3+} + Zn -> 2Fe^{2+} + Zn^{2+}",
-  "changed": true
- },
- {
-  "name": "U12 Na3PO4+CaCl2 白沉",
-  "subs": [
-   [
-    "Na_3PO_4",
-    2
-   ],
-   [
-    "CaCl_2",
-    3
-   ]
-  ],
-  "has": {
-   "Ca_3(PO_4)_2": 0.8
-  },
-  "eq": "3Ca^{2+} + 2PO_4^{3-} -> Ca_3(PO_4)_2",
   "changed": true
  },
  {
@@ -17079,8 +16786,17 @@
     0.1
    ]
   ],
-  "note": "Sb3+ 强烈水解生成 SbOCl 白色沉淀",
-  "changed": true
+  "note": "Sb3+ 强烈水解生成 SbOCl 白色沉淀；Sb3+ 水解生成 SbOCl 白色沉淀；Sb3+ 水解极强（SbCl3+水配制必须加盐酸防 SbOCl 沉淀；引擎以 Sb(OH)3 近似），0.1M 纯水 67% 水解、pH≈0.7",
+  "changed": true,
+  "degree": 1,
+  "has": {
+   "Sb(OH)_3": 0.05,
+   "Sb^{3+}": 0.02
+  },
+  "ph": [
+   0.2,
+   1.2
+  ]
  },
  {
   "name": "S32 SbCl3+NaOH",
@@ -17330,41 +17046,6 @@
   },
   "eq": "4I^- + Hg^{2+} -> [HgI_4]^{2-}",
   "note": "Hg2+ + 4I- → [HgI4]2-；奈氏试剂基础",
-  "changed": true
- },
- {
-  "name": "Fe31 FeCl3+KSCN 显色",
-  "subs": [
-   [
-    "FeCl_3",
-    1
-   ],
-   [
-    "KSCN",
-    1
-   ]
-  ],
-  "has": {},
-  "eq": "99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] + 12[Fe(SCN)_2]^+",
-  "note": "Fe3+ 检验；血红色；化学事实（配位平衡产物，引擎按定量热力学给出）",
-  "changed": true
- },
- {
-  "name": "Fe32 Fe2(SO4)3+NaF",
-  "subs": [
-   [
-    "FeCl_3",
-    1
-   ],
-   [
-    "NaF",
-    6
-   ]
-  ],
-  "has": {
-   "[FeF_6]^{3-}": 0.5
-  },
-  "note": "Fe3+ + 6F- → [FeF6]3-；无色",
   "changed": true
  },
  {
@@ -17893,23 +17574,6 @@
   },
   "eq": "2NH_3 + Ag^+ -> [Ag(NH_3)_2]^+",
   "note": "Ag+ + 2NH3 → [Ag(NH3)2]+",
-  "changed": true
- },
- {
-  "name": "Fe33 FeCl3+3KSCN",
-  "subs": [
-   [
-    "FeCl_3",
-    1
-   ],
-   [
-    "KSCN",
-    3
-   ]
-  ],
-  "has": {},
-  "note": "Fe3+ + SCN- → [Fe(SCN)]2+；血红色；化学事实（配位平衡产物，引擎按定量热力学给出）",
-  "eq": "3SCN^- + Fe^{3+} -> [Fe(SCN)_3]",
   "changed": true
  },
  {
@@ -18685,8 +18349,18 @@
     0.1
    ]
   ],
-  "note": "Fe3+ 水解使溶液显酸性（pH≈2）",
-  "changed": true
+  "note": "Fe3+ 水解使溶液显酸性（pH≈2）；Fe3+ 仅在强酸中稳定：0.1M 纯水约 7% 水解（pH≈1.7），FeCl3+3H2O⇌Fe(OH)3+3HCl 教材标准可逆反应；单一来源水解成淀计为化学反应（新语义）",
+  "changed": true,
+  "reacted": true,
+  "degree": 1,
+  "has": {
+   "Fe(OH)_3": 0.004,
+   "Fe^{3+}": 0.08
+  },
+  "ph": [
+   1.3,
+   2.1
+  ]
  },
  {
   "name": "Hyd2 AlCl3 水解",
@@ -18719,17 +18393,6 @@
    ]
   ],
   "note": "Bi3+ 强烈水解生成 BiOCl 白色沉淀",
-  "changed": true
- },
- {
-  "name": "Hyd5 SbCl3+水 水解",
-  "subs": [
-   [
-    "SbCl_3",
-    0.1
-   ]
-  ],
-  "note": "Sb3+ 水解生成 SbOCl 白色沉淀",
   "changed": true
  },
  {
@@ -18865,39 +18528,6 @@
   ]
  },
  {
-  "name": "SH1 NH4Cl 水解",
-  "subs": [
-   [
-    "NH_4Cl",
-    1
-   ]
-  ],
-  "note": "NH4+ 水解使溶液显酸性",
-  "changed": false
- },
- {
-  "name": "SH2 NaAc 水解",
-  "subs": [
-   [
-    "CH_3COONa",
-    1
-   ]
-  ],
-  "note": "Ac- 水解使溶液显碱性",
-  "changed": false
- },
- {
-  "name": "SH3 Na2CO3 水解",
-  "subs": [
-   [
-    "Na_2CO_3",
-    1
-   ]
-  ],
-  "note": "CO3^2- 水解使溶液显强碱性",
-  "changed": true
- },
- {
   "name": "SH4 NaHCO3 水解",
   "subs": [
    [
@@ -18906,17 +18536,6 @@
    ]
   ],
   "note": "HCO3- 水解大于电离，碱性",
-  "changed": true
- },
- {
-  "name": "SH5 Na2S 水解",
-  "subs": [
-   [
-    "Na_2S",
-    1
-   ]
-  ],
-  "note": "S2- 强烈水解为 HS- 和 OH-",
   "changed": true
  },
  {
@@ -19008,25 +18627,6 @@
   "changed": true
  },
  {
-  "name": "Sf5 CdSO4+H2S",
-  "subs": [
-   [
-    "CdSO_4",
-    1
-   ],
-   [
-    "H_2S",
-    1
-   ]
-  ],
-  "has": {
-   "CdS": 0.9
-  },
-  "eq": "Cd^{2+} + H_2S -> 2H^+ + CdS",
-  "note": "CdS 黄色沉淀；H2S 组",
-  "changed": true
- },
- {
   "name": "Sf7 HgCl2+H2S",
   "subs": [
    [
@@ -19065,25 +18665,6 @@
   "changed": true
  },
  {
-  "name": "H2 Br2+NaI 置换",
-  "subs": [
-   [
-    "Br_2",
-    1
-   ],
-   [
-    "NaI",
-    2
-   ]
-  ],
-  "has": {
-   "I_2": 0.9
-  },
-  "eq": "2I^- + Br_2 -> I_2 + 2Br^-",
-  "note": "Br2 置换 I-",
-  "changed": true
- },
- {
   "name": "H3 Cl2+NaI 置换",
   "subs": [
    [
@@ -19099,23 +18680,7 @@
    "I_2": 0.9
   },
   "eq": "2I^- + Cl_2 -> I_2 + 2Cl^-",
-  "note": "Cl2 置换 I-",
-  "changed": true
- },
- {
-  "name": "AS1 NaHSO4+NaOH",
-  "subs": [
-   [
-    "NaHSO_4",
-    1
-   ],
-   [
-    "NaOH",
-    1
-   ]
-  ],
-  "eq": "H^+ + OH^- -> H_2O",
-  "note": "NaHSO4 二级电离；与碱中和",
+  "note": "Cl2 置换 I-；Cl2 氧化 I-；CCl4 萃取 I2 紫色",
   "changed": true
  },
  {
@@ -19134,81 +18699,6 @@
    "HPO_4^{2-}": 0.5
   },
   "note": "磷酸二氢钠 + 碱 → 磷酸氢二钠",
-  "changed": true
- },
- {
-  "name": "AS3 Na2HPO4+HCl",
-  "subs": [
-   [
-    "Na_2HPO_4",
-    1
-   ],
-   [
-    "HCl",
-    1
-   ]
-  ],
-  "has": {
-   "H_2PO_4^-": 0.5
-  },
-  "note": "磷酸氢二钠 + 酸 → 磷酸二氢钠",
-  "changed": true
- },
- {
-  "name": "AS4 NaHCO3+HCl",
-  "subs": [
-   [
-    "NaHCO_3",
-    1
-   ],
-   [
-    "HCl",
-    1
-   ]
-  ],
-  "has": {
-   "CO_2": 0.9
-  },
-  "eq": "HCO_3^- + H^+ -> CO_2 + H_2O",
-  "note": "碳酸氢钠 + 酸 → CO2",
-  "changed": true
- },
- {
-  "name": "AS5 NaHS+HCl",
-  "subs": [
-   [
-    "NaHS",
-    1
-   ],
-   [
-    "HCl",
-    1
-   ]
-  ],
-  "has": {
-   "H_2S": 0.9
-  },
-  "eq": "H^+ + HS^- -> H_2S",
-  "note": "硫氢化钠 + 酸 → H2S",
-  "changed": true
- },
- {
-  "name": "AS6 NaHSO3+HCl",
-  "subs": [
-   [
-    "NaHSO_3",
-    1
-   ],
-   [
-    "HCl",
-    1
-   ]
-  ],
-  "has": {
-   "SO_2": 0.8
-  },
-  "eq": "H^+ + HSO_3^- -> H_2O + SO_2",
-  "note": "亚硫酸氢钠 + 酸 → SO2",
   "changed": true
  },
  {
@@ -19269,44 +18759,6 @@
   "changed": true
  },
  {
-  "name": "DR4 CaCl2+Na2CO3",
-  "subs": [
-   [
-    "CaCl_2",
-    1
-   ],
-   [
-    "Na_2CO_3",
-    1
-   ]
-  ],
-  "has": {
-   "CaCO_3": 0.9
-  },
-  "eq": "Ca^{2+} + CO_3^{2-} -> CaCO_3",
-  "note": "CaCO3 白色沉淀",
-  "changed": true
- },
- {
-  "name": "DR5 SrCl2+Na2CO3",
-  "subs": [
-   [
-    "SrCl_2",
-    1
-   ],
-   [
-    "Na_2CO_3",
-    1
-   ]
-  ],
-  "has": {
-   "SrCO_3": 0.9
-  },
-  "eq": "Sr^{2+} + CO_3^{2-} -> SrCO_3",
-  "note": "SrCO3 白色沉淀",
-  "changed": true
- },
- {
   "name": "DR6 MgCl2+Na2CO3",
   "subs": [
    [
@@ -19323,44 +18775,6 @@
   },
   "eq": "Mg^{2+} + CO_3^{2-} -> MgCO_3",
   "note": "MgCO3 白色沉淀",
-  "changed": true
- },
- {
-  "name": "DR7 BaCl2+K2CrO4",
-  "subs": [
-   [
-    "BaCl_2",
-    1
-   ],
-   [
-    "K_2CrO_4",
-    1
-   ]
-  ],
-  "has": {
-   "BaCrO_4": 0.9
-  },
-  "eq": "Ba^{2+} + CrO_4^{2-} -> BaCrO_4",
-  "note": "BaCrO4 黄色沉淀",
-  "changed": true
- },
- {
-  "name": "DR8 Pb(NO3)2+K2CrO4",
-  "subs": [
-   [
-    "Pb(NO_3)_2",
-    1
-   ],
-   [
-    "K_2CrO_4",
-    1
-   ]
-  ],
-  "has": {
-   "PbCrO_4": 0.9
-  },
-  "eq": "CrO_4^{2-} + Pb^{2+} -> PbCrO_4",
-  "note": "PbCrO4 黄色沉淀；铬黄颜料",
   "changed": true
  },
  {
@@ -19435,8 +18849,9 @@
    2.7,
    3.0
   ],
-  "note": "0.1 M CH3COOH；pH≈2.87",
-  "changed": true
+  "note": "0.1 M CH3COOH；pH≈2.87；醋酸电离是真实平衡（部分电离→changed=True），但非狭义化学反应（reacted=False）",
+  "changed": true,
+  "reacted": false
  },
  {
   "name": "pH6 NH3 0.1M",
@@ -19450,8 +18865,9 @@
    11.1,
    11.4
   ],
-  "note": "0.1 M NH3；pH≈11.13",
-  "changed": true
+  "note": "0.1 M NH3；pH≈11.13；NH3 溶解电离：changed=True 但 reacted=False（纯形态变化）",
+  "changed": true,
+  "reacted": false
  },
  {
   "name": "DR9 AgNO3+Na2S2O3",
@@ -19820,44 +19236,6 @@
   "changed": true
  },
  {
-  "name": "RX4 Cl2+NaI+CCl4 萃取",
-  "subs": [
-   [
-    "Cl_2",
-    1
-   ],
-   [
-    "NaI",
-    2
-   ]
-  ],
-  "has": {
-   "I_2": 0.9
-  },
-  "eq": "2I^- + Cl_2 -> I_2 + 2Cl^-",
-  "note": "Cl2 氧化 I-；CCl4 萃取 I2 紫色",
-  "changed": true
- },
- {
-  "name": "DR13 Na2CO3+CaCl2",
-  "subs": [
-   [
-    "Na_2CO_3",
-    1
-   ],
-   [
-    "CaCl_2",
-    1
-   ]
-  ],
-  "has": {
-   "CaCO_3": 0.9
-  },
-  "eq": "Ca^{2+} + CO_3^{2-} -> CaCO_3",
-  "note": "CaCO3 白色沉淀",
-  "changed": true
- },
- {
   "name": "DR14 Na2CO3+MgCl2",
   "subs": [
    [
@@ -19893,25 +19271,6 @@
   },
   "eq": "CrO_4^{2-} + Pb^{2+} -> PbCrO_4",
   "note": "PbCrO4 黄色沉淀；铬黄颜料",
-  "changed": true
- },
- {
-  "name": "DR16 AgNO3+Na3PO4",
-  "subs": [
-   [
-    "AgNO_3",
-    3
-   ],
-   [
-    "Na_3PO_4",
-    1
-   ]
-  ],
-  "has": {
-   "Ag_3PO_4": 0.9
-  },
-  "eq": "3Ag^+ + PO_4^{3-} -> Ag_3PO_4",
-  "note": "Ag3PO4 黄色沉淀",
   "changed": true
  },
  {
@@ -21677,30 +21036,6 @@
   "note": "极活泼金属先与水反应（Fe3+ 溶液中水浓度远大）"
  },
  {
-  "name": "API01 弱酸溶解 changed≠reacted",
-  "subs": [
-   [
-    "NH_3",
-    0.1
-   ]
-  ],
-  "changed": true,
-  "reacted": false,
-  "note": "NH3 溶解电离：changed=True 但 reacted=False（纯形态变化）"
- },
- {
-  "name": "API02 弱碱溶解电离",
-  "subs": [
-   [
-    "CH_3COOH",
-    0.1
-   ]
-  ],
-  "changed": true,
-  "reacted": false,
-  "note": "醋酸电离是真实平衡（部分电离→changed=True），但非狭义化学反应（reacted=False）"
- },
- {
   "name": "API03 NaCl 溶解纯电离",
   "subs": [
    [
@@ -22600,19 +21935,6 @@
   "note": "Ksp 模型 s≈5mM（浓度基准；文献溶解度 15mM 为活度/离子对效应）"
  },
  {
-  "name": "SL02 PbCl2 微溶(冷水)",
-  "subs": [
-   [
-    "PbCl_2",
-    0.2
-   ]
-  ],
-  "has": {
-   "Pb^{2+}": 0.014
-  },
-  "note": "PbCl2 Ksp 模型 s≈16mM（活度效应使真实溶解度更大）"
- },
- {
   "name": "SL03 Ag2SO4 微溶",
   "subs": [
    [
@@ -22624,19 +21946,6 @@
    "SO_4^{2-}": 0.01
   },
   "note": "Ag2SO4 溶度 ~0.03M"
- },
- {
-  "name": "SL04 Li2CO3 微溶",
-  "subs": [
-   [
-    "Li_2CO_3",
-    0.2
-   ]
-  ],
-  "has": {
-   "Li^+": 0.1
-  },
-  "note": "Li2CO3 微溶（区别于其他碱金属碳酸盐）"
  },
  {
   "name": "EN01 硬水软化 石灰苏打法",
@@ -23243,27 +22552,6 @@
   "changed": true
  },
  {
-  "name": "Fe11 FeCl3+水 水解成淀(可逆)",
-  "subs": [
-   [
-    "FeCl_3",
-    0.1
-   ]
-  ],
-  "ph": [
-   1.3,
-   2.1
-  ],
-  "has": {
-   "Fe(OH)_3": 0.004,
-   "Fe^{3+}": 0.08
-  },
-  "degree": 1,
-  "reacted": true,
-  "note": "Fe3+ 仅在强酸中稳定：0.1M 纯水约 7% 水解（pH≈1.7），FeCl3+3H2O⇌Fe(OH)3+3HCl 教材标准可逆反应；单一来源水解成淀计为化学反应（新语义）",
-  "changed": true
- },
- {
   "name": "Fe12 FeCl3+少量NaOH 部分沉淀",
   "subs": [
    [
@@ -23322,26 +22610,6 @@
    "Sb(OH)_3": 0.5
   },
   "note": "Sb(OH)3 + OH- -> [Sb(OH)4]-（亚锑酸根，两性）；辉锑矿碱法浸出基础",
-  "changed": true
- },
- {
-  "name": "S33 SbCl3 水解自酸化",
-  "subs": [
-   [
-    "SbCl_3",
-    0.1
-   ]
-  ],
-  "ph": [
-   0.2,
-   1.2
-  ],
-  "has": {
-   "Sb(OH)_3": 0.05,
-   "Sb^{3+}": 0.02
-  },
-  "degree": 1,
-  "note": "Sb3+ 水解极强（SbCl3+水配制必须加盐酸防 SbOCl 沉淀；引擎以 Sb(OH)3 近似），0.1M 纯水 67% 水解、pH≈0.7",
   "changed": true
  },
  {
