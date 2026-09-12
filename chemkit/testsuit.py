@@ -66,10 +66,42 @@ def _eq_signature(eq: str) -> tuple | None:
     """方程式的规范化签名：({反应物: 系数}, {产物: 系数})，两侧内部顺序无关。
 
     系数按比例归一（以最大系数为 1），容差 1e-3 比较——断言关注化学计量
-    关系而非书写顺序。无法解析返回 None。"""
+    关系而非书写顺序。无法解析返回 None。
+
+    **H⁺/OH⁻/H₂O 规范形（v0.5.0）**：净方程写成 H⁺ 还是 OH⁻ 是**呈现规范**
+    而非化学——两者只差水的自电离关系 `H⁺ + OH⁻ → H₂O`：
+
+        H₂S + OH⁻ → HS⁻ + H₂O   ≡   H₂S → HS⁻ + H⁺        （Q05）
+        CO₂ + OH⁻ → HCO₃⁻       ≡   CO₂ + H₂O → HCO₃⁻ + H⁺ （H39）
+
+    用例库两种写法都有（B12/H78 期望解离式、H39 期望中和式、E46/N24 期望
+    水解式），引擎的呈现政策（终态 pH > 7 用 OH⁻）不可能同时满足——把它当
+    正确性判据就是把格式选择当成化学事实。故比较前**先消去 OH⁻**：
+    `OH⁻(消耗 c) → H₂O(消耗 c) + H⁺(生成 c)`（反向同理），再跨侧抵消。
+    规范形对元素/电荷守恒与氧化还原配平**完全保真**（只挪动 H/O 记账位置），
+    真正的错解（少一个原子、电荷不平）照样不匹配。
+    """
     r, p = _parse_equation(eq)
     if not r or not p:
         return None
+    # 消去 OH⁻（把水自电离的规范自由度固定下来）
+    for side, other in ((r, p), (p, r)):
+        c = side.pop("OH^-", 0.0)
+        if c:
+            side["H_2O"] = side.get("H_2O", 0.0) + c
+            other["H^+"] = other.get("H^+", 0.0) + c
+    # 跨侧抵消（规范形可能把物种挪到另一侧）
+    for sp in set(r) & set(p):
+        x = min(r[sp], p[sp])
+        r[sp] -= x
+        p[sp] -= x
+    r = {s: v for s, v in r.items() if v > 1e-9}
+    p = {s: v for s, v in p.items() if v > 1e-9}
+    if not r or not p:
+        # 规范形为空 = 该方程**就是**水的自电离关系本身（`H⁺ + OH⁻ → H₂O`
+        # 及等价写法）——纯中和体系的标准式正是它。返回空签名（可比较），
+        # 与"解析失败"（None）区分开：前者是合法方程，后者不是。
+        return ({}, {}) if not r and not p else None
     mx = max(list(r.values()) + list(p.values()))
     if mx <= 0:
         return None
