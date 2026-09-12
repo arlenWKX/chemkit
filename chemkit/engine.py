@@ -169,6 +169,27 @@ def _sweep_gases(ledger: dict, escaped: dict, gsup: frozenset,
             ledger[g] = cap
 
 
+def _phase_channel(c: Cand, T) -> bool:
+    """该候选是否为**相变通道**（溶解/沉淀，含 Hess 合并写法）。
+
+    微步（ext 低于阈值）的处置分两类：相变通道的 ext 就是微溶盐的溶解度
+    终态，必须执行一次；质子/氧化还原微步则整体跳过（执行会经签名变化
+    逐对渗漏）。原判据只看 `kind in ("dissolve","precip")`，漏掉了
+    derived 的溶度积通道（ksp_pka/ksp_beta…）——那些在化学上同样是
+    溶解/沉淀，只是写成 Hess 合并形式（见调用点 v0.5.0 记录）。
+    NH4Ac 双水解类无固相，判据放宽后仍在跳过侧。
+    **redox 一律排除**：氧化还原微步执行会经签名变化逐对渗漏（原注释的
+    NH4Ac/Ag-Cu 教训）——实测把 redox 纳入后 V04/NR50（Ag+CuSO4，
+    E° 差 −0.65 V 本不该反应）、Y09（PbS+盐酸，pKsp 28 不溶）被放出
+    幻影反应，1247 断言 2→10 失败。
+    """
+    if c.kind in ("dissolve", "precip"):
+        return True
+    if c.kind == "redox":
+        return False
+    return any(s in T.solids for s in list(c.r) + list(c.pr))
+
+
 def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                  V: float, T_K: float, T,
                  gsup: frozenset = frozenset(), iters: int = 60,
@@ -1023,7 +1044,13 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
           # ③ x_max 计量上界 * 1e-4 < BLOCKED_EXTENT(0.02)——膜封锁比较
           #   ext > bext 在微步量级恒不触发（双保险，防极端大投料）
           _micro_rel = None
-          if pick.kind not in ("dissolve", "precip"):
+          # 相变通道（含 derived 的溶度积通道）不做微步快通道截断：
+          # micro_rel 的提前止损在 hi ≤ 阈值时即 return lo，而 hi 是从
+          # x_max 折半下压的——阈值 1e-4 触发时 lo 往往仍是 0.0（根在
+          # 1e-5 量级时 lo 要等 hi 压到根附近才首次非零）。非相变微步
+          # 只把返回值当"是否微步"的布尔用，故 0.0 无害；相变通道要用
+          # 这个值**执行一次**（微溶盐溶解度终态），必须给真值。
+          if not _phase_channel(pick, T):
             _rr_pk = pick.r if d > 0 else pick.pr
             _xm = min((ledger.get(s, 0.0) / nu for s, nu in _rr_pk.items()
                        if s not in (WATER, H_ION)), default=0.0)
@@ -1075,10 +1102,19 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             # 微溶事实整体漏报；真正的零推进由签名机制在下一轮挡下
             sig0 = _sig()
             disabled[(pick.key, d)] = sig0
-            disabled[(pick.key, -d)] = sig0
-            # 仅溶解/沉淀类微步执行（微溶盐终态）；质子/氧化还原微步仍跳过——
-            # 后者执行会经签名变化逐对渗漏（NH4Ac 双水解曾被渗到 pH 9.4）
-            if ext <= X_MIN or pick.kind not in ("dissolve", "precip"):
+            disabled[(pick.key, -1 * d)] = sig0
+            # 仅**相变通道**微步执行（微溶盐/难溶盐的溶解度终态）；
+            # 质子/氧化还原微步仍跳过——后者执行会经签名变化逐对渗漏
+            # （NH4Ac 双水解曾被渗到 pH 9.4）。
+            # v0.5.0 修：原判据只看 `kind in ("dissolve","precip")`，把
+            # **derived 的溶度积通道**（ksp_pka/ksp_beta 等 Hess 合并写法，
+            # 化学上就是溶解/沉淀）当成质子微步跳过。实测代价：N23/U12
+            # Na3PO4+CaCl2 的真解离度 x*=1.017e-05（手算复核 1.1e-05 一致）
+            # 被 `1e-4·x_max = 1e-4`（x_max=1 mol 沉淀库）挡下 ⟹ Ca²⁺ 报
+            # 2.14e-06 而非 ~3.2e-05，live 残差 8.28；Y03/DR16 的
+            # Ag3PO4/Ag2O 通道同理（x*=4.3e-06 vs 阈值 5e-05，残差 10.25）。
+            # 判据改为「两侧含固相」——NH4Ac 无固相，原有防线不受影响。
+            if ext <= X_MIN or not _phase_channel(pick, T):
                 idle += 1
                 if idle >= 8:
                     # （触发点② idle 退出前精修已回退——v0.3.8 全量差分否决：
