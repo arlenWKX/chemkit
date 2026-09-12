@@ -18,7 +18,7 @@ from functools import reduce
 
 from .core import elements_of, charge_of
 from .data import Tables, load_tables
-from .candidates import WATER, H_ION, X_MIN
+from .candidates import WATER, H_ION, X_MIN, ANN_MIN_EXTENT
 
 # 净方程守恒的绝对容差 = 报告量子：consumption/production 由 round(x, 6)
 # 产出，每个系数误差 ≤5e-7；含物种数与电荷项余量后取 1e-5。
@@ -939,8 +939,14 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
                      if not _pool_step_key(set(rr), set(p), _pools, _pm, _pl)]
     equations: list[str] = []
     if collected:
-        main_ext = max(ext for _, _, ext in collected)
-        kept = [c for c in collected if c[2] >= main_ext * 0.05]
+        # 步骤取舍用**引擎自己的显著程度判据**（`ANN_MIN_EXTENT`），不用
+        # "主步骤的 5%"这个第二套阈值。两套阈值会互相打架：真实执行过、
+        # 且远超显著线（0.04 mol 对 1e-3 的线 = 40 倍）的步骤，只因占主步骤
+        # 比例小（H89 的 `Ca(OH)₂ + CO₃²⁻ + 2H⁺ → CaCO₃` 占 4.2%、
+        # P11 的 `CO₃²⁻ + H⁺ → HCO₃⁻` 占 3.5%）就被剔除，而 `eq_has` 断言的
+        # 正是"这条真实步骤必须在多步叙述里"——叙述不该吞掉自己执行过的步。
+        # 痕量步骤（H89 尾部的 2.6e-5 级振荡步）仍被 ANN_MIN_EXTENT 挡掉 ✓。
+        kept = [c for c in collected if c[2] >= ANN_MIN_EXTENT]
         kept.sort(key=lambda c: -c[2])
         seen_eq: set[str] = set()
         for rr, p, ext in kept:
