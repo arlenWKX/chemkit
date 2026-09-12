@@ -158,8 +158,17 @@ def merge_pair(a: dict, b: dict) -> tuple[dict, list[str]]:
     return out, bad
 
 
+def _detect_indent(text: str) -> int:
+    for line in text.splitlines():
+        if line.strip() == "{":
+            return len(line) - len(line.lstrip(" "))
+    return 1
+
+
 def main(argv: list[str]) -> None:
-    rows = json.load(open(PATH, encoding="utf-8"))
+    raw = open(PATH, encoding="utf-8", newline="").read()
+    ind = _detect_indent(raw)
+    rows = json.loads(raw)
     print(f"tests.json 共 {len(rows)} 条")
 
     by_name = defaultdict(list)
@@ -210,10 +219,9 @@ def main(argv: list[str]) -> None:
     print(f"需人工裁决的冲突 {sum(1 for m in conflicts if m.startswith('    '))} 条：")
     for m in conflicts:
         print(m)
-    with open(PATH, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, indent=1)
-        f.write("\n")
-    print(f"已写回 {PATH}")
+    with open(PATH, "w", encoding="utf-8", newline="") as f:
+        f.write(json.dumps(out, ensure_ascii=False, indent=ind) + "\n")
+    print(f"已写回 {PATH}（indent={ind}）")
 
 
 if __name__ == "__main__":

@@ -14,8 +14,17 @@ from collections import Counter
 PATH = "chemkit/data/beta.json"
 
 
+def _detect_indent(text: str) -> int:
+    for line in text.splitlines():
+        if line.strip() == "{":
+            return len(line) - len(line.lstrip(" "))
+    return 1
+
+
 def main(write: bool) -> None:
-    rows = json.load(open(PATH, encoding="utf-8"))
+    raw = open(PATH, encoding="utf-8", newline="").read()
+    ind = _detect_indent(raw)
+    rows = json.loads(raw)
     key = lambda e: (e["center"], e["ligand"], e["nu"], e["complex"], e["logb"])  # noqa: E731
     cnt = Counter(key(e) for e in rows)
     dupes = {k for k, v in cnt.items() if v > 1}
@@ -41,10 +50,11 @@ def main(write: bool) -> None:
         out.append(e)
     print(f"合并后 {len(out)} 条（删去 {len(rows) - len(out)} 条纯冗余）")
     if write:
-        with open(PATH, "w", encoding="utf-8") as f:
-            json.dump(out, f, ensure_ascii=False, indent=1)
-            f.write("\n")
-        print(f"已写回 {PATH}")
+        # newline="" 保 LF、缩进按原文探测：文本模式默认翻 CRLF + 固定
+        # indent 会把整文件重排版（ksp.json 首版制造过 4057 行假 diff）
+        with open(PATH, "w", encoding="utf-8", newline="") as f:
+            f.write(json.dumps(out, ensure_ascii=False, indent=ind) + "\n")
+        print(f"已写回 {PATH}（indent={ind}）")
 
 
 if __name__ == "__main__":
