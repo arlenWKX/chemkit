@@ -354,7 +354,14 @@ def _beautify_big_coeff(consumed: dict[str, float],
     方法：逐个（先小者）再成对移除次要物种（量 <30% 峰值），把剩余量
     投影到元素/电荷平衡子空间（_project_balanced），对投影方向做小分母
     有理重构（≤24），精确配平校验后取最小整数比。全程配平硬保证——
-    化学计量关系不因美化失真。找不到干净形式返回 None（保持原样）。"""
+    化学计量关系不因美化失真。找不到干净形式返回 None（保持原样）。
+
+    **0.4.4 加宽移除集**：原先只试单/双物种移除，容量不足以覆盖 3 个混合
+    配位通道——Fe³⁺+SCN⁻ 的 1/2/3 配位共存体系里，单/双移除后仍剩两个
+    通道，snap 到小整数时缺 1Fe、电荷 −3（`99:52 -> 21:18:12`），而
+    `_balanced_quick` 的相对容差没拦住它。补三连移除后该族塌缩到干净的
+    单通道式 `3SCN^- + Fe^{3+} -> [Fe(SCN)_3]`（精确守恒）。
+    """
     all_sp = list(consumed) + list(produced)
     a_all = [consumed.get(s, 0.0) + produced.get(s, 0.0) for s in all_sp]
     mx = max(a_all, default=0.0)
@@ -367,6 +374,12 @@ def _beautify_big_coeff(consumed: dict[str, float],
     removal_sets: list[tuple[str, ...]] = [(s,) for s in minor]
     removal_sets += [(x, y) for i, x in enumerate(minor)
                      for y in minor[i + 1:]]
+    triples = sorted(((x, y, z) for i, x in enumerate(minor)
+                      for j, y in enumerate(minor[i + 1:], i + 1)
+                      for z in minor[j + 1:]),
+                     key=lambda t: sum(consumed.get(s, 0.0)
+                                       + produced.get(s, 0.0) for s in t))
+    removal_sets += triples[:60]
     for rm in removal_sets:
         rms = set(rm)
         c2 = {s: v for s, v in consumed.items() if s not in rms}
@@ -867,9 +880,34 @@ def _max_coef(eq: str) -> float:
 
 
 def _balanced_quick(consumed: dict, produced: dict, tol: float = 0.03) -> bool:
-    """快速配平验证：元素与电荷两侧相等（相对容差 3%）。"""
+    """配平验证：元素与电荷两侧相等。
+
+    **整数系数走精确整数算术，非整数走相对容差**——这是"配平硬保证"的
+    真正落点。0.4.x 一律用相对容差（默认 3%、美化路径 0.1%），容差被
+    最大系数放大：对整数化的美化产物（最大系数 ~500）可达 0.1–15 eq，
+    于是 `99SCN^- + 52Fe^{3+} -> 21[Fe(SCN)]^{2+} + 18[Fe(SCN)_3] +
+    12[Fe(SCN)_2]^+`（缺 1Fe、电荷 −3）与银氨族（缺 6H/2N）照样通过，
+    被固化成测试标准。整数候选没有"近似配平"的余地（系数本身就是
+    化学计量），故零容差；浮点候选（真实非化学计量混合比）保留容差。
+    """
     species = list(consumed) + list(produced)
-    mx = max(list(consumed.values()) + list(produced.values()), default=1.0)
+    if not species:
+        return True
+    vals = list(consumed.values()) + list(produced.values())
+    if all(float(v).is_integer() for v in vals):
+        els = set()
+        for sp in species:
+            els |= set(elements_of(sp))
+        for el in els:
+            lhs = sum(elements_of(s).get(el, 0) * int(n)
+                      for s, n in consumed.items())
+            rhs = sum(elements_of(s).get(el, 0) * int(n)
+                      for s, n in produced.items())
+            if lhs != rhs:
+                return False
+        return (sum(charge_of(s) * int(n) for s, n in consumed.items())
+                == sum(charge_of(s) * int(n) for s, n in produced.items()))
+    mx = max(vals, default=1.0)
     els = set()
     for sp in species:
         els |= set(elements_of(sp))
