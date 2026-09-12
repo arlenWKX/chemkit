@@ -17,10 +17,10 @@ Python ≥ 3.12。
 ```bash
 git clone https://github.com/arlenWKX/chemkit.git
 cd chemkit
-python -m chemkit.testsuit   # 1173 例 / 1202 断言 + 热力学环闭合（~40 s）
+python -m chemkit.testsuit   # 1173 例 / 1294 断言 + 酸碱锚点 + 环闭合（~40 s）
 ```
 
-> **基线如实声明**：当前 HEAD 实测 **1196/1202** 断言通过（6 例长期红例
+> **基线如实声明**：当前 HEAD 实测 **1288/1294** 断言通过（6 例长期红例
 > 及其病根见下文「测试」与「已知局限」）。任何改动都必须跑全量复核——
 > "全绿"也不等于"没变"，判定语义的位移要靠 `chemkit.converg` 的全量
 > 差分与 `tools/xver.py` 的逐例对照才能看见。
@@ -463,7 +463,7 @@ Ksp 的测定相与账本写法可能不一致（无水盐 vs 水合物），换
 ## 测试
 
 ```bash
-python -m chemkit.testsuit                  # 全量：1173 例 / 1202 条断言 + 热力学环闭合
+python -m chemkit.testsuit                  # 全量：1173 例 / 1294 条断言（含酸碱锚点）+ 环闭合
 python -m chemkit.testsuit my.json          # 自定义用例库
 python -m chemkit.testsuit --out result.json  # 结构化结果（cases/summary/checks）
 python tools/quick.py T99 N15 E42           # 子集（按名称前缀/序号），带单例计时
@@ -478,7 +478,7 @@ python tools/quick.py --fails               # 复跑上一轮失败项
 不存在"要显式写 `null`（如 `"reacted": null`）。`has` 是**下限**断言
 （终态 ≥ 给定 mol），`has_range` 是区间，`has_not` 是上限。
 
-**当前基线**：**1196/1202 PASS**（6 例红，均为已知项，见下）。这些数字是
+**当前基线**：**1288/1294 PASS**（6 例红，均为已知项，见下；1294 = 1202 用例断言 + 92 条酸碱地基断言）。这些数字是
 `python -m chemkit.testsuit` 自报的口径，任何改动都必须跑全量复核。
 
 | 长期红例 | 病根（详见 architecture.md §7） |

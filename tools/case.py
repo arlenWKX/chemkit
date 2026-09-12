@@ -52,11 +52,12 @@ def show(prefixes: list[str], verbose: bool = False) -> None:
             fi = fams.get(s)
             tag = ""
             if fi is not None:
-                fid, order, idx, pka, dh = fi
+                fid, order, idx, pka, dh = fi[:5]
                 ek = eff_pka(pka, dh, T_K)
                 tag = (f" [族 {fid}: {list(order)} pKa="
                        f"{[round(x, 2) for x in ek]} q="
-                       f"{[charge_of(x) for x in order]}]")
+                       f"{[charge_of(x) for x in order]}"
+                       f" sgn={list(fi[5])}]")
             print(f"    {s:24s} {m:12.6g}  z={charge_of(s):+d}{tag}")
         if verbose:
             print("  --- 候选 S（两侧在场）---")

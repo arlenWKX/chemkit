@@ -256,6 +256,84 @@ def case_T_range(T: Tables) -> int:
     return PASS_N
 
 
+# ============================================================ 酸碱地基检查
+# 教科书对照（溶液 pH 的解析值或文献值；浓度与投料组成均写全）。
+ACIDBASE_ANCHORS: list[tuple] = [
+    ("HCl 1M",       {"Cl^-": 1.0},                        0.00),
+    ("NaOH 1M",      {"Na^+": 1.0},                        14.00),
+    ("NaAc 1M",      {"Na^+": 1.0, "CH_3COO^-": 1.0},       9.38),
+    ("NH4Cl 0.1M",   {"NH_4^+": 0.1, "Cl^-": 0.1},          5.12),
+    ("NH3 0.1M",     {"NH_3": 0.1},                        11.12),
+    ("NaHCO3 0.1M",  {"Na^+": 0.1, "HCO_3^-": 0.1},         8.34),
+    ("Na2CO3 0.1M",  {"Na^+": 0.2, "CO_3^{2-}": 0.1},      11.62),
+    ("H3BO3 0.1M",   {"H_3BO_3": 0.1},                      5.12),
+    ("NaHSO3 0.1M",  {"Na^+": 0.1, "HSO_3^-": 0.1},         4.50),
+    ("NaH2PO4 0.1M", {"Na^+": 0.1, "H_2PO_4^-": 0.1},       4.65),
+    ("Na2HPO4 0.1M", {"Na^+": 0.2, "HPO_4^{2-}": 0.1},      9.75),
+    ("TlCl 饱和",     {"Tl^+": 0.0135, "Cl^-": 0.0135},      7.00),
+]
+
+
+def acidbase_check(T: Tables) -> int:
+    """精确酸碱地基（`chemkit.acidbase`）的常驻不变量检查。返回通过数。
+
+    两道检查，都是"数据自身的化学约束"，不依赖任何引擎输出：
+
+    1. **族分布必须复现条目自己的 Ka**（本轮抓到的缺陷类）：pKa 条目的定义
+       是 `A ⇌ B + H⁺` ⟹ `[B]/[A] = Ka/[H⁺] = 10^(pH − pKa)`。族内逐级
+       权重若在**标记酸恰是少质子一侧**的条目（H₃BO₃/[B(OH)₄]⁻、Tl⁺/TlOH、
+       CO₂/HCO₃⁻…）上取错方向，整个族的分布会倒过来——实测硼酸 pH 7 下
+       `[B(OH)₄]⁻/[H₃BO₃] = 174`（真值 0.0058）、TlCl 溶液被算成 pH 1.87。
+       该检查对全部 n==1 条目逐条比对，是全库级的（不是抽样）。
+    2. **教科书锚点**：12 个溶液的 pH 与解析/文献值对照（±0.15）。
+
+    这两条都落在"数据 + 精确地基"层，与判定引擎的走步无关，改数据或改
+    `build_families`/`dist_charge` 都会被立刻抓住。
+    """
+    global PASS_N
+    from .acidbase import build_families, charge_pH, dist_charge, eff_pka
+    from .core import charge_of
+    fams = build_families(T)
+    T_K = 298.15
+    pH_ref = 7.0
+    n_ok = 0
+    for e in T.pka:
+        if e.get("n", 1) != 1:
+            continue
+        a, b, pka = e.get("acid"), e.get("base"), e.get("pka")
+        if a is None or b is None or a not in fams or b not in fams:
+            continue
+        fa = fams[a]
+        if fa[0] != fams[b][0] or a not in fa[1] or b not in fa[1]:
+            continue
+        order, pkaT, dh, sgn = fa[1], fa[3], fa[4], fa[5]
+        ek = eff_pka(pkaT, dh, T_K)
+        logw = [0.0]
+        acc = 0.0
+        for k in range(len(ek)):
+            acc += (ek[k] - pH_ref) * sgn[k]
+            logw.append(acc)
+        mx = max(logw)
+        ws = [10.0 ** (v - mx) for v in logw]
+        sw = sum(ws)
+        got = ws[order.index(b)] / ws[order.index(a)]
+        want = 10.0 ** (pH_ref - pka)
+        if abs(got / want - 1.0) > 0.02:
+            FAILS.append(f"族分布不复现 Ka：{a} / {b} pKa={pka} "
+                         f"族比 {got:.4g} 应为 {want:.4g}")
+        else:
+            n_ok += 1
+    for name, led, want in ACIDBASE_ANCHORS:
+        got = charge_pH(led, 1.0, T, T_K)
+        if got is None or abs(got - want) > 0.15:
+            FAILS.append(f"酸碱锚点 {name}：解 {got} 期望 {want}")
+        else:
+            n_ok += 1
+    _ = dist_charge, charge_of
+    PASS_N += n_ok
+    return n_ok
+
+
 # ============================================================ 环闭合检查
 PKW = 14.0
 K = 0.05916
@@ -610,6 +688,7 @@ def main(cases_path: str | None = None, out_path: str | None = None) -> int:
     for c in load_cases(cases_path):
         run_case(c, T)
     ok_T = case_T_range(T)
+    ok_ab = acidbase_check(T)
     ok_api = case_api()
     total = PASS_N + len(FAILS)
     print(f"\n===== {PASS_N}/{total} PASS =====")
@@ -633,7 +712,7 @@ def main(cases_path: str | None = None, out_path: str | None = None) -> int:
         print("全部环闭合检查通过。")
     if out_path:
         p = write_report(out_path, extra={
-            "T_range_ok": ok_T, "api_ok": ok_api,
+            "T_range_ok": ok_T, "acidbase_ok": ok_ab, "api_ok": ok_api,
             "consistency_fail": cfail,
         })
         print(f"\n结构化结果已写入 {p}"

@@ -87,6 +87,15 @@ def build_families(T) -> dict:
     # 无向邻接（求连通块用）；pKa/焓记在物种对键上（方向无关）
     adj: dict[str, list] = {}
     bond: dict[tuple, tuple] = {}
+    # 边的**方向**（acid → base）单独留档：pKa 条目的定义是
+    # `A ⇌ B + H⁺`，即 `[B]/[A] = Ka/[H⁺] = 10^(pH − pKa)`。链定序按
+    # "最去质子端在前"，多数条目链序与标签序一致（链上 k→k+1 是 base→acid），
+    # 但**标记酸恰是少质子一侧**的条目（H₃BO₃/[B(OH)₄]⁻、Tl⁺/TlOH、CO₂/HCO₃⁻…）
+    # 会被定序成 acid→base——此时逐级权重比必须取倒数，否则整个族的分布
+    # 倒过来（实测硼酸 pH 7 下 [B(OH)₄]⁻/[H₃BO₃] = 174，真值 0.0058；
+    # T01/T02 的 TlCl 溶液被算成 pH 1.87）。`bond` 保持原样供 _longest_chain
+    # 用（它只需要 pKa 数值）。
+    bond_dir: dict[tuple, tuple] = {}
     for e in T.pka:
         if e.get("n", 1) != 1:
             continue
@@ -98,6 +107,7 @@ def build_families(T) -> dict:
         adj.setdefault(b, []).append((a, e["pka"], dh))
         key = (a, b) if a <= b else (b, a)
         bond.setdefault(key, (e["pka"], dh))
+        bond_dir.setdefault(key, (a, b))
     seen: set = set()
     out: dict = {}
     for root in sorted(adj):
@@ -121,15 +131,21 @@ def build_families(T) -> dict:
         order = _longest_chain(block, nb, bond)
         pka_from: list[float] = []
         dh_from: list = []
+        sgn_from: list[int] = []
         for i in range(len(order) - 1):
             a, b = order[i], order[i + 1]
             key = (a, b) if a <= b else (b, a)
             v = bond.get(key)
             pka_from.append(v[0] if v is not None else 7.0)
             dh_from.append(v[1] if v is not None else None)
+            # 逐级权重比的符号：链步 base→acid（与条目标签同向）取 +1
+            # （w[acid]/w[base] = 10^(pKa−pH)）；链步 acid→base（标签反向）
+            # 取 −1（w[base]/w[acid] = 10^(pH−pKa) = 10^−(pKa−pH)）。
+            d = bond_dir.get(key)
+            sgn_from.append(1 if (d is not None and d[0] == b) else -1)
         for i, s in enumerate(order):
             out[s] = (min(block), tuple(order), i,
-                      tuple(pka_from), tuple(dh_from))
+                      tuple(pka_from), tuple(dh_from), tuple(sgn_from))
     T._ab_families = out
     return out
 
@@ -239,23 +255,26 @@ def eff_pka(pka: tuple, dh: tuple, T_K: float) -> tuple:
     return pka
 
 
-def dist_charge(pka: tuple, q: tuple, M: float, V: float, pH: float) -> float:
+def dist_charge(pka: tuple, q: tuple, M: float, V: float, pH: float,
+                sgn: tuple | None = None) -> float:
     """族在 pH 下的总电荷（mol，对 V 升）。q[k] = order[k] 的电荷数。
 
     严格多级分布：以 order[0]（最去质子态）为基准的权重
         w_0 = 1
-        w_i = Π_{k<i} ([H⁺]/K_{a,k}) = 10^(Σ_{k<i}(pKa_k − pH))
-    即每一质子化级比上一级多一个 H⁺（[H⁺] 一次幂）并除以该级 K_a。
+        w_i = Π_{k<i} 10^(sgn_k·(pKa_k − pH))
+    `sgn_k` 由链步与条目标签方向的关系定（见 `build_families`）：同向取 +1
+    （w_{k+1}/w_k = [H⁺]/Ka），反向取 −1（w_{k+1}/w_k = Ka/[H⁺]）。
     log 域累加避免上下溢。
     校验：Ac⁻/HAc（order = [Ac⁻, HAc]，pKa 4.76）——pH 7 > pKa 时
     去质子态占优，电荷 → −0.1；NH₄⁺/NH₃（order = [NH₃, NH₄⁺]）——
     pH 7 < pKa 9.25 时质子化态占优，电荷 → +0.1。
+    `sgn=None` 等价全 +1（旧口径；仅当调用方确知链序与标签同向时可用）。
     """
     n = len(pka) + 1
     logw = [0.0]
     acc = 0.0
     for k in range(n - 1):
-        acc += pka[k] - pH
+        acc += (pka[k] - pH) * (1 if sgn is None else sgn[k])
         logw.append(acc)
     mx = max(logw)
     sw = 0.0
@@ -325,11 +344,11 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
         if info is None:
             fixed += charge_of(s) * m
             continue
-        fid, order, _idx, pka, dh = info
+        fid, order, _idx, pka, dh, sgn = info
         rec = fam.get(fid)
         if rec is None:
             rec = fam[fid] = [eff_pka(pka, dh, T_K),
-                              tuple(charge_of(x) for x in order), 0.0]
+                              tuple(charge_of(x) for x in order), 0.0, sgn]
         rec[2] += m
     # 强酸条件的无阴离子记账：从固定电荷中扣除（见 docstring）
     if c_H:
@@ -345,8 +364,8 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
         h = 10.0 ** (-pH)
         oh = 10.0 ** (pH - pKw)
         tot = V * h - V * oh + fixed
-        for ek, q, M in fam.values():
-            tot += dist_charge(ek, q, M, V, pH)
+        for ek, q, M, sg in fam.values():
+            tot += dist_charge(ek, q, M, V, pH, sg)
         return tot
 
     if _F(lo) < 0.0:
