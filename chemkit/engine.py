@@ -1310,6 +1310,10 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 _r = "**零推进（S 强而 x*≈0）**"
             dis_why[(pick.key, d)] = (_r, round(abs(S), 3), round(ext, 9),
                                       round(x_max, 9))
+            if _TRACE:
+                print(f'    [micro] {_r[:6]} d={d:+d} He={H_excess:+.3g} '
+                      f'x_max={x_max:.4g} ext={ext:.3g} S={S:+.3f} '
+                      f'x_st={_xmax_st:.4g}')
             # 仅溶解/沉淀类微步执行（微溶盐终态）；质子/氧化还原微步仍跳过——
             # 后者执行会经签名变化逐对渗漏（NH4Ac 双水解曾被渗到 pH 9.4）
             if ext <= X_MIN or pick.kind not in ("dissolve", "precip"):
@@ -1697,7 +1701,11 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
                  else estimate_pH(led, He_raw, V, T, T_K))
     H_excess = _presentation_He(led, He_raw, V, T, T_K)
     pH_f = presentation_pH(led, H_excess, V, T, T_K)
-    cands_f = _enum(led, H_excess, pH_f, V, T_K, T, kinetics)
+    # **枚举也必须用走步那一套 (He, pH)**（v0.5.0 两侧同态，承 §7 X-9）：
+    # `enumerate_candidates` 的在场过滤与 pH 有关，用呈现 pH 枚举会给出**另一个
+    # 候选集**——探针于是可能报出"无旗标却没走"的平衡（其实走步那次枚举里
+    # 根本没有它），把口径缺陷算成求解器缺陷。呈现 pH 仍用于 `probe["pH"]`。
+    cands_f = _enum(led, He_raw, pH_solver, V, T_K, T, kinetics)
     active = []
     logc: dict = {}
     logc_p: dict = {}

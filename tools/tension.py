@@ -44,6 +44,9 @@ def _why(a: dict) -> str:
         return "blocked（膜封锁溶剂通道）"
     if a["ext_max"] < ANN_MIN_EXTENT:
         return f"痕量方向（ext_max {a['ext_max']:.2g} < {ANN_MIN_EXTENT:g}）"
+    w = a.get("dis_why")            # 禁用时的归档原因（engine 里逐条记录）
+    if w:
+        return (f"{w[0]}（禁用时 |S|={w[1]} ext={w[2]:.2g} x_max={w[3]:.2g}）")
     if a.get("dis_fwd") and a.get("dis_rev"):
         return "**双向禁用**"
     if a.get("dis_fwd") or a.get("dis_rev"):
@@ -56,6 +59,10 @@ def main() -> None:
     args = sys.argv[1:]
     if "-n" in args:
         n = int(args[args.index("-n") + 1])
+    census_mode = "--census" in args
+    only = ""
+    if "--class" in args:
+        only = args[args.index("--class") + 1]
     want: tuple[str, ...] = ()
     if "--case" in args:
         want = tuple(args[args.index("--case") + 1:])
@@ -65,6 +72,7 @@ def main() -> None:
     if want:
         cases = [c for c in cases if c["name"].startswith(want)]
     rows = []
+    cls: dict = {}          # 归因类别 -> [例数, 最大 |S|]
     for c in cases:
         subs = [{"name": nm, "mol": m} for nm, m in c["subs"]]
         cond = c.get("cond") or {"V_L": 1.0}
@@ -79,7 +87,26 @@ def main() -> None:
             continue
         top = max(act, key=lambda a: abs(a["S"]))
         rows.append((abs(top["S"]), c["name"], probe, top, len(act)))
+        if census_mode:
+            key = _why(top)
+            # 普查按**类别标签**归并（去掉括号里的数值细节）：只分
+            # 已达平衡 / 限幅 / 零推进 / 单向禁用 / 无旗标 几档
+            label = key.split("（")[0].replace("*", "")
+            w = top.get("dis_why")
+            if w and abs(top["S"]) > 0.1 and w[1] <= 0.1:
+                label += "〔禁用时已平衡、退出时又强驱动〕"
+            rec = cls.setdefault(label, [0, 0.0])
+            rec[0] += 1
+            rec[1] = max(rec[1], abs(top["S"]))
     rows.sort(key=lambda r: -r[0])
+    if only:
+        rows = [r for r in rows if only in _why(r[3])]
+    if census_mode:
+        print(f"张力例归因普查：{len(rows)} 例（每例取 |S| 最大的活跃平衡）\n")
+        for k, (cnt, mx) in sorted(cls.items(), key=lambda t: -t[1][0]):
+            print(f"  {cnt:5d} 例（{cnt / len(rows) * 100:5.1f}%）  最大|S|={mx:7.3f}"
+                  f"   {k}")
+        print()
     print(f"张力例（live > 0，按 |S| 排序）：共 {len(rows)} 例，列前 {n}\n")
     for val, name, probe, top, nact in rows[:n]:
         print(f"== {name[:46]}  live={val:.3f}  pH={probe['pH']} "
