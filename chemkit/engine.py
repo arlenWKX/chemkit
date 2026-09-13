@@ -194,7 +194,7 @@ def _sweep_gases(ledger: dict, escaped: dict, gsup: frozenset,
 
 
 def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
-                   n_bis: int, f_hi: float, micro: bool) -> None:
+                   n_bis: int, f_hi: float, micro: bool) -> float | None:
     """求根审计（仅 `tools/roots.py` 启用；生产路径不调用）。
 
     在**同一个括号** [0, x_max] 上记录三件事：
@@ -206,8 +206,7 @@ def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
          可能选中另一个根。这不是"测试被锁"的问题，而是"换根 = 换
          实际执行量 = 换化学"，必须避免。
 
-    判据因此是两问：网格单调（几乎）处处成立吗？成立时两法根差是否
-    可忽略？两问都过，才允许用假位法替换二分。
+    返回 `x_ill`（供调用方在"换根"时补一份 pH 轨迹细扫）。
     """
     n = 33
     signs = [f(x_max * k / (n - 1)) > 0 for k in range(n)]
@@ -248,6 +247,7 @@ def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
         "x_bis": x_bis, "x_ill": x_ill, "n_bis": n_bis, "n_ill": n_ill,
         "flips": flips, "f0": f0, "micro": micro, "f": f,
     })
+    return x_ill if f0 > 0 else None
 
 
 def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
@@ -366,6 +366,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
     # 其余物种的 log10(c/V) 在整个二分期间不变——按物种记忆、逐次失效
     # changing 条目（值与逐次计算 bit 级一致）
     _logc: dict = {}
+    # 求根审计专用：f 的 (x, pH) 轨迹（生产路径恒为 None；见 ROOT_AUDIT）
+    _atrace: list | None = None
 
     def f(x: float) -> float:
         for s, d, orig in changing:
@@ -373,6 +375,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             if s in _logc:
                 del _logc[s]
         if not _need_ph:
+            if _atrace is not None:
+                _atrace.append((x, None))
             return direction * S_of(c, led_work, V, 7.0, T_K, T, gsup,
                                     p_ext_kpa, gas_escape, _logc)
         if c.kind == "redox":
@@ -381,6 +385,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             else:
                 pH_x, led_v, _ = estimate_state(led_work, H_excess + nu_H * x,
                                                 V, T, T_K, _bt_cache, _touch)
+            if _atrace is not None:
+                _atrace.append((x, pH_x))
             # led_v 是滴定后的虚拟账本：与 led_work 同一对象时（无滴定）
             # 浓度缓存仍有效；新生成的 dict 必须回退逐项计算
             return direction * S_of(c, led_v, V, pH_x, T_K, T, gsup,
@@ -389,6 +395,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
         pH_x = (_ph_closed(H_excess + nu_H * x) if _ph_closed is not None
                 else estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
                                  _bt_cache, _touch))
+        if _atrace is not None:
+            _atrace.append((x, pH_x))
         return direction * S_of(c, led_work, V, pH_x, T_K, T, gsup,
                                 p_ext_kpa, gas_escape, _logc)
 
@@ -441,8 +449,17 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             if _micro_thr is not None and hi <= _micro_thr:
                 break   # 微步快通道：根的上界已坍缩到主循环微步阈值之下
         if _audit is not None:
-            _audit_bracket(f, c, direction, x_max, lo, _audit[0], f_hi,
-                           _micro_thr is not None)
+            _x_ill = _audit_bracket(f, c, direction, x_max, lo, _audit[0], f_hi,
+                                    _micro_thr is not None)
+            if _x_ill is not None:
+                # pH(x) 细扫轨迹：判定"口袋是不是 pH 造成的"（§7 X-3 的假设）
+                # 并普查 pH 的连续性（近似机器分支切换会让 pH 跳变）
+                _atrace = []
+                _hi_s = 1.3 * max(lo, _x_ill)
+                for _k in range(61):
+                    f(_hi_s * _k / 60)
+                ROOT_AUDIT["rec"][-1]["trace"] = _atrace
+                _atrace = None
         return lo, x_max
     # 粗精度求解（iters<=20，仅用于慢标注等布尔阈值判定，不影响路径）：
     # 5 次二分定盆 + Brent 抛光，~12 次求值达到足够精度

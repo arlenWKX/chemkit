@@ -101,14 +101,30 @@ def main() -> None:
                   f" 二分={r['x_bis']:.6g} Illinois={r['x_ill']:.6g}"
                   f"  {str(r['case'])[:26]} | {str(r['eq'])[:52]}")
         # 形状诊断：把最差几例的 f 在 [0, 1.3·两法较大根] 上细扫一遍——
-        # 看它是"两次穿越"（真多根）还是"平台/台阶"（pH 机器分支造成的伪结构）
-        print("\n   形状诊断（f 细扫，+ 表示 f>0）：")
+        # 看它是"两次穿越"（真多根）还是"平台/台阶"（pH 机器分支造成的伪结构）；
+        # 同时给出 pH 的斜率符号行（对齐同一网格）：若 f 的口袋正好落在 pH
+        # 的"折点"上，就证实口袋来自 pH 机器而非化学。
+        print("\n   形状诊断（f 细扫，+ 表示 f>0；下一行是 pH 斜率：+升 -降 .平）：")
         for r in sorted(n_hi, key=lambda r: -abs(r["x_ill"] - r["x_bis"])
                         / max(1.0, r["x_max"]))[:5]:
             hi = 1.3 * max(r["x_bis"], r["x_ill"], 1e-30)
             n = 61
-            row = "".join("+" if r["f"](hi * k / (n - 1)) > 0 else "." for k in range(n))
+            row = "".join("+" if r["f"](hi * k / (n - 1)) > 0 else "."
+                          for k in range(n))
             print(f"     x∈[0,{hi:.4g}]  {row}")
+            tr = r.get("trace")
+            if tr:
+                phs = [p for _, p in tr if p is not None]
+                slope = "".join(
+                    "+" if b - a > 0.02 else ("-" if a - b > 0.02 else ".")
+                    for a, b in zip(phs, phs[1:]))
+                print(f"        pH 斜率     {slope}")
+                jump = max(((abs(b - a), i, a, b)
+                            for i, (a, b) in enumerate(zip(phs, phs[1:]))),
+                           default=(0, 0, 0, 0))
+                print(f"        pH {phs[0]:.2f}→{phs[-1]:.2f}；最大单步跳变 "
+                      f"{jump[0]:.2f} @ 第 {jump[1]}/60 点（{jump[2]:.2f}→{jump[3]:.2f}）"
+                      f"；口径={'estimate_pH' if phs else '无 pH'}")
             print(f"       二分根 {r['x_bis']:.6g} @ {r['x_bis'] / hi * (n - 1):.1f}/60"
                   f"；Illinois 根 {r['x_ill']:.6g} @ {r['x_ill'] / hi * (n - 1):.1f}/60"
                   f"  [{str(r['case'])[:22]}]")
@@ -124,6 +140,33 @@ def main() -> None:
               f"{len(ok)}/{len(solid)} = {len(ok) / len(solid) * 100:.1f}%；"
               f"其中根差 >1e-6 的 {n_ok_bad} 例；"
               f"求值 {nb_ok} → {ni_ok} = {nb_ok / max(ni_ok, 1):.2f}×")
+
+    # ⑤ pH(x) 连续性普查：口袋只是"pH 不连续"的一个后果，先把病本身量出来
+    traced = [r for r in solid if r.get("trace")]
+    jumps = []
+    for r in traced:
+        phs = [p for _, p in r["trace"] if p is not None]
+        if len(phs) < 2:
+            continue
+        mx = max(abs(b - a) for a, b in zip(phs, phs[1:]))
+        jumps.append((mx, r))
+    if jumps:
+        jumps.sort(key=lambda t: -t[0])
+        vals = sorted(j for j, _ in jumps)
+        n02 = sum(1 for j in vals if j > 0.2)
+        n10 = sum(1 for j in vals if j > 1.0)
+        n30 = sum(1 for j in vals if j > 3.0)
+        print(f"\n⑤ pH(x) 连续性普查（{len(vals)} 个括号，61 点网格内相邻点的最大"
+              f" pH 变化）：p50={_pct(vals, 0.5):.3f} p90={_pct(vals, 0.9):.3f}"
+              f" max={vals[-1]:.2f}")
+        print(f"   >0.2：{n02} 例（{n02 / len(vals) * 100:.1f}%）；"
+              f">1.0：{n10} 例（{n10 / len(vals) * 100:.1f}%）；"
+              f">3.0：{n30} 例（{n30 / len(vals) * 100:.1f}%）")
+        print("   跳变最大的 12 例：")
+        for j, r in jumps[:12]:
+            print(f"     ΔpH={j:5.2f}  x_max={r['x_max']:.3g}"
+                  f" 翻转={r['flips']}  根差={abs(r['x_ill'] - r['x_bis']) / max(1.0, r['x_max']):.1e}"
+                  f"  {str(r['case'])[:24]} | {str(r['eq'])[:44]}")
 
 
 if __name__ == "__main__":
