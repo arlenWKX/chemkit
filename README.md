@@ -54,8 +54,11 @@ r = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0)
 r.changed        # True  —— 体系发生显著净变化（宽口径：含溶解/电离/水解形态变化）
 r.reacted        # True  —— 发生狭义化学反应（氧化还原/中和/跨投料沉淀配位）
 r.degree         # 2     —— 2=完全反应 / 1=可逆（部分）反应 / 0=难反应或未反应
-r.net_equation   # '2H^+ + Zn -> H_2 + Zn^{2+}'（总净离子反应方程式，两侧内部顺序无关）
-r.equations      # 分步离子方程式列表（按贡献降序）
+r.net_equation   # Equation 结构（left/right 系数 + reversible 布尔 + kind）
+r.net_equation.plain()   # '2H+ + Zn -> H2 + Zn2+'（纯字符串 fallback，无标记）
+r.net_equation.tex()     # TeX：可直接放进 Markdown 的 $$…$$ 块
+r.net_equation_raw       # 同一净差的**原始版**（不做精编口径裁剪）
+r.equations      # 分步方程式列表（Equation 结构，按贡献降序）
 r.consumption    # {'Zn': 1.0, ...} 净消耗；r.production 净生成 {化学式: mol}
 r.initial        # 初态组成（强电解质已电离、SO3 等已与水反应、酸碱已中和）
 r.final          # 终态组成 {化学式: mol}（H2O 为溶剂不计入）
@@ -81,7 +84,7 @@ r.pH             # 终态 pH
 sys = chemkit.System(V=1.0, T_C=25)
 sys.add("NaOH", 0.1)            # 纯水 + NaOH
 r = sys.add("HCl", 0.15)        # 再投 HCl —— 按累计投料整体重新平衡
-r.pH, r.net_equation
+r.pH, r.net_equation.plain()
 sys.feeds                       # {'NaOH': 0.1, 'HCl': 0.15}
 sys.history                     # 历次 Reaction 列表
 sys.result                      # 最近一次 Reaction
@@ -131,8 +134,9 @@ r = judge([{"name": "HCl", "mol": 1.0}, {"name": "NaOH", "mol": 1.0}],
 
 | 属性 | 类型 | 含义 |
 |---|---|---|
-| `net_equation` | `str \| None` | 总净离子反应方程式（全部显著步骤的净和：中间体自然抵消，H₂O 显式配平，OH⁻ 从 H⁺ 正则形还原，系数最简整数比）。无显著反应为 None |
-| `equations` | `list[str]` | 分步离子方程式（按贡献降序）。许多反应用多步概括更贴近书写习惯（如 Ca(OH)₂+CO₂ 是 `CO_2 + 2OH^- -> CO_3^{2-} + H_2O` 与 `Ca^{2+} + CO_3^{2-} -> CaCO_3` 两步） |
+| `net_equation` | `Equation \| None` | 总净离子反应方程式（**结构**：`left`/`right` 系数 + `reversible` 布尔 + `kind`）。**先结构化后渲染**——`str()`/`.tex()` = TeX（Markdown `$$…$$` 可显示），`.plain()` = 不带上下标标注的纯字符串 fallback；`reversible=True` 渲染 `<=>`（平衡过程），`False` 渲染 `->`（完全反应）。全部显著步骤的净和：中间体自然抵消，H₂O 显式配平，OH⁻ 从 H⁺ 正则形还原，系数最简整数比。无显著反应为 None |
+| `net_equation_raw` | `Equation \| None` | 同一净差的**原始版**（不做精编口径裁剪）：与 `net_equation` 不一致 ⟺ 该体系只有痕量副过程 |
+| `equations` | `list[Equation]` | 分步离子方程式（结构，按贡献降序）。许多反应用多步概括更贴近书写习惯（如 Ca(OH)₂+CO₂ 是 `CO_2 + 2OH^- -> CO_3^{2-} + H_2O` 与 `Ca^{2+} + CO_3^{2-} -> CaCO_3` 两步） |
 | `steps` | `list[dict]` | 引擎逐步过程（kind / equation / logK / S / extent / conversion） |
 
 ### 标注层
