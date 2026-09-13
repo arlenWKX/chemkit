@@ -1085,6 +1085,14 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         evals = []
         deferred_evals = []   # 让位档（晶格氧化等慢氧化通道）：无快候选时才出手
         slow_now = False
+        # 候选评估的账本（v0.5.0 一致性）：redox 候选的驱动力对**强酸/强碱下
+        # 的自由形态**敏感（VO3-→VO2+ 这类形态重排），而 `solve_extent` 的
+        # 探针用的正是 estimate_state 的虚拟账本 ⟹ 评估侧必须用同一个账本，
+        # 否则"选中时 S>0、探头在 x=0 重算 S≤0"（§7 X-8 实测的 5/435 反常
+        # 括号全是 redox）。虚拟账本只在**元素守恒**时可用（守恒闸门与落实
+        # 路径同一判据；FeCl3+Na2CO3 型漏族尾的虚拟账本会被拒绝）。
+        _virt_led = (vled if (vled is not ledger and _swap_conserves(ledger, vled))
+                     else ledger)
         # 候选评估循环中账本/pH 固定不变：浓度对数按物种记忆，跨全部
         # 候选复用（与逐次计算 bit 级一致；步后由下轮重建）
         logc: dict = {}
@@ -1104,8 +1112,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             pres_p = all(ledger.get(s, 0.0) > X_MIN for s in _ps[1])
             if not pres_r and not pres_p:
                 continue
-            S_fwd = S_of(c, ledger, V, pH, T_K, T, gsup, p_ext_kpa,
-                         gas_escape, logc)
+            _led_s = _virt_led if c.kind == "redox" else ledger
+            S_fwd = S_of(c, _led_s, V, pH, T_K, T, gsup, p_ext_kpa,
+                         gas_escape, logc if _led_s is ledger else None)
             if pres_r and S_fwd > 0 and (c.key, 1) not in disabled:
                 d, S = 1, S_fwd
             elif pres_p and S_fwd < 0 and (c.key, -1) not in disabled:
