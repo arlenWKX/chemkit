@@ -142,31 +142,48 @@ def main() -> None:
               f"求值 {nb_ok} → {ni_ok} = {nb_ok / max(ni_ok, 1):.2f}×")
 
     # ⑤ pH(x) 连续性普查：口袋只是"pH 不连续"的一个后果，先把病本身量出来
+    census(rec, label="pH 连续性与换根普查")
+
+
+def census(rec: list, label: str = "pH 连续性普查") -> dict:
+    """pH(x) 连续性 + 换根普查（`tools/phcont.py` 复用；返回统计字典）。
+
+    只统计**完整二分档**（微步快通道档的括号本就注定丢弃）。
+    """
+    solid = [r for r in rec if not r["micro"] and r["f0"] > 0]
+    out: dict = {"n": len(solid)}
     traced = [r for r in solid if r.get("trace")]
     jumps = []
     for r in traced:
-        phs = [p for _, p in r["trace"] if p is not None]
+        phs = [t[1] for t in r["trace"] if t[1] is not None]
         if len(phs) < 2:
             continue
-        mx = max(abs(b - a) for a, b in zip(phs, phs[1:]))
-        jumps.append((mx, r))
-    if jumps:
-        jumps.sort(key=lambda t: -t[0])
-        vals = sorted(j for j, _ in jumps)
-        n02 = sum(1 for j in vals if j > 0.2)
-        n10 = sum(1 for j in vals if j > 1.0)
-        n30 = sum(1 for j in vals if j > 3.0)
-        print(f"\n⑤ pH(x) 连续性普查（{len(vals)} 个括号，61 点网格内相邻点的最大"
-              f" pH 变化）：p50={_pct(vals, 0.5):.3f} p90={_pct(vals, 0.9):.3f}"
-              f" max={vals[-1]:.2f}")
-        print(f"   >0.2：{n02} 例（{n02 / len(vals) * 100:.1f}%）；"
-              f">1.0：{n10} 例（{n10 / len(vals) * 100:.1f}%）；"
-              f">3.0：{n30} 例（{n30 / len(vals) * 100:.1f}%）")
-        print("   跳变最大的 12 例：")
-        for j, r in jumps[:12]:
-            print(f"     ΔpH={j:5.2f}  x_max={r['x_max']:.3g}"
-                  f" 翻转={r['flips']}  根差={abs(r['x_ill'] - r['x_bis']) / max(1.0, r['x_max']):.1e}"
-                  f"  {str(r['case'])[:24]} | {str(r['eq'])[:44]}")
+        jumps.append((max(abs(b - a) for a, b in zip(phs, phs[1:])), r))
+    if not jumps:
+        return out
+    jumps.sort(key=lambda t: -t[0])
+    vals = sorted(j for j, _ in jumps)
+    n02 = sum(1 for j in vals if j > 0.2)
+    n10 = sum(1 for j in vals if j > 1.0)
+    n30 = sum(1 for j in vals if j > 3.0)
+    div = [r for r in solid
+           if abs(r["x_ill"] - r["x_bis"]) / max(1.0, r["x_max"]) > 1e-6]
+    out.update(n_ph=len(vals), jump_p50=_pct(vals, 0.5),
+               jump_p90=_pct(vals, 0.9), jump_max=vals[-1],
+               n_gt02=n02, n_gt10=n10, n_gt30=n30, n_div=len(div))
+    print(f"\n⑤ {label}（{len(vals)} 个括号，61 点网格内相邻点的最大 pH 变化）："
+          f"p50={_pct(vals, 0.5):.3f} p90={_pct(vals, 0.9):.3f} max={vals[-1]:.2f}")
+    print(f"   >0.2：{n02} 例（{n02 / len(vals) * 100:.1f}%）；"
+          f">1.0：{n10} 例（{n10 / len(vals) * 100:.1f}%）；"
+          f">3.0：{n30} 例（{n30 / len(vals) * 100:.1f}%）")
+    print(f"   换根（两法根差 >1e-6·max(1,x_max)）：{len(div)}/{len(solid)}"
+          f" = {len(div) / max(len(solid), 1) * 100:.1f}%")
+    print("   跳变最大的 12 例：")
+    for j, r in jumps[:12]:
+        print(f"     ΔpH={j:5.2f}  x_max={r['x_max']:.3g}"
+              f" 翻转={r['flips']}  根差={abs(r['x_ill'] - r['x_bis']) / max(1.0, r['x_max']):.1e}"
+              f"  {str(r['case'])[:24]} | {str(r['eq'])[:44]}")
+    return out
 
 
 if __name__ == "__main__":

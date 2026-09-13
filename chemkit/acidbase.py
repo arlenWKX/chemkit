@@ -299,7 +299,8 @@ def ledger_charge(ledger: dict) -> float:
 
 def charge_pH(ledger: dict, V: float, T, T_K: float,
               lo: float = PH_LO, hi: float | None = None,
-              c_H: float = 0.0, tol: float = 0.0, fast: bool = False):
+              c_H: float = 0.0, tol: float = 0.0, fast: bool = False,
+              pinned: tuple = ()):
     """电荷平衡求解 pH；返回 float 或 None（无括号）。
 
     账本按两轴解读：
@@ -326,6 +327,19 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
     的溶解量本身就与电荷平衡不自洽（L08：Cu²⁺ 0.0005 对 pH 5.805 满足
     Ksp，却要求 [OH⁻]=0.001）——此时本函数给出的是"把账本拉回自洽"的 pH，
     而机器的 Ksp 估计更接近真值。两类反例的清单见 tools/phdiag.py。
+    **`pinned` 正是为补这一条而生**（v0.5.0，见下）：把储库自由度写进
+    同一个方程，就不必在"账本自洽"与"Ksp 估计"之间二选一了。
+
+    `pinned`：**储库钉住项**。元素 `(z, pKsp, x, y)` 表示"账本里有
+    `M_x(OH)_y` 固相在场，自由阳离子 M 的浓度被溶度积钉住"：
+
+        [M] = 10^((y·(pKw − pH) − pKsp)/x)      （Ksp = [M]^x·[OH⁻]^y）
+
+    电荷项 `z·V·[M]` 随 pH **连续**变化（pH 降 → 溶解度升），于是
+    "固相在场"从**分支选择**（旧 pH 机器的 Ksp 档：一换档 pH 就跳几个
+    单位，§7 X）变成**同一个方程的一项**——固相出现/消失的瞬间，账本里
+    的自由离子本就等于饱和浓度，两侧解连续。调用方须先把该阳离子的账本
+    条目删掉（钉住值取代它），否则双重记账。
 
     F(pH) = Σ_{全部物种} z·c(pH) 在 pH 上严格单调减，二分必收敛。
 
@@ -363,31 +377,39 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
     if c_H:
         fixed -= c_H
     if not fam:
-        return _closed_no_family(fixed, V, pKw)
+        if not pinned:
+            return _closed_no_family(fixed, V, pKw)
 
     def _F(pH: float) -> float:
         """F = Σ_{全部物种} z·c（mol）。**随 pH 单调递减**：
-        [H⁺] 降、[OH⁻] 升、族平均电荷降（去质子化）——故根在
-        F 由正变负处，二分用 b=mid（F>0 时）收上界。
+        [H⁺] 降、[OH⁻] 升、族平均电荷降（去质子化）、钉住阳离子升
+        （溶解随碱升）——故根在 F 由正变负处，二分用 b=mid（F>0 时）收上界。
         """
         h = 10.0 ** (-pH)
         oh = 10.0 ** (pH - pKw)
         tot = V * h - V * oh + fixed
         for ek, q, M, sg in fam.values():
             tot += dist_charge(ek, q, M, V, pH, sg)
+        for z, pKsp, xx, y in pinned:
+            tot += z * V * 10.0 ** ((y * (pKw - pH) - pKsp) / xx)
         return tot
 
     def _FD(pH: float) -> tuple[float, float]:
         """(F, dF/dpH)。族分布的 pH 导数有闭式：权重是 pH 的指数族，
         `dlogw_i/dpH = −Σ_{k<i} sgn_k ≡ −c_i`（常数）⟹
-        `d⟨q⟩/dpH = −ln10·Cov_w(q, c)`（一次扫描），水项导数 `−ln10·V·(h+oh)`。
-        F 单调递减 ⟹ 导数恒负，Newton 步长方向天然正确。
+        `d⟨q⟩/dpH = −ln10·Cov_w(q, c)`（一次扫描），水项导数 `−ln10·V·(h+oh)`，
+        钉住项 `d[M]/dpH = −ln10·(y/x)·[M]`。F 单调递减 ⟹ 导数恒负，
+        Newton 步长方向天然正确。
         """
         ln10 = 2.302585092994046
         h = 10.0 ** (-pH)
         oh = 10.0 ** (pH - pKw)
         tot = V * h - V * oh + fixed
         der = -ln10 * V * (h + oh)
+        for z, pKsp, xx, y in pinned:
+            cm = 10.0 ** ((y * (pKw - pH) - pKsp) / xx)
+            tot += z * V * cm
+            der -= ln10 * (y / xx) * z * V * cm
         for ek, q, M, sg in fam.values():
             n = len(ek) + 1
             logw = [0.0]

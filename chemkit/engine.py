@@ -366,8 +366,18 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
     # 其余物种的 log10(c/V) 在整个二分期间不变——按物种记忆、逐次失效
     # changing 条目（值与逐次计算 bit 级一致）
     _logc: dict = {}
-    # 求根审计专用：f 的 (x, pH) 轨迹（生产路径恒为 None；见 ROOT_AUDIT）
+    # 求根审计专用（生产路径 `_atrace is None` ⟹ 三处 append 全跳过）：
+    # `_atrace` = f 的 (x, pH, 固相在场) 轨迹；`_solid0/_solid_chg` 供标注
+    # "固相在场"——用于判定 pH 跳变是否恰好伴随固相出现/消失。
     _atrace: list | None = None
+    _solid0 = False
+    _solid_chg: list = []
+    if ROOT_AUDIT is not None:
+        _solid0 = any(s in T.solids and m > X_MIN for s, m in ledger.items())
+        _solid_chg = [(s, d, o) for s, d, o in changing if s in T.solids]
+
+    def _sol(x: float) -> bool:
+        return _solid0 or any(o + d * x > X_MIN for s, d, o in _solid_chg)
 
     def f(x: float) -> float:
         for s, d, orig in changing:
@@ -376,7 +386,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 del _logc[s]
         if not _need_ph:
             if _atrace is not None:
-                _atrace.append((x, None))
+                _atrace.append((x, None, False))
             return direction * S_of(c, led_work, V, 7.0, T_K, T, gsup,
                                     p_ext_kpa, gas_escape, _logc)
         if c.kind == "redox":
@@ -386,7 +396,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 pH_x, led_v, _ = estimate_state(led_work, H_excess + nu_H * x,
                                                 V, T, T_K, _bt_cache, _touch)
             if _atrace is not None:
-                _atrace.append((x, pH_x))
+                _atrace.append((x, pH_x, _sol(x)))
             # led_v 是滴定后的虚拟账本：与 led_work 同一对象时（无滴定）
             # 浓度缓存仍有效；新生成的 dict 必须回退逐项计算
             return direction * S_of(c, led_v, V, pH_x, T_K, T, gsup,
@@ -396,7 +406,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 else estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
                                  _bt_cache, _touch))
         if _atrace is not None:
-            _atrace.append((x, pH_x))
+            _atrace.append((x, pH_x, _sol(x)))
         return direction * S_of(c, led_work, V, pH_x, T_K, T, gsup,
                                 p_ext_kpa, gas_escape, _logc)
 
