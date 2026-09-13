@@ -196,7 +196,8 @@ def _sweep_gases(ledger: dict, escaped: dict, gsup: frozenset,
 
 
 def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
-                   n_bis: int, f_hi: float, micro: bool) -> float | None:
+                   n_bis: int, f_hi: float, micro: bool,
+                   ph_closed: bool = False, cls_ok: bool = False) -> float | None:
     """求根审计（仅 `tools/roots.py` 启用；生产路径不调用）。
 
     在**同一个括号** [0, x_max] 上记录三件事：
@@ -248,6 +249,11 @@ def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
         "kind": c.kind, "dir": direction, "x_max": x_max,
         "x_bis": x_bis, "x_ill": x_ill, "n_bis": n_bis, "n_ill": n_ill,
         "flips": flips, "f0": f0, "micro": micro, "f": f,
+        # f(0)≤0 的反常：候选是在**走步选它的那个 pH**下 S>0 才被选中的，
+        # 而探头在 x=0 重算 S 却 ≤0 ⟹ 两条 pH 路径不一致。记录探头侧
+        # 是否关掉了闭式快通道（走步用的是闭式、探头因 changing 弱物种
+        # 走完整路径即此类），供 tools/roots.py 归因。
+        "ph_closed": ph_closed, "cls_ok": cls_ok,
     })
     return x_ill if f0 > 0 else None
 
@@ -405,7 +411,14 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                                 _tags[-1] if _tags else "闭式"))
                 _speciation.PH_TAGS = None
             # led_v 是滴定后的虚拟账本：与 led_work 同一对象时（无滴定）
-            # 浓度缓存仍有效；新生成的 dict 必须回退逐项计算
+            # 浓度缓存仍有效；新生成的 dict 必须回退逐项计算。
+            # 注意：走步的**候选评估**用的是真实账本（虚拟账本只在守恒闸门
+            # 通过时被置换进来），这里用 led_v ⟹ 两条路径的驱动力求值不同态，
+            # §7 X-5 的 f(0)≤0 反常即由此而来（实测全是 redox 候选）。
+            # 反向改（探头也用真实账本）已实测：E14/D14 是标准锁旧路线，
+            # 但 I24/KIN02/KIN06 三例真回退——强酸/强碱下的自由形态参与
+            # 氧化还原竞争正是虚拟账本的设计意图，故**保持现状**，
+            # 一致化留待"哪个账本对redox有权威"的设计决定（§7 X-8）。
             return direction * S_of(c, led_v, V, pH_x, T_K, T, gsup,
                                     p_ext_kpa, gas_escape,
                                     _logc if led_v is led_work else None)
@@ -451,11 +464,16 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
         # 锁化学（张成判据 + 区间断言）⟹ 全量 1294 断言不降。
         _tol = _EXTENT_TOL_REL * max(1.0, x_max)
         _audit = None
+        _cls_ok = False
         if ROOT_AUDIT is not None:
             _i = ROOT_AUDIT["n"]
             ROOT_AUDIT["n"] += 1
             if _i % ROOT_AUDIT["every"] == 0:
                 _audit = [0]                      # 本括号的 f 求值计数
+                # 走步侧用的是不是闭式快路径（探头侧另看 _ph_closed）：
+                # 两侧不一致就是 f(0)≤0 反常的来源
+                _cls_ok = _need_ph and closed_pH(ledger, H_excess, V, T,
+                                                 T_K) is not None
         lo, hi = 0.0, x_max
         for _ in range(iters):
             if hi - lo <= _tol:
@@ -473,7 +491,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 break   # 微步快通道：根的上界已坍缩到主循环微步阈值之下
         if _audit is not None:
             _x_ill = _audit_bracket(f, c, direction, x_max, lo, _audit[0], f_hi,
-                                    _micro_thr is not None)
+                                    _micro_thr is not None, _ph_closed is not None,
+                                    _cls_ok)
             if _x_ill is not None:
                 # pH(x) 细扫轨迹：判定"口袋是不是 pH 造成的"（§7 X-3 的假设）
                 # 并普查 pH 的连续性（近似机器分支切换会让 pH 跳变）

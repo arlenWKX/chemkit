@@ -66,6 +66,19 @@ def main() -> None:
           f"（完整二分档 {len(solid)}、微步快通道档 {len(micro)}）"
           f"；f(0)≤0 的非法括号 {len(bad)}（f(0)={len(bad)} 例，"
           f"二分在该括号上不成立）")
+    if bad:
+        # 归因：候选是在**走步的 pH** 下 S>0 才被选中的，探头在 x=0 重算却 ≤0
+        # ⟹ 两条 pH 路径不一致。看闭式快通道：走步用闭式、探头因 changing
+        # 弱物种改走完整路径，是最可能的一条。
+        n_walk_closed = sum(1 for r in bad if r.get("cls_ok"))
+        n_probe_closed = sum(1 for r in bad if r.get("ph_closed"))
+        print(f"   其中：走步侧可用闭式 {n_walk_closed}/{len(bad)}，"
+              f"探头侧可用闭式 {n_probe_closed}/{len(bad)}"
+              f"（两侧不等 = pH 路径不一致）")
+        for r in bad[:6]:
+            print(f"     {str(r['case'])[:26]:28s} dir={r['dir']:+d}"
+                  f" 走步闭式={r.get('cls_ok')} 探头闭式={r.get('ph_closed')}"
+                  f" f(0)={r['f0']:+.3g}  {str(r['eq'])[:40]}")
 
     if not solid:
         return
