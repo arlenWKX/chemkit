@@ -289,13 +289,22 @@ def estimate_pH(ledger: dict, H_excess: float, V: float, T, T_K: float,
     return estimate_state(ledger, H_excess, V, T, T_K, cache, touch)[0]
 
 
+# 分支标注（**仅审计**：`tools/roots.py` 之外恒为 None，生产路径零成本）。
+# §7 X 的 pH 跳变要归因到"换的哪一条分支"，否则只能看到跳变本身。
+PH_TAGS: list | None = None
+
+
+def _tag(why: str) -> None:
+    if PH_TAGS is not None:
+        PH_TAGS.append(why)
+
+
 def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                    cache: dict | None = None,
                    touch: frozenset | None = None) -> tuple[float, dict, float]:
     """返回 (pH, 滴定后的虚拟账本, 残余He)。虚拟账本是 pH 一致的自由形态分布；
     残余He是弱酸/弱碱储备吸收后仍未中和的游离强酸/强碱（酸碱平衡后的真实 He）。"""
-    pKw = pKw_of(T_K)
-    # 1) 强酸连续形态分布后，游离 H+ 全部由 He 记账（分子分数不贡献游离 H+，
+    pKw = pKw_of(T_K)    # 1) 强酸连续形态分布后，游离 H+ 全部由 He 记账（分子分数不贡献游离 H+，
     #    不再有"分子态浓酸"直读分支——pH 即 -log10(自由 H+) 的自然结果）
     # 2) 缓冲滴定（质子条件近似）：游离强酸/强碱先被在账弱碱/弱酸储备按强度
     #    顺序吸收；被全吸收则由最后缓冲对的 Henderson 式定 pH；
@@ -303,11 +312,14 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     tit, He_res, ledger = _buffer_titration(ledger, H_excess, V, T, pKw,
                                             T_K=T_K, cache=cache, touch=touch)
     if tit is not None:
+        _tag("滴定/Henderson")
         return tit, ledger, He_res
     He = He_res / V
     if He >= 1e-3:
+        _tag("H⁺直读")
         return max(-1.0, -log10(He)), ledger, He_res
     if He <= -1e-3:
+        _tag("OH⁻直读")
         return min(pKw + 1.0, pKw + log10(-He)), ledger, He_res
     # 4) 缓冲/弱酸弱碱区：取各来源贡献最大者（在滴定后的虚拟账本上评估）
     h_c = 10.0 ** (-pKw / 2)
@@ -428,6 +440,7 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     if amph:
         c_a, pH_a = max(amph, key=lambda t: t[0])
         if c_a > 100.0 * max(h_c, o_c):
+            _tag("两性中点")
             return min(max(pH_a, -1.0), pKw + 1.0), ledger, He_res
     # 共轭缓冲对：弱碱与其共轭酸（或反之）同时在账时，pH 由
     # Henderson-Hasselbalch 决定（pKa + log(c_b/c_a)），sqrt(Kb·c) 的
@@ -438,8 +451,10 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         w_sum = sum(w for _, w in buf)
         if w_sum > max(h_c, o_c):
             pH_buf = sum(p * w for p, w in buf) / w_sum
+            _tag("缓冲对")
             return min(max(pH_buf, -1.0), pKw + 1.0), ledger, He_res
     pH = -log10(h_c) if h_c >= o_c else pKw + log10(o_c)
+    _tag("酸侧max" if h_c >= o_c else "碱侧max")
     return min(max(pH, -1.0), pKw + 1.0), ledger, He_res
 
 

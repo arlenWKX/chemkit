@@ -26,6 +26,7 @@ from math import log10
 
 from .core import (elements_of, pKw_of, _vant, k_nernst,
                    K_NERNST_298, PKW_298, charge_of, balance)
+from .acidbase import ledger_charge as _ledger_charge
 from .data import Tables, henry_of
 from .candidates import (Cand, logK_T, build_derived, _bal, _bal_fast,
                          _half_pairs, _redox_mix_ok, _half_scale,
@@ -41,6 +42,7 @@ from .candidates import (Cand, logK_T, build_derived, _bal, _bal_fast,
                          _set_proton_roots)
 from .normalize import (normalize, _mol_fraction, _split_acid,
                         _salt_ksp_cell, _ionize_map, _split_salt)
+from . import speciation as _speciation
 from .speciation import (_buffer_titration, estimate_pH, estimate_state,
                          _respeciate_strong_acids, _full_speciation,
                          _RESPECIATE_ACIDS, _pksp, closed_pH,
@@ -386,27 +388,38 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 del _logc[s]
         if not _need_ph:
             if _atrace is not None:
-                _atrace.append((x, None, False))
+                _atrace.append((x, None, False, "与 pH 无关"))
             return direction * S_of(c, led_work, V, 7.0, T_K, T, gsup,
                                     p_ext_kpa, gas_escape, _logc)
         if c.kind == "redox":
+            if _atrace is not None:
+                _speciation.PH_TAGS = []
             if _ph_closed is not None:
                 pH_x, led_v = _ph_closed(H_excess + nu_H * x), led_work
             else:
                 pH_x, led_v, _ = estimate_state(led_work, H_excess + nu_H * x,
                                                 V, T, T_K, _bt_cache, _touch)
             if _atrace is not None:
-                _atrace.append((x, pH_x, _sol(x)))
+                _tags = _speciation.PH_TAGS
+                _atrace.append((x, pH_x, _sol(x),
+                                _tags[-1] if _tags else "闭式"))
+                _speciation.PH_TAGS = None
             # led_v 是滴定后的虚拟账本：与 led_work 同一对象时（无滴定）
             # 浓度缓存仍有效；新生成的 dict 必须回退逐项计算
             return direction * S_of(c, led_v, V, pH_x, T_K, T, gsup,
                                     p_ext_kpa, gas_escape,
                                     _logc if led_v is led_work else None)
+        if _atrace is not None:
+            _speciation.PH_TAGS = []
         pH_x = (_ph_closed(H_excess + nu_H * x) if _ph_closed is not None
                 else estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
                                  _bt_cache, _touch))
         if _atrace is not None:
-            _atrace.append((x, pH_x, _sol(x)))
+            _tags = _speciation.PH_TAGS
+            _he = H_excess + nu_H * x
+            _atrace.append((x, pH_x, _sol(x), _tags[-1] if _tags else "闭式",
+                            _ledger_charge(led_work) + _he))
+            _speciation.PH_TAGS = None
         return direction * S_of(c, led_work, V, pH_x, T_K, T, gsup,
                                 p_ext_kpa, gas_escape, _logc)
 

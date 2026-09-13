@@ -114,7 +114,7 @@ def main() -> None:
             print(f"     x∈[0,{hi:.4g}]  {row}")
             tr = r.get("trace")
             if tr:
-                phs = [p for _, p in tr if p is not None]
+                phs = [t[1] for t in tr if t[1] is not None]
                 slope = "".join(
                     "+" if b - a > 0.02 else ("-" if a - b > 0.02 else ".")
                     for a, b in zip(phs, phs[1:]))
@@ -123,8 +123,18 @@ def main() -> None:
                             for i, (a, b) in enumerate(zip(phs, phs[1:]))),
                            default=(0, 0, 0, 0))
                 print(f"        pH {phs[0]:.2f}→{phs[-1]:.2f}；最大单步跳变 "
-                      f"{jump[0]:.2f} @ 第 {jump[1]}/60 点（{jump[2]:.2f}→{jump[3]:.2f}）"
-                      f"；口径={'estimate_pH' if phs else '无 pH'}")
+                      f"{jump[0]:.2f} @ 第 {jump[1]}/60 点（{jump[2]:.2f}→{jump[3]:.2f}）")
+                # 分支序列：跳变处换的是哪条返回路径（§7 X 的归因）
+                tags = [t[3] if len(t) > 3 else "?" for t in tr]
+                seq: list[str] = []
+                for k, tg in enumerate(tags):
+                    if k == 0 or tg != tags[k - 1]:
+                        seq.append(f"{tg}@{k}")
+                print(f"        分支序列    {' → '.join(seq[:12])}")
+                if jump[0] > 0.2:
+                    j = jump[1]
+                    print(f"        跳变归因    第 {j} 点 {tags[j]} → 第 {j + 1} 点 "
+                          f"{tags[j + 1] if j + 1 < len(tags) else '?'}")
             print(f"       二分根 {r['x_bis']:.6g} @ {r['x_bis'] / hi * (n - 1):.1f}/60"
                   f"；Illinois 根 {r['x_ill']:.6g} @ {r['x_ill'] / hi * (n - 1):.1f}/60"
                   f"  [{str(r['case'])[:22]}]")
@@ -178,6 +188,18 @@ def census(rec: list, label: str = "pH 连续性普查") -> dict:
           f">3.0：{n30} 例（{n30 / len(vals) * 100:.1f}%）")
     print(f"   换根（两法根差 >1e-6·max(1,x_max)）：{len(div)}/{len(solid)}"
           f" = {len(div) / max(len(solid), 1) * 100:.1f}%")
+    # 电荷自洽性：精确质子条件（charge_pH）的**前提**。不一致 ⟹ 账本内部
+    # 电荷平衡不是真实约束（§7 F/N 的 L08 反例），统一方程不能盲用。
+    res = sorted(abs(t[4]) for r in traced for t in r["trace"] if len(t) > 4)
+    if res:
+        n6 = sum(1 for v in res if v > 1e-6)
+        n3 = sum(1 for v in res if v > 1e-3)
+        out.update(resid_p50=_pct(res, 0.5), resid_max=res[-1],
+                   n_res_gt6=n6, n_res_gt3=n3)
+        print(f"   探头态电荷自洽 |Σz·n + He|：p50={_pct(res, 0.5):.2e} "
+              f"p90={_pct(res, 0.9):.2e} max={res[-1]:.2e}；"
+              f">1e-6 的 {n6}/{len(res)} = {n6 / len(res) * 100:.1f}%，"
+              f">1e-3 的 {n3}（{n3 / len(res) * 100:.1f}%）")
     print("   跳变最大的 12 例：")
     for j, r in jumps[:12]:
         print(f"     ΔpH={j:5.2f}  x_max={r['x_max']:.3g}"

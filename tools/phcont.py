@@ -35,6 +35,7 @@ from chemkit import engine                           # noqa: E402
 from chemkit import testsuit as ts                   # noqa: E402
 from chemkit.acidbase import charge_pH               # noqa: E402
 from chemkit.candidates import X_MIN, _ksp_xy        # noqa: E402
+from chemkit.acidbase import ledger_charge as _ledger_charge   # noqa: E402
 from chemkit.core import charge_of, pKw_of           # noqa: E402
 from chemkit.data import load_tables                 # noqa: E402
 from chemkit.speciation import _pksp                 # noqa: E402
@@ -86,6 +87,24 @@ def _ph_pinned(ledger, H_excess, V, T, T_K, bt_cache=None, touch=None):
     return ph
 
 
+def _ph_exact(ledger, H_excess, V, T, T_K, bt_cache=None, touch=None):
+    """estimate_pH 的替身：**账本自洽就直接解电荷平衡**（统一方程），否则回退机器。
+
+    前提是本轮实测的：97.4% 的探头态满足 `|Σz·n + He| ≤ 1e-6`（p50 5.6e-17），
+    此时账本内部的电荷平衡就是真实约束（§7 F/N 的 L08 反例正是不满足的那 2.6%）。
+    好处是 **pH 不再有分支阈值**（酸侧 max / OH⁻ 直读 / 两性中点 / 缓冲对
+    全是同一个方程的近似），pH(x) 因此天然连续。
+    """
+    if abs(_ledger_charge(ledger) + H_excess) <= 1e-6:
+        ph = charge_pH(ledger, V, T, T_K, tol=1e-9, fast=True)
+        if ph is not None:
+            _STAT["hit"] += 1
+            return ph
+        _STAT["none"] += 1
+    _STAT["fall"] += 1
+    return _ORIG(ledger, H_excess, V, T, T_K, bt_cache, touch)
+
+
 def main() -> None:
     every = 40
     if "-e" in sys.argv:
@@ -94,9 +113,11 @@ def main() -> None:
     if "--cases" in sys.argv:
         want = tuple(sys.argv[sys.argv.index("--cases") + 1:])
     patch = "--orig" not in sys.argv
+    mode = ("统一方程（账本自洽即解电荷平衡）" if "--exact" in sys.argv
+            else "钉住式电荷平衡（原型）")
     detail = bool(want)
     if patch:
-        engine.estimate_pH = _ph_pinned
+        engine.estimate_pH = _ph_exact if "--exact" in sys.argv else _ph_pinned
     T = load_tables()
     cases = ts.load_cases(None)
     if want:
@@ -118,7 +139,7 @@ def main() -> None:
     rec = engine.ROOT_AUDIT["rec"]
     engine.ROOT_AUDIT = None
     engine.estimate_pH = _ORIG
-    print(f"\n== {'钉住式电荷平衡（原型）' if patch else '基线（原 pH 机器）'} ==")
+    print(f"\n== {'基线（原 pH 机器）' if not patch else mode} ==")
     print(f"断言：{len(cases) - len(bad)}/{len(cases)} 例通过（红 {len(bad)}）")
     if patch:
         print(f"钉住档命中 {_STAT['hit']} 次 / 回退原机器 {_STAT['fall']} 次"
