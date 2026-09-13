@@ -62,6 +62,16 @@ _TRACE = bool(_os.environ.get("CHEM_TRACE"))
 # 默认关闭（每次调用一次全局判空，开销可忽略）；`converg.dump()` 临时置位。
 SOF_CALLS: list[int] | None = None
 
+# ---- 求根审计钩子（仅 tools/roots.py 启用；生产路径恒为 None）---------
+# 待裁决的问题（§7 W-5 之后剩下的最大性能杠杆）：二分在主求解分支固定
+# ~52 次迭代（容差落地后 ~35 次求值/步），而**保括号的假位法**（Illinois）
+# 在光滑单调括号上 ~10 次即可到同一精度 ⟹ 每步成本还能再降一大截。
+# 唯一的语义风险是**根选定**：括号内 f 非单调（多根）时，快方法可能收敛到
+# 另一个根，而"选中哪个根"就是"实际执行多少"就是化学——不能靠断言兜底
+# （断言锁化学，但换根 = 换化学，是**必须**避免的位移）。故先审计：
+# 在同一括号上同时跑两种方法，记录根差、求值次数与网格符号翻转数。
+ROOT_AUDIT: dict | None = None
+
 # 二分收敛容差（相对 x_max 的绝对值下限见 solve_extent）：见 §7 W-4 的
 # 论证与实测。置 0.0 可复现"跑满迭代到浮点饱和"的旧路径（实验用）。
 _EXTENT_TOL_REL = 1e-11
@@ -181,6 +191,63 @@ def _sweep_gases(ledger: dict, escaped: dict, gsup: frozenset,
         if m > cap:
             escaped[g] = escaped.get(g, 0.0) + (m - cap)
             ledger[g] = cap
+
+
+def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
+                   n_bis: int, f_hi: float, micro: bool) -> None:
+    """求根审计（仅 `tools/roots.py` 启用；生产路径不调用）。
+
+    在**同一个括号** [0, x_max] 上记录三件事：
+
+      ① 生产二分的根与求值次数（`x_bis`/`n_bis`，由调用方传入）；
+      ② **Illinois 保括号假位法**的根与求值次数（`x_ill`/`n_ill`）——
+         它收敛到同一精度的求值次数就是这块性能的量级；
+      ③ f 在 33 点网格上的**符号翻转次数**：>1 ⟹ 括号内多根，快方法
+         可能选中另一个根。这不是"测试被锁"的问题，而是"换根 = 换
+         实际执行量 = 换化学"，必须避免。
+
+    判据因此是两问：网格单调（几乎）处处成立吗？成立时两法根差是否
+    可忽略？两问都过，才允许用假位法替换二分。
+    """
+    n = 33
+    signs = [f(x_max * k / (n - 1)) > 0 for k in range(n)]
+    flips = sum(1 for i in range(1, n) if signs[i] != signs[i - 1])
+    tol = _EXTENT_TOL_REL * max(1.0, x_max)
+    f0 = f(0.0)
+    n_ill = 1
+    x_ill = 0.0
+    if f0 > 0:
+        lo, hi = 0.0, x_max
+        flo, fhi = f0, f_hi
+        last = ""
+        while hi - lo > tol and n_ill < 200:
+            den = fhi - flo
+            x = (lo * fhi - hi * flo) / den if den != 0 else 0.5 * (lo + hi)
+            if not (lo < x < hi):
+                x = 0.5 * (lo + hi)
+            vx = f(x)
+            n_ill += 1
+            if vx > 0:
+                lo, flo = x, vx
+                if last == "lo":
+                    fhi *= 0.5        # Illinois 端点衰弱
+                last = "lo"
+            else:
+                hi, fhi = x, vx
+                if last == "hi":
+                    flo *= 0.5
+                last = "hi"
+        x_ill = lo
+    ROOT_AUDIT["rec"].append({
+        "case": ROOT_AUDIT.get("case"),
+        "eq": (" + ".join(f"{_fmt(nu)}{s}" for s, nu in c.r.items() if s != WATER)
+               + " -> "
+               + " + ".join(f"{_fmt(nu)}{s}" for s, nu in c.pr.items()
+                            if s != WATER)),
+        "kind": c.kind, "dir": direction, "x_max": x_max,
+        "x_bis": x_bis, "x_ill": x_ill, "n_bis": n_bis, "n_ill": n_ill,
+        "flips": flips, "f0": f0, "micro": micro, "f": f,
+    })
 
 
 def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
@@ -331,9 +398,11 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
     if iters > 20:
         # 主求解（参与路径选择）：纯二分，迭代次数固定。
         # 鞍点/多根体系（NaClO+CO2、Cu+HNO3 的 NO2→NO 脱气伪解通道）中
-        # f 非单调、存在多个过零点，求解结果（含数值噪声下的根选择）
-        # 直接决定 walk 路径——此处语义被测试套件锁定，不得改动
-        # （实测割线/Brent 跨根、迭代压缩均引入回退）。
+        # f 非单调、存在多个过零点，**根选定**直接决定 walk 路径——即
+        # "执行多少"就是化学。旧的约束写法是"被测试套件锁定"（§7 V），
+        # 这条已按 §7 W 纠正：断言锁化学不锁轨迹，**真约束是根选定**
+        # ——换更快的求根方法时，必须保证它选出同一个根（`tools/roots.py`
+        # 的括号审计：网格符号翻转 + 两法根差）。
         # 微步快通道例外（见 micro_rel 文档）：lo 恒 < hi ≤ 阈值，与跑满
         # 送代在主循环的分支决策上 bit 级等价（非单调 f 同样成立：
         # 后续送代 lo=mid<hi ≤ 阈值的单调推理不依赖 f 的形态）
@@ -350,6 +419,12 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
         # N23 8.28→0、Y03 10.2→1.8），断言侧锁轨迹的 4 条已按 §7 W 改为
         # 锁化学（张成判据 + 区间断言）⟹ 全量 1294 断言不降。
         _tol = _EXTENT_TOL_REL * max(1.0, x_max)
+        _audit = None
+        if ROOT_AUDIT is not None:
+            _i = ROOT_AUDIT["n"]
+            ROOT_AUDIT["n"] += 1
+            if _i % ROOT_AUDIT["every"] == 0:
+                _audit = [0]                      # 本括号的 f 求值计数
         lo, hi = 0.0, x_max
         for _ in range(iters):
             if hi - lo <= _tol:
@@ -357,12 +432,17 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             mid = (lo + hi) / 2
             if mid <= lo or mid >= hi:
                 break   # 浮点饱和：区间已不可再分（数学上与跑完全部迭代等价）
+            if _audit is not None:
+                _audit[0] += 1
             if f(mid) > 0:
                 lo = mid
             else:
                 hi = mid
             if _micro_thr is not None and hi <= _micro_thr:
                 break   # 微步快通道：根的上界已坍缩到主循环微步阈值之下
+        if _audit is not None:
+            _audit_bracket(f, c, direction, x_max, lo, _audit[0], f_hi,
+                           _micro_thr is not None)
         return lo, x_max
     # 粗精度求解（iters<=20，仅用于慢标注等布尔阈值判定，不影响路径）：
     # 5 次二分定盆 + Brent 抛光，~12 次求值达到足够精度
