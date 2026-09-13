@@ -740,6 +740,10 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     annotations: list[str] = []
     blocked_solids: dict[str, list] = {}   # 被膜封锁的金属 -> 膜固相列表
     disabled: dict = {}   # (key, d) -> 禁用时的账本签名；状态实质漂移后自动解禁
+    # 禁用原因（只读诊断，与 disabled 同生命周期）：质量口径 resid_live 把
+    # disabled 计入"欠收敛"，但禁用有不同来路——"已达平衡后零推进"是正当的，
+    # "驱动仍强却被限幅/仲裁挡下"才是病灶。不区分就只能对着一个大数字猜。
+    dis_why: dict = {}    # (key, d) -> (原因, |S|@禁用时, ext, x_max)
     slow_seen = False
     _exit_reason = "max-iter"   # 探针专用：主循环退出原因（只读诊断）
     _it_total = 0               # 探针专用：累计主循环迭代数（含 sweep 轮）
@@ -755,6 +759,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         for k, sig0 in list(disabled.items()):
             if sig != sig0:
                 del disabled[k]
+                dis_why.pop(k, None)
     # 净反应震荡冻结：同一净反应（忽略 H2O/H+）正反向净零空转经三种
     # 检测器（极限环签名复现 / 近窗程度对消 / 短周期重复）判定后永久冻结——
     # 阻断浓酸体系中同一反应因 H+ 挂侧不同生成多个配平形式互相逆转净零
@@ -858,7 +863,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 触发点①（爬行检测）：it≥64 且近 24 步全微步且 ≥2 个不同规范净键
     # → 只联立解实际在循环的平衡（Gauss-Seidel 循环坐标的 Newton 加速；
     # 不全收——候选集存在跨数据源 Hess 互斥副本，全收无解）。成功 →
-    # 走步同款记账落实 + disabled.clear()，walk 全量重评估自校验；
+    # 走步同款记账落实 + disabled.clear(); dis_why.clear()，walk 全量重评估自校验；
     # "boundary"（联立不动点在物理域外——数据张力型）→ 提前冻结循环键
     # （Ag32 型从 ~1786 步提前到 ~101 步）；失败 = 严格无操作 + 黑名单。
     # （触发点② idle 退出前精修已试已回退——全量差分否决：idle 点上走步
@@ -947,7 +952,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                            if s not in (WATER, H_ION)), default=0.0)
             _exec(c, dd, abs(xj), x_max_j, S_f if xj > 0 else -S_f,
                   _netkey(c, dd))
-        disabled.clear()   # 状态实质移动：全量解禁让 S 重验（既有自校正）
+        disabled.clear(); dis_why.clear()   # 状态实质移动：全量解禁让 S 重验（既有自校正）
         return True
 
     def _joint_cycle_keys():
@@ -1037,7 +1042,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                            if s not in (WATER, H_ION)), default=0.0)
             _exec(c, dd, abs(xj), x_max_j, S_f if xj > 0 else -S_f,
                   _netkey(c, dd))
-        disabled.clear()   # 状态实质移动：全量解禁让 S 重验（既有自校正）
+        disabled.clear(); dis_why.clear()   # 状态实质移动：全量解禁让 S 重验（既有自校正）
         return True
 
     for _sweep_round in range(20):
@@ -1291,6 +1296,20 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             sig0 = _sig()
             disabled[(pick.key, d)] = sig0
             disabled[(pick.key, -d)] = sig0
+            # 原因归档（只读）：驱动仍强却零推进 ⟹ 不是"已达平衡"，而是被
+            # 限幅（x_max 被酸/碱储备封顶）或仲裁挡下——两类要分开数
+            _rr = pick.r if d > 0 else pick.pr
+            _lim = [ledger.get(s, 0.0) / nu for s, nu in _rr.items()
+                    if s not in (WATER, H_ION) and nu > 0]
+            _xmax_st = min(_lim) if _lim else float("inf")
+            if _xmax_st > 0 and x_max <= 1e-3 * _xmax_st:
+                _r = "限幅（x_max 被封顶：酸/碱储备或计量上限）"
+            elif abs(S) <= 0.1:
+                _r = "已达平衡"
+            else:
+                _r = "**零推进（S 强而 x*≈0）**"
+            dis_why[(pick.key, d)] = (_r, round(abs(S), 3), round(ext, 9),
+                                      round(x_max, 9))
             # 仅溶解/沉淀类微步执行（微溶盐终态）；质子/氧化还原微步仍跳过——
             # 后者执行会经签名变化逐对渗漏（NH4Ac 双水解曾被渗到 pH 9.4）
             if ext <= X_MIN or pick.kind not in ("dissolve", "precip"):
@@ -1329,7 +1348,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             # 微溶盐溶解/沉淀微步：执行这一次（热力学终态），双向禁用已在上方
             # 登记——签名机制保证下一轮挡下，无需额外停滞语义
           else:
-            disabled.clear()   # 状态将发生实质改变，解禁全部（签名机制双保险）
+            disabled.clear(); dis_why.clear()   # 状态将发生实质改变，解禁全部（签名机制双保险）
           break
         if _outer_break:
             break
@@ -1528,7 +1547,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                         tgt = ledger.get(s, 0.0) + d * scale
                         ledger[s] = tgt if tgt > 0.0 else 0.0
                     H_excess += d_he1 * scale
-                    disabled.clear()   # 状态实质改变，解禁全部让 S 重验
+                    disabled.clear(); dis_why.clear()   # 状态实质改变，解禁全部让 S 重验
                     if _TRACE:
                         print(f'  [crawl-jump] rho={rho:.3f} +{scale:.1f}x '
                               f'D[{len(D)}] n1/gross={n1/max(gross,1e-9):.2f} '
@@ -1575,7 +1594,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         _probe_exit(_probe, ledger, H_excess, escaped, gsup, V, T_K, T,
                     kinetics, gas_escape, p_ext_kpa, disabled, frozen_perm,
                     _exit_reason, _it_total, len(hist), len(steps),
-                    blocked_solids)
+                    blocked_solids, dis_why)
         # 走步画像诊断（v0.4.2 探针扩展）：纯诊断字段，不进
         # _result_digest（digest 键集不含它们），零行为影响
         _probe["joint_tries"] = _diag["joint_tries"]
@@ -1649,7 +1668,8 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
                 gas_escape: bool, p_ext_kpa: float, disabled: dict,
                 frozen_perm: set, exit_reason: str, it_total: int,
                 hist_len: int, steps_len: int,
-                blocked_solids: set = frozenset()) -> None:
+                blocked_solids: set = frozenset(),
+                dis_why: dict | None = None) -> None:
     """收敛质量探针（只读诊断，v0.3.8）：walk 退出点上的平衡残差画像。
 
     对最终账本重新枚举候选，记录"两侧均在场"的平衡的 S = logK − logQ
@@ -1663,12 +1683,24 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
     金属-水通道顶到 156.12）。"""
     from .templates import enumerate_candidates as _enum
     led = dict(ledger)   # 副本隔离：respeciate 会原地改账本（探针零副作用）
-    H_excess = _respeciate_strong_acids(led, H_excess, V, T)
-    H_excess = _presentation_He(led, H_excess, V, T, T_K)
+    He_raw = _respeciate_strong_acids(led, H_excess, V, T)
+    # **两个 pH 都要算**（v0.5.0 质量口径自洽修）：质量残差问的是"walk 还把
+    # 什么留在了桌上"，而 walk 是在**求解器自己的 pH**（closed_pH 快路径 /
+    # estimate_pH，用原始 He）上判断驱动力的；呈现 pH 走 `_presentation_He`
+    # 的"幻影碱归零"闸，会与求解器 pH 相差几个单位（实测 NR97：raw He
+    # −0.001 → 求解器 pH 11.0 / 呈现 pH 7.0，同一候选 S 由 +6.18 翻成 −0.11）。
+    # 用呈现 pH 评残差就等于**换一个态**去质问求解器——旧口径下 104 例
+    # "张力"里大部分是这类假象。故：`S` 一律在**求解器 pH** 上评（口径基准），
+    # 呈现 pH 上的值单列 `S_pres` 供透明核对。
+    _cls_s = closed_pH(led, He_raw, V, T, T_K)
+    pH_solver = (_cls_s[0] if _cls_s is not None
+                 else estimate_pH(led, He_raw, V, T, T_K))
+    H_excess = _presentation_He(led, He_raw, V, T, T_K)
     pH_f = presentation_pH(led, H_excess, V, T, T_K)
     cands_f = _enum(led, H_excess, pH_f, V, T_K, T, kinetics)
     active = []
     logc: dict = {}
+    logc_p: dict = {}
 
     def _peq(c) -> str:
         rr = " + ".join(f"{_fmt(nu)}{s}" for s, nu in c.r.items() if s != WATER)
@@ -1681,13 +1713,20 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
         pres_p = all(led.get(s, 0.0) > X_MIN for s in ps[1])
         if not (pres_r or pres_p):
             continue
-        S_f = S_of(c, led, V, pH_f, T_K, T, gsup, p_ext_kpa,
+        S_f = S_of(c, led, V, pH_solver, T_K, T, gsup, p_ext_kpa,
                    gas_escape, logc)
+        S_pres = (S_f if pH_f == pH_solver else
+                  S_of(c, led, V, pH_f, T_K, T, gsup, p_ext_kpa,
+                       gas_escape, logc_p))
         # 逐方向 disabled：walk 的评估循环按"该方向未禁用"才入选
         # （engine L903/905），只看双向同时禁用会漏报——TS04 的三条
         # S≈+17.6 候选正是**单向**禁用，旧口径报 dis=0 造成"walk 看不见
         # 仍有驱动的候选"的假象。
         df, dr = (c.key, 1) in disabled, (c.key, -1) in disabled
+        # 禁用原因（只读，见 dis_why 的定义）：把"已达平衡"与"驱动仍强却
+        # 被限幅/零推进"分开——前者正当，后者才是质量口径要找的病灶。
+        _dw = ((dis_why or {}).get((c.key, 1))
+               or (dis_why or {}).get((c.key, -1)))
         sl = bool(c.meta.get("slow") or 1 in c.meta.get("slow_dirs", ())
                   or -1 in c.meta.get("slow_dirs", ()))
         # 膜封锁（与 walk L892 同口径）：致密膜只抑制溶剂氧化通道
@@ -1707,24 +1746,26 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
         if not (pres_r and pres_p):
             # 单侧在场：驱动属正常（反应物耗尽/产物未生）；仅记录不判残差
             active.append({"kind": c.kind, "eq": _peq(c),
-                           "S": round(S_f, 3), "two_sided": False,
+                           "S": round(S_f, 3), "S_pres": round(S_pres, 3),
+                           "two_sided": False,
                            "frozen": c.netkey_fwd in frozen_perm
                                      or c.netkey_rev in frozen_perm,
                            "slow": sl, "blocked": bl, "ext_max": round(ex, 9),
-                           "dis_fwd": df, "dis_rev": dr,
+                           "dis_fwd": df, "dis_rev": dr, "dis_why": _dw,
                            "disabled": df and dr})
             continue
         active.append({"kind": c.kind, "eq": _peq(c), "S": round(S_f, 3),
-                       "two_sided": True,
+                       "S_pres": round(S_pres, 3), "two_sided": True,
                        "frozen": c.netkey_fwd in frozen_perm
                                  or c.netkey_rev in frozen_perm,
                        "slow": sl, "blocked": bl, "ext_max": round(ex, 9),
-                       "dis_fwd": df, "dis_rev": dr,
+                       "dis_fwd": df, "dis_rev": dr, "dis_why": _dw,
                        "disabled": df and dr})
     probe.clear()
     probe.update({
         "exit": exit_reason, "iters": it_total, "hist": hist_len,
         "steps_n": steps_len, "pH": round(pH_f, 3),
+        "pH_solver": round(pH_solver, 3),
         "H_excess": round(H_excess, 9),
         "ledger": {s: round(m, 9) for s, m in led.items() if m > 0.0},
         "active": active,
