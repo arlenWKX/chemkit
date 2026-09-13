@@ -32,7 +32,9 @@ def show(prefixes: list[str], verbose: bool = False) -> None:
         print(f"  note: {(c.get('note') or '')[:200]}")
         print(f"  degree={r['degree']} changed={r['changed']} "
               f"final_pH={r.get('final_pH')} steps={len(r.get('steps', []))}")
-        print(f"  net_equation: {r.get('net_equation')}")
+        from chemkit.system import Reaction
+        _net = Reaction(r).net_equation
+        print(f"  net_equation: {None if _net is None else _net.plain()}")
         print(f"  exit={probe.get('exit')} iters={probe.get('iters')} "
               f"resid={probe.get('max_abs_S')} frozen={probe.get('frozen_n')} "
               f"disabled={probe.get('disabled_n')}")

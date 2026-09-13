@@ -18,7 +18,25 @@ from functools import reduce
 
 from .core import elements_of, charge_of
 from .data import Tables, load_tables
+import os as _os
+
+_TRACE_EQ = bool(_os.environ.get("CHEM_TRACE_EQ"))
+
+from dataclasses import dataclass
+
 from .candidates import WATER, H_ION, X_MIN, ANN_MIN_EXTENT
+
+from .data import load_tables as _load_tables
+
+_SOLIDS_C: frozenset | None = None
+
+
+def _solid_set() -> frozenset:
+    """固相物种全集（`Tables.solids` 的键），模块级缓存（痕量新相闸门用）。"""
+    global _SOLIDS_C
+    if _SOLIDS_C is None:
+        _SOLIDS_C = frozenset(_load_tables().solids)
+    return _SOLIDS_C
 
 # 净方程守恒的绝对容差 = 报告量子：consumption/production 由 round(x, 6)
 # 产出，每个系数误差 ≤5e-7；含物种数与电荷项余量后取 1e-5。
@@ -47,7 +65,6 @@ _SPECIES_NORMALIZE = {
 # 匹配 "系数+物种"，系数为可选的整数或小数；物种以非数字开头（字母/[/(
 _TERM_RE = re.compile(r"^(\d+(?:\.\d+)?)(\D.*)$")
 _SIDE_SEP = " + "
-_ARROW = " -> "
 
 WATER = "H_2O"
 H_ION = "H^+"
@@ -73,12 +90,21 @@ def _parse_side(s: str) -> dict[str, float]:
     return result
 
 
-def _parse_equation(eq: str) -> tuple[dict[str, float], dict[str, float]]:
-    """解析 '2A + 3B -> 4C + D' → ({A:2, B:3}, {C:4, D:1})。"""
-    if _ARROW not in eq:
-        return {}, {}
-    lhs, rhs = eq.split(_ARROW, 1)
-    return _parse_side(lhs), _parse_side(rhs)
+def _parse_equation(eq) -> tuple[dict[str, float], dict[str, float]]:
+    """解析 '2A + 3B -> 4C + D' → ({A:2, B:3}, {C:4, D:1})。
+
+    接受 `Equation` 结构（v0.5.0：方程式先结构化后渲染——结构对象直接
+    返回其系数，不走字符串回读）；接受任一箭头记号（`->`/`<=>`/`→`/`⇌`），
+    因为箭头是**渲染细节**（结构里只有 `reversible` 布尔）。"""
+    if isinstance(eq, Equation):
+        return dict(eq.left), dict(eq.right)
+    if not isinstance(eq, str):
+        eq = str(eq)
+    for a in (ARROW_FWD, ARROW_EQ, "\u2192", "\u21cc", "="):
+        if a in eq:
+            lhs, rhs = eq.split(a, 1)
+            return _parse_side(lhs), _parse_side(rhs)
+    return {}, {}
 
 
 # ============================================================ H/O 原子配平
@@ -608,14 +634,156 @@ def _beautify_big_coeff(consumed: dict[str, float],
     return None
 
 
-def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> str | None:
-    """将 consumed/produced 格式化为最简整数比的离子方程式字符串。
+# 可逆箭头（v0.5.0 用户口径）：**平衡过程用可逆符号**，完全反应用单向箭头。
+# 用 ASCII 的 `<=>` 而不是 U+21CC：渲染结果要进日志/断言/GBK 控制台，
+# ASCII 不会在打印时炸掉（语义相同）。
+ARROW_FWD = "->"
+ARROW_EQ = "<=>"
 
-    物种排序：先按系数降序，再按名称字典序（确定性输出，便于测试断言）。
-    优先级：① 整数 snap（处理 equilibrium 残差，干净小整数）；
-            ② _rationalize 分数有理化（处理真实非整数比，如 1:2:1.5）；
-            ③ 浮点系数兜底（真实非化学计量混合，如 Fe→Fe2+/Fe3+）。
+
+def species_plain(sp: str) -> str:
+    """物种名 → **纯字符串**（连上下标标注都不用，最大兼容性）。
+
+    只去掉**标记字符** `_ ^ { }`，内容一律保留：
+    `H^+` → `H+`、`SO_4^{2-}` → `SO42-`、`CH_3COOH` → `CH3COOH`、
+    `[Fe(SCN)_3]` → `[Fe(SCN)3]`。这是**手动读取的 fallback**（默认渲染是
+    TeX，见 `Equation.__str__`）：供不支持任何标记的场合（纯文本日志、
+    文件名、旧终端）使用。"""
+    for ch in "_^{}":
+        sp = sp.replace(ch, "")
+    return sp
+
+
+def species_tex(sp: str) -> str:
+    r"""物种名 → TeX（**TeX 模式**的语法细节集中在这里）。
+
+    引擎物种记法（`H^+` / `SO_4^{2-}` / `[Fe(SCN)_3]` / `CH_3COOH`）→ TeX：
+      · 配方部分整体进 `\mathrm{}`（正体，符合化学排版惯例）；
+      · `_x` → `_{x}`、`^x` → `^{x}`（多字符必须加花括号，否则 TeX 只取首字符）；
+      · 电荷挂在 `\mathrm{}` **外面**（`\mathrm{SO_4}^{2-}`），与教科书一致。
+    纯字符串模式不走这里（用户口径：纯字符串不考虑上下标问题，求最大兼容性）。
     """
+    body, charge = sp, ""
+    i = sp.rfind("^")
+    if i >= 0:
+        body, charge = sp[:i], sp[i + 1:]
+    # 下标补花括号：_4 → _{4}（已带花括号的原样保留）
+    out = []
+    k = 0
+    while k < len(body):
+        ch = body[k]
+        if ch in "_^" and k + 1 < len(body):
+            nxt = body[k + 1]
+            if nxt == "{":
+                j = body.find("}", k)
+                j = len(body) if j < 0 else j + 1
+                out.append(f"{ch}{body[k + 1:j]}")
+                k = j
+                continue
+            out.append(f"{ch}{{{nxt}}}")
+            k += 2
+            continue
+        out.append(ch)
+        k += 1
+    tex = "\\mathrm{" + "".join(out) + "}"
+    if charge:
+        c = charge[1:-1] if charge.startswith("{") and charge.endswith("}") \
+            else charge
+        tex += "^{" + c + "}"
+    return tex
+
+
+def render_equation(left: dict, right: dict, reversible: bool = False,
+                    mode: str = "tex") -> str | None:
+    """把两侧系数渲染成离子方程式字符串（**渲染与结构分离**，v0.5.0）。
+
+    箭头由**布尔**决定（用户口径：结构里存 reversible，符号只在渲染时出现）：
+    `reversible=True` → `<=>`（平衡过程）；`False` → `->`（完全反应）。
+    用 ASCII `<=>` 而非 U+21CC：渲染结果会进日志/断言/GBK 控制台，
+    ASCII 不会在打印时炸掉（语义相同）。
+
+    物种排序：先按系数降序，再按名称字典序（确定性输出，便于断言）。"""
+    if not left or not right:
+        return None
+    c_items = sorted(((sp, v) for sp, v in left.items() if v > 0),
+                     key=lambda x: (-x[1], x[0]))
+    p_items = sorted(((sp, v) for sp, v in right.items() if v > 0),
+                     key=lambda x: (-x[1], x[0]))
+    if not c_items or not p_items:
+        return None
+    if mode == "plain":
+        # 纯字符串 fallback：无任何标记（不写 `_`/`^`，也不加 \mathrm）
+        def _p(v, sp):
+            coef = "" if abs(v - 1.0) < 1e-12 else f"{_fmt_term(v, '')}"
+            return f"{coef}{species_plain(sp)}"
+        arrow = ARROW_EQ if reversible else ARROW_FWD
+        lhs = " + ".join(_p(v, sp) for sp, v in c_items)
+        rhs = " + ".join(_p(v, sp) for sp, v in p_items)
+        return f"{lhs} {arrow} {rhs}"
+    # 默认 TeX：放进 Markdown 的 $$…$$ 块即可正常显示
+    def _t(v, sp):
+        coef = "" if abs(v - 1.0) < 1e-12 else f"{_fmt_term(v, '')}"
+        return f"{coef}{species_tex(sp)}"
+    arrow = "\\rightleftharpoons" if reversible else "\\rightarrow"
+    lhs = " + ".join(_t(v, sp) for sp, v in c_items)
+    rhs = " + ".join(_t(v, sp) for sp, v in p_items)
+    return f"{lhs} {arrow} {rhs}"
+
+
+def make_equation(consumed: dict, produced: dict, reversible: bool = False,
+                  kind: str = "", extent: float | None = None) -> "Equation | None":
+    """由净差字典构造 `Equation`（规整系数后结构化存储）；空净差返回 None。"""
+    norm = _normalize_equation(consumed, produced)
+    if norm is None:
+        return None
+    return Equation(norm[0], norm[1], reversible, kind, extent)
+
+
+@dataclass(frozen=True)
+class Equation:
+    """**结构化**离子方程式（先存结构，后渲染——用户 v0.5.0 口径）。
+
+    left/right  物种 → 系数（呈现系数：整数 snap / 有理化 / 浮点兜底）
+    reversible  **布尔**：True = 平衡过程（渲染成 `<=>`）；False = 完全反应（`->`）
+    kind        机制标签（precip/dissolve/proton/redox/complex/…，可为空）
+    extent      该步程度（mol，路由步骤用；净方程为 None）
+
+    结构里**不存符号**（用户口径：可逆是语义、符号是渲染细节）；字符串只作
+    呈现视图 `str(eq)`，比较/断言走结构（见 testsuit）。
+    """
+    left: dict
+    right: dict
+    reversible: bool = False
+    kind: str = ""
+    extent: float | None = None
+
+    def __str__(self) -> str:
+        """**默认 = TeX 模式**：直接放进 Markdown 的 `$$…$$` 块即可显示。"""
+        return self.tex()
+
+    def tex(self) -> str:
+        r"""TeX 渲染（`\mathrm{}` 正体 + 规范上下标 + `\rightarrow`/`\rightleftharpoons`）。"""
+        return render_equation(self.left, self.right, self.reversible,
+                               mode="tex") or ""
+
+    def plain(self) -> str:
+        """**纯字符串 fallback**（手动调用）：不带任何上下标标注，最大兼容性。"""
+        return render_equation(self.left, self.right, self.reversible,
+                               mode="plain") or ""
+
+    def __repr__(self) -> str:
+        return f"Equation({self.plain()!r}, reversible={self.reversible})"
+
+
+def _normalize_equation(consumed: dict[str, float], produced: dict[str, float]
+                        ) -> tuple[dict, dict] | None:
+    """把净差规整为**呈现系数**（结构，不拼接字符串）。
+
+    优先级：① 整数 snap；② `_rationalize` 分数有理化；③ 浮点系数兜底。
+    返回 (left, right) 两个"物种→系数"字典；调用方交给 `render_equation`
+    渲染（v0.5.0：**先结构化存储、后渲染**——用户口径）。
+
+    排序与渲染集中在 `render_equation`（先按系数降序、再按名称字典序）。"""
     if not consumed or not produced:
         return None
     # 显示级痕量剔除：<0.1% 峰值的项是数值噪声（近中性点体系的 H+ 残差
@@ -647,9 +815,7 @@ def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> 
                             key=lambda x: (-x[1], x[0]))
         prod_items = sorted([(s, v) for s, v in zip(produced.keys(), prod_ints) if v > 0],
                             key=lambda x: (-x[1], x[0]))
-        lhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in cons_items)
-        rhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in prod_items)
-        return f"{lhs}{_ARROW}{rhs}"
+        return dict(cons_items), dict(prod_items)
 
     # ② _rationalize 分数有理化（真实非整数比，如 1:2:1.5）——
     #    只接受**守恒**的整数向量（独立逐项近似会破坏守恒，见 _ints_balanced）
@@ -693,9 +859,7 @@ def _format_equation(consumed: dict[str, float], produced: dict[str, float]) -> 
                              if v > 0], key=lambda x: (-x[1], x[0]))
         prod_items = sorted([(s, v) for s, v in zip(produced.keys(), prod_ints)
                              if v > 0], key=lambda x: (-x[1], x[0]))
-    lhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in cons_items)
-    rhs = _SIDE_SEP.join(_fmt_term(v, sp) for sp, v in prod_items)
-    return f"{lhs}{_ARROW}{rhs}"
+    return dict(cons_items), dict(prod_items)
 
 
 # ============================================================ 步骤聚合与方程式构建
@@ -826,14 +990,19 @@ def _collapse_transient_intermediates(
 
 def _step_to_ionic(reactants: dict, products: dict, extent: float
                    ) -> tuple[dict, dict, str | None]:
-    """单个聚合步骤 → (consumed, produced, 方程式)。含 H2O 配平与 OH- 还原。"""
+    """单个聚合步骤 → (consumed, produced, 纯字符串视图)。
+
+    含 H2O 配平与 OH- 还原；第三个返回值只用于**步骤去重**（结构才是权威，
+    见 `Equation`），按纯字符串（无标记）渲染。"""
     consumed = {sp: nu * extent for sp, nu in reactants.items()}
     produced = {sp: nu * extent for sp, nu in products.items()}
     consumed, produced = _balance_h_o(consumed, produced)
     consumed, produced = _restore_oh(consumed, produced, _TRACE)
     if not consumed or not produced:
         return {}, {}, None
-    return consumed, produced, _format_equation(consumed, produced)
+    _n = _normalize_equation(consumed, produced)
+    return consumed, produced, (None if _n is None
+                                else render_equation(_n[0], _n[1], mode="plain"))
 
 
 # 净方程式中"分子态 → 离子形"的改写不再维护本地表（旧 _NET_ACID_SPLIT /
@@ -917,15 +1086,23 @@ def _pool_step_key(sp_r: set[str], sp_p: set[str],
     return sps <= allowed
 
 
-def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict, str | None]:
-    """构建多步离子方程式列表 + 净离子方程式。
+def _build_equations(steps: list[dict], r: dict
+                     ) -> tuple[list, dict, dict, "Equation | None",
+                                "Equation | None"]:
+    """构建多步离子方程式列表 + 净离子方程式（**两版本**，v0.5.0）。
 
-    返回 (equations, consumption, production, net_equation)：
+    返回 (equations, consumption, production, net_equation, net_equation_raw)：
       equations         各显著步骤的离子方程式（聚合、对消、按 extent 降序）；
       consumption/production  净消耗/生成（mol，含 H+/OH-/H2O）——来自账本净差
                         （consumption_raw/production_raw + H_excess 变化 + 中和步），
                         是真实摩尔量，振荡与中间体天然抵消；
-      net_equation      净离子方程式（上述净差的格式化）。
+      net_equation      净离子方程式（**精编版**）：按"有意义的平衡过程"口径
+                        呈现——实质反应、解离/水解/配位、投料自带固相的溶解度
+                        表达都给；只有**痕量副过程**（生成投料里没有的新相/
+                        痕量配合物，且非该过程的全部）置 None；
+      net_equation_raw  **原始版**：不做上述口径裁剪，永远给出账本净差的格式化
+                        （用户要求："不带 raw 是当前行为，带 _raw 则三种情况
+                        都考虑"）。两者不一致时正是"该体系只发生了痕量副过程"。
     """
     # ---- 多步方程式（步骤聚合路径）----
     collected = _collect_steps(steps)
@@ -937,7 +1114,15 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
         _pl = r.get("pool_ligands") or {}
         collected = [(rr, p, ext) for rr, p, ext in collected
                      if not _pool_step_key(set(rr), set(p), _pools, _pm, _pl)]
-    equations: list[str] = []
+    # 箭头按**体系**判定（v0.5.0 用户口径）：完全反应 `->`，残存平衡 `<=>`。
+    # 逐步判定需要每步的 conversion，而聚合后的步骤已混入多个来源；体系级
+    # degree 是引擎自己的权威判定（0/1=未完成 ⟹ 平衡；2=完全），用它统一
+    # 且自洽：净方程与多步叙述的箭头不会互相矛盾。
+    # degree 是引擎给的三档**码**：2=完全（conv ≥ DEGREE_COMPLETE）、
+    # 1=部分、0=无显著变化（见 engine 的 degree 计算）。注意别把它与
+    # candidates 的转换率阈值 DEGREE_COMPLETE=0.99 混用。
+    _rev = int(r.get("degree") or 0) < 2
+    equations: list[Equation] = []
     if collected:
         # 步骤取舍用**引擎自己的显著程度判据**（`ANN_MIN_EXTENT`），不用
         # "主步骤的 5%"这个第二套阈值。两套阈值会互相打架：真实执行过、
@@ -950,10 +1135,14 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
         kept.sort(key=lambda c: -c[2])
         seen_eq: set[str] = set()
         for rr, p, ext in kept:
-            _, _, eq = _step_to_ionic(rr, p, ext)
-            if eq and eq not in seen_eq:
+            sc, sp2, eq = _step_to_ionic(rr, p, ext)
+            if eq and sc and sp2 and eq not in seen_eq:
                 seen_eq.add(eq)
-                equations.append(eq)
+                # **结构化存储**：存**规整系数**（不是 mol 量），渲染交给
+                # Equation.__str__——结构才是权威，字符串只是视图。
+                _sn = _normalize_equation(sc, sp2)
+                equations.append(Equation(*(_sn if _sn else (sc, sp2)),
+                                          reversible=_rev, extent=ext))
 
     # ---- 净方程（账本净差路径）----
     # 优先吃**精确净差**（`net_exact`，不 round/不设阈）：迹量反应在 1e-6
@@ -1011,7 +1200,7 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
     consumed = {s: v for s, v in consumed.items() if v > 1e-9}
     produced = {s: v for s, v in produced.items() if v > 1e-9}
     if not consumed or not produced:
-        return equations, {}, {}, None
+        return equations, {}, {}, None, None
     # ---- 痕量净反应过滤：仅过滤形成配合物的痕量反应（如同离子效应下
     # 的 [AgCl2]- / [Ag(NH3)2]+ 形成痕迹量），不过滤纯溶解的 Ksp 表达
     # （如 BaSO4 → Ba2+ + SO4^2- 是 Ksp 平衡表达，应保留）。
@@ -1027,8 +1216,12 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
     net_total = sum(consumed.values())
     # 仅当产物中含配合物离子且总消耗 <0.5% 总投料 且 < 5e-3 mol 时过滤
     has_complex_product = any(sp.startswith("[") for sp in produced)
-    if has_complex_product and net_total < 0.005 * feed_total and net_total < 5e-3:
-        return equations, {}, {}, None
+    # 痕量副过程不再早退：置旗标，末尾统一裁决——这样**原始净方程**
+    # （net_equation_raw，用户要求的"两版本"之一）仍可给出，而精编版
+    # （net_equation）按口径置 None。consumption/production 保持真实净差
+    # （呈现层仍能看到痕量量值），只是不写成方程式。
+    _trace_net = bool(has_complex_product
+                      and net_total < 0.005 * feed_total and net_total < 5e-3)
 
     # ============================================================
     # 守恒契约（v0.5.0 重构）
@@ -1063,7 +1256,7 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
     consumed = {s: v for s, v in consumed.items() if v > 1e-9}
     produced = {s: v for s, v in produced.items() if v > 1e-9}
     if not consumed or not produced:
-        return equations, {}, {}, None
+        return equations, {}, {}, None, None
     # 痕量过滤 → 共轭酸碱对质量平衡调整 → 配平 → OH- 还原 → 终过滤
     # 全部走同一个闸门 `_step`（相对 base 的累计偏差 ≤ REPORT_QUANTUM）。
     # 各化简的**内在启发式**（阈值、配对规则）保持不变——它们只是候选生成器；
@@ -1092,13 +1285,45 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
         lambda c, p: _filter_trace(c, p, frac=0.05, balanced=True),
         consumed, produced)
     if not consumed or not produced:
-        return equations, {}, {}, None
+        return equations, {}, {}, None, None
     # H/O 未配平的净差（隐式水档）：先整数化再补水的候选。浮点档补水必然
     # 引入 H+/OH- 而被闸门拒（见 _stoichiometric_net），呈现只能退化成
     # 既非整数、又缺水的浮点式——本步把它换成教科书整数式。
     if not _h_o_balanced(consumed, produced):
         consumed, produced = _step(_stoichiometric_net, consumed, produced)
-    net_str = _format_equation(consumed, produced)
+    # ---- 痕量**新相**闸门（v0.5.0，用户确认的边界）----------------------
+    # 位置关键：必须在化简链**之后**——此时 consumed/produced 才是最终叙述形，
+    # 用它判痕量才准（早期净差还含池内周转：NR19 的 Zn-Cl 配位周转使净差达
+    # 0.78 mol，早期判据会误判为"非痕量"）。
+    # 规则：生成"投料里没有的固相"，且净差**相对总投料 <0.5% 且 <5e-3 mol**
+    # ⟹ 不叙述。化学依据：这类体系**在饱和线上**
+    # （1 M CuSO4 自身水解到 pH 4.15 时 Q = 10^-19.7 = Ksp(Cu(OH)2)，析出
+    # 5e-4 mol 化学上正确），但写成净方程与 changed=False 自相矛盾。
+    # 两类反例天然不受影响：① 投料自带固相的溶解（E39 BaSO4、J03/J04
+    # Ca(OH)2）产物里没有"新固相"；② **痕量投料**下的沉淀（H03 AgCl 1e-4、
+    # H05/H06）：绝对量小，但相对其自身投料规模并不痕量（feed_total 有
+    # 0.01 mol 下限、判据取 0.5%）⟹ 保留（它就是该测试的主题）。
+    # 注：不能用"步的 conversion"当判据——痕量步的 x_max 本身也是痕量，
+    # 比值可以接近 1（T92 的逆析出步 conversion 0.487 即此），会把该抑制的
+    # 情形放行。
+    _sol = _solid_set()
+    _feed_sp = {e["name"] for e in r.get("initial", [])}
+    _new_solid = bool(_sol) and any(sp in _sol and sp not in _feed_sp
+                                    for sp in produced)
+    _conv = max([st.get("conversion", 0.0) for st in steps
+                 if st.get("kind") in ("precip", "dissolve")] or [0.0])
+    _net_tot = sum(consumed.values())
+    if _TRACE_EQ:
+        print(f"  [eq-gate] net={_net_tot:.3g} feed={feed_total:.3g} "
+              f"new_solid={_new_solid} conv={_conv:.3g} steps={len(steps)}")
+    # **不抑制痕量新相**（用户 v0.5.0 口径修正）：饱和线上的痕量析出是
+    # **有意义的平衡过程**（1 M CuSO₄ 的 pH 4.15 正是 Cu(OH)₂ 的 Ksp 线），
+    # 精编版应把它讲出来，只是讲成**可逆平衡**（`reversible=True` ⟹ `<=>`）
+    # 而不是"反应发生了"。`net_equation_raw` 仍给同一净差的原始渲染。
+    # 保留的只有"痕量配合物"一条（B03 同离子隐蔽形态，不构成化学方程式）。
+    _norm = _normalize_equation(consumed, produced)
+    _nc, _np = (_norm if _norm is not None else (dict(consumed), dict(produced)))
+    net_str = render_equation(_nc, _np)
     # ---- 大系数美化（v0.3.8）：浮点系数或 max>20 的混合通道净差 →
     # 主通道呈现（移除次要物种 + 平衡子空间投影 + 小整数比；配平硬保证，
     # 见 _beautify_big_coeff）。找不到干净形式保持原样（诚实优先）。
@@ -1107,9 +1332,11 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
         bp = _beautify_big_coeff(consumed, produced)
         if bp is not None:
             bc, bp_ = bp
-            pretty = _format_equation(bc, bp_)
+            _bn2 = _normalize_equation(bc, bp_)
+            pretty = (None if _bn2 is None
+                      else render_equation(_bn2[0], _bn2[1], mode="plain"))
             # 接受条件（v0.5.0 放宽并改为"看产物质量"）：
-            #   ① 干净——`_format_equation` 给的是整数形式（无小数点）
+            #   ① 干净——渲染给的是整数形式（无小数点）
             #   ② 小系数——max ≤ 20
             #   ③ 覆盖——被保留的物种承载净差的主要部分（≥50%），
             #      否则"主通道"名不副实，不如呈现诚实混合比
@@ -1124,7 +1351,12 @@ def _build_equations(steps: list[dict], r: dict) -> tuple[list[str], dict, dict,
                     and _max_coef(pretty) <= 20
                     and _beautify_covers(consumed, produced, bc, bp_)):
                 net_str = pretty
-    return equations, consumed, produced, net_str
+                _bn = _normalize_equation(bc, bp_)
+                _nc, _np = (_bn if _bn is not None else (dict(bc), dict(bp_)))
+    net_obj = Equation(_nc, _np, _rev) if net_str else None
+    net_raw = Equation(_nc, _np, _rev) if net_str else None
+    return (equations, consumed, produced,
+            None if _trace_net else net_obj, net_raw)
 
 
 def _beautify_covers(consumed: dict, produced: dict,

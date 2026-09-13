@@ -25,7 +25,7 @@
   Reaction(judge 结果) -> 人类可读对象
       changed / reacted / degree / pH
       consumption / production / initial / final
-      net_equation / equations / annotations
+      net_equation / equations（Equation 结构，读取时渲染） / annotations
       raw（引擎记账层：steps / H_excess / consumption_raw 等）
 
 底层（判定引擎直通）：

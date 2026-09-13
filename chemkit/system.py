@@ -13,10 +13,11 @@ from .engine import judge
 from . import thermo
 from .equations import (_parse_equation, _balance_h_o, _restore_oh,
                         _fmt_term, _rationalize, _try_integer_snap,
-                        _format_equation, _step_key, _collect_steps,
+                        make_equation, Equation,
+                        _step_key, _collect_steps,
                         _collapse_transient_intermediates, _step_to_ionic,
                         _build_equations, _balanced_quick, _filter_trace,
-                        _SPECIES_NORMALIZE, _TERM_RE, _SIDE_SEP, _ARROW,
+                        _SPECIES_NORMALIZE, _TERM_RE, _SIDE_SEP,
                         WATER, H_ION, OH_ION, _TRACE, STEP_MIN,
                         TABLES, default_tables)
 
@@ -37,8 +38,11 @@ class Reaction:
                        气体如 SO3 已与水反应为酸、酸碱中和已记账；H2O 为溶剂不入）
         final          终态组成 {化学式: mol}（H2O 为溶剂不入）
         pH             终态 pH（None 表示不适用，如 OVERRIDE 路径）
-        net_equation   总净离子反应方程式（str | None），无显著反应时为 None
-        equations      多步离子方程式列表（按贡献降序）
+        net_equation   总净离子反应方程式（**Equation 结构** | None）；无显著
+                       反应时为 None。**读取时**才渲染：
+                       `str(eq)`/`eq.tex()` = TeX（Markdown `$$…$$` 可显示），
+                       `eq.plain()` = 不带上下标标注的纯字符串 fallback
+        equations      多步离子方程式列表（Equation 结构，按贡献降序）
         annotations    标注列表（slow / blocked 等）
         override       命中的 OVERRIDE id（或 None）
         escaped        逸出气相 {化学式: mol}（泡点扫气：超过 H(T)·p_ext
@@ -71,7 +75,7 @@ class Reaction:
         # 人类可读层
         "changed", "reacted", "degree",
         "consumption", "production", "initial", "final",
-        "pH", "net_equation", "equations",
+        "pH", "net_equation", "net_equation_raw", "equations",
         "annotations", "override", "escaped",
         # 热效应层（独立温度模块）
         "heat_kJ", "dT_K", "T_final_K", "thermal",
@@ -107,16 +111,25 @@ class Reaction:
         self.H_excess_raw: float = r.get("H_excess", 0.0)
 
         # ---- 人类可读层（化学习惯）----
-        self.equations, self.consumption, self.production, self.net_equation = \
+        # net_equation 是**精编版**（痕量副过程不叙述）；net_equation_raw 是
+        # **原始版**（账本净差的格式化，永远给出）。两者不一致 ⟹ 该体系只发生
+        # 了痕量副过程（如 1 M CuSO₄ 在自身 Ksp 线上析出 5e-4 mol Cu(OH)₂）。
+        # 结构化对象（Equation：left/right/arrow/kind），字符串只是渲染视图
+        (self.equations, self.consumption, self.production,
+         self.net_equation, self.net_equation_raw) = \
             _build_equations(r["steps"], r)
+        # **不做预先转换**（用户口径）：这里只存 Equation 结构；需要文本时
+        # 由读取方在读取点转换——`str(eq)`/`eq.tex()` = TeX（Markdown $$ 块可
+        # 直接显示），`eq.plain()` = 无标记纯字符串 fallback。
 
         # OVERRIDE 路径无 steps，退化为 raw 层面的化学式方程式
         if (not self.consumption and not self.production and self.consumption_raw
                 and self.override):
             self.consumption = dict(self.consumption_raw)
             self.production = dict(self.production_raw)
-            self.net_equation = _format_equation(self.consumption, self.production)
-            if self.net_equation and not self.equations:
+            self.net_equation = make_equation(self.consumption, self.production)
+            self.net_equation_raw = self.net_equation
+            if self.net_equation is not None and not self.equations:
                 self.equations = [self.net_equation]
 
         # 终态组成：raw final + H+/OH-（H2O 为溶剂不入）
@@ -377,7 +390,8 @@ def react(substances: dict[str, float],
 
     示例：
         r = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0)
-        print(r.net_equation)   # 'Zn + 2H^+ -> H_2 + Zn^{2+}'
+        print(r.net_equation.plain())   # '2H+ + Zn -> H2 + Zn2+'（纯字符串）
+        print(r.net_equation.tex())     # Markdown $$ 块可直接显示
         rt = chemkit.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0,
                            isothermal=False)
         print(rt.heat_kJ, rt.dT_K)  # 绝热耦合：放热与温升

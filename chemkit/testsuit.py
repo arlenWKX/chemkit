@@ -41,6 +41,7 @@ import time
 
 from .data import load_tables, Tables, _half_balance
 from .engine import judge
+from .equations import Equation
 from .system import Reaction, _parse_equation
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -328,7 +329,9 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
                         "pH": r.get("final_pH"), "degree": r.get("degree"),
                         "changed": r.get("changed"),
                         "annotations": list(r.get("annotations") or []),
-                        "net_equation": Reaction(r).net_equation
+                        "net_equation": (
+                            None if Reaction(r).net_equation is None
+                            else Reaction(r).net_equation.plain())
                         if ("eq" in c or "eq_has" in c) else None})
         if verbose:
             print(f"[FAIL] {name}  -- {'; '.join(errs)}"
@@ -602,8 +605,17 @@ def case_api() -> None:
     ok3 = chemkit.System({"NaCl": 0.1}).result is not None
     # 净离子方程式：Zn + H2SO4 → Zn + 2H+ -> H2 + Zn2+
     r4 = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0)
-    ok4 = (isinstance(r4.net_equation, str) and "Zn" in r4.net_equation
-           and "H^+" in r4.net_equation and "H_2" in r4.net_equation)
+    # v0.5.0：净方程式**先结构化后渲染**——`net_equation` 是 Equation
+    # （left/right 系数 + reversible 布尔），字符串只是视图：
+    # `str()`/`.tex()` = TeX（进 Markdown $$ 块），`.plain()` = 无标记 fallback。
+    _n4 = r4.net_equation
+    ok4 = (isinstance(_n4, Equation)
+           and _n4.left == {"H^+": 2, "Zn": 1}
+           and _n4.right == {"H_2": 1, "Zn^{2+}": 1}
+           and _n4.reversible is False
+           and _n4.tex() == ("2\\mathrm{H}^{+} + \\mathrm{Zn} \\rightarrow "
+                            "\\mathrm{H_{2}} + \\mathrm{Zn}^{2+}")
+           and _n4.plain() == "2H+ + Zn -> H2 + Zn2+")
     # H+/OH-/H2O 显式出现在 consumption/production：
     # NaOH+HCl → consumption 含 H+ 和 OH-，production 含 H2O
     r5 = chemkit.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0)

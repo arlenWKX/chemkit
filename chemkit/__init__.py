@@ -21,7 +21,7 @@
 
     r.changed, r.reacted, r.degree, r.pH                 # 判定层
     r.consumption, r.production, r.initial, r.final      # 人类可读层
-    r.net_equation, r.equations                          # 方程式层
+    r.net_equation, r.equations    # Equation 结构，读取时 .tex()/.plain()
     r.consumption_raw, r.H_excess_raw                    # 引擎记账层
 
 底层 API（判定引擎直通）：

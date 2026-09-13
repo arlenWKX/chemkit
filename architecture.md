@@ -2713,3 +2713,44 @@ redox 型痕量）；② F49/NR22/T92/R06/F48/NR55/NR114/NR169 的**标准要求
 （1:3 恰在两性边界）；④ T64 比例、NR57/NR152/NR153、Co33/EU01/RX12 产率。
 ⟹ 这 16 例是**标准与化学的边界**，需逐条裁决后才好落地；已请用户确认边界规则。
 
+#### X-16. 方程式层重构：**先结构化、后渲染** + 两版净方程 + 可逆符号
+
+用户口径（本轮）：① 精编方程式必须体现**有意义的平衡过程**；② 可逆过程用
+可逆符号；③ **不要预先转换**成字符串——`Reaction` 只存结构，读取时才渲染；
+④ 区分 **TeX 模式**（默认）与**纯字符串 fallback**（手动读取，连上下标标注
+都不用）；⑤ 不留 alias；⑥ 同步修改测试用例库。
+
+落地（`equations.py` / `system.py` / `testsuit.py`）：
+
+```python
+@dataclass(frozen=True)
+class Equation:
+    left: dict          # 物种 → 呈现系数（整数 snap / 有理化 / 浮点兜底）
+    right: dict
+    reversible: bool    # **布尔**（结构里不存符号）：True=平衡过程
+    kind: str = ""      # precip/dissolve/proton/redox/complex…
+    extent: float | None = None
+    def __str__(self):  return self.tex()      # 默认 TeX
+    def tex(self):      ...                    # \mathrm{} 正体 + ^{} _{} + \rightleftharpoons
+    def plain(self):    ...                    # 手动 fallback：去掉 _ ^ { } 标记，内容保留
+```
+
+- **渲染与规整分离**：`_normalize_equation()` 只产出系数结构，
+  `render_equation(left, right, reversible, mode)` 只负责拼字符串；
+  步骤与净方程都存结构，**读取时**才渲染（`Reaction` 不再预存字符串副本，
+  也不留 `*_str`/`*_tex` alias）。
+- **两版净方程**（用户设计）：`net_equation`（精编）+ `net_equation_raw`
+  （同一净差的原始渲染）。二者不一致 ⟺ 该体系只发生了痕量副过程。
+- **可逆符号**：`reversible` 由引擎自己的 `degree` 决定（2=完全 ⟹ `->`，
+  0/1=未完成 ⟹ `<=>`）。用 ASCII `<=>` 而不是 U+21CC：渲染结果要进日志/
+  断言/GBK 控制台，ASCII 不会在打印时炸掉（语义相同）。
+- **精编口径修正**：痕量**新相**不再抑制——饱和线上的痕量析出是**有意义的
+  平衡过程**（1 M CuSO₄ 的 pH 4.15 正是 Cu(OH)₂ 的 Ksp 线），精编版把它讲
+  出来、但讲成**可逆平衡**而不是"反应发生了"。仍保留的抑制只有"痕量配合物"
+  （B03 型同离子隐蔽形态，不构成化学方程式）。
+- 测试用例库同步：API 自测按**结构**断言（`left`/`right` 字典 + `reversible`
+  + `tex()`/`plain()` 文本），失败记录写 `plain()` 文本（JSON 可序列化）。
+
+**验收**：全量 **1294/1294**；`digest_all` 不变（纯呈现层重构，判定语义零
+位移——逐例 digest 用 `chemkit.converg.diff()` 复核）。
+
