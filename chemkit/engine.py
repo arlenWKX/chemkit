@@ -54,6 +54,18 @@ from .templates import (_redox_pair_static, _redox_templates,
 
 _TRACE = bool(_os.environ.get("CHEM_TRACE"))
 
+# ---- 确定性性能计数器（v0.5.0 性能审计，architecture §7 W-4）----------
+# 墙钟在共享沙箱里逐轮抖动 ±10–15%（同一份代码三次全量：均值
+# 29.1 / 32.5 / 33.9 ms），**不足以裁决"求根改动是否真的省了"**。
+# `S_of` 调用次数是确定性的：同一份代码 ⇒ 同一计数，且它正是走步每步
+# 的钱主要花在哪（§7 U-1 剖面：S_of 33% + pH 机器 20%，每次 f 各一遍）。
+# 默认关闭（每次调用一次全局判空，开销可忽略）；`converg.dump()` 临时置位。
+SOF_CALLS: list[int] | None = None
+
+# 二分收敛容差（相对 x_max 的绝对值下限见 solve_extent）：见 §7 W-4 的
+# 论证与实测。置 0.0 可复现"跑满迭代到浮点饱和"的旧路径（实验用）。
+_EXTENT_TOL_REL = 1e-11
+
 # ========================================================== ③ S = logK − logQ
 
 def _logc_of(s: str, ledger: dict, V: float, logc: dict | None) -> float:
@@ -84,6 +96,8 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
     求值只做查表与算术；项序与原逐项分支一致（r 全项后 pr 全项），
     logQ 累加顺序不变 ⇒ 数值 bit 级等价。
     """
+    if SOF_CALLS is not None:
+        SOF_CALLS[0] += 1
     tid = id(T)
     plan = c._plan
     if plan is None or c._plan_tid != tid:
@@ -325,13 +339,24 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
         # 后续送代 lo=mid<hi ≤ 阈值的单调推理不依赖 f 的形态）
         _micro_thr = (max(X_MIN, micro_rel * x_max)
                       if micro_rel is not None else None)
+        # 收敛容差（v0.5.0 性能，§7 U-3/W）：二分原本跑到**浮点饱和**——
+        # 源码注释已记"60 次二分超出 double 分辨率 ~52 bit，剩余迭代 mid 与
+        # 端点重合、f 重复求值同值，纯空转"。而走步对 ext 的实际需求远低于
+        # double 分辨率：执行量最终以 1e-6 mol 呈现、判据阈值是
+        # ANN_MIN_EXTENT(1e-3) 与微步线(0.02·x_max)。取 `1e-11·max(1,x_max)`
+        # 绝对容差——比任何消费 ext 的判据小 5 个数量级以上。
+        # 实测（SOF_CALLS 确定性计数，§7 W-4）：S_of 调用 −19%；
+        # 代价是部分用例的走步轨迹改变（多为收敛变好：Z31 resid 0.02→0.0、
+        # N23 8.28→0、Y03 10.2→1.8），断言侧锁轨迹的 4 条已按 §7 W 改为
+        # 锁化学（张成判据 + 区间断言）⟹ 全量 1294 断言不降。
+        _tol = _EXTENT_TOL_REL * max(1.0, x_max)
         lo, hi = 0.0, x_max
         for _ in range(iters):
+            if hi - lo <= _tol:
+                break   # 区间已到需求精度：返回的 lo 与真根差 ≤ _tol
             mid = (lo + hi) / 2
             if mid <= lo or mid >= hi:
-                break   # 浮点饱和：区间已不可再分（60 次二分超出 double
-                        # 分辨率 ~52 bit，剩余迭代 mid 与端点重合、f 重复
-                        # 求值同值，纯空转）——数学上与跑完全部迭代等价
+                break   # 浮点饱和：区间已不可再分（数学上与跑完全部迭代等价）
             if f(mid) > 0:
                 lo = mid
             else:

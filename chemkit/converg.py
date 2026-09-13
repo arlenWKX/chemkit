@@ -29,6 +29,7 @@ import time
 
 from .candidates import ANN_MIN_EXTENT
 from .data import load_tables
+from . import engine
 from .engine import judge
 from .testsuit import load_cases, DEFAULT_CASES
 
@@ -91,14 +92,22 @@ def _live(active: list, only: str | None = None) -> float:
     return round(max((abs(a["S"]) for a in active if f(a)), default=0.0), 3)
 
 
-def run_all(cases_path: str | None = None, with_probe: bool = True) -> list[dict]:
-    """跑全量用例，返回逐例记录（结果摘要 + 收敛画像 + 计时）。"""
+def run_all(cases_path: str | None = None, with_probe: bool = True,
+            count_sof: bool = False) -> list[dict]:
+    """跑全量用例，返回逐例记录（结果摘要 + 收敛画像 + 计时）。
+
+    count_sof: 同时记录每例的 `S_of` 调用次数（确定性性能指标，见
+    `engine.SOF_CALLS` 的说明）。默认关闭——它是给"求根/走步改动是否
+    真的省了"作裁决用的硬指标，墙钟不足以承担这个判断。
+    """
     cases = load_cases(cases_path)
     T = load_tables()
     out = []
     for c in cases:
         subs = [{"name": n, "mol": m} for n, m in c["subs"]]
         probe = {} if with_probe else None
+        if count_sof:
+            engine.SOF_CALLS = [0]
         t0 = time.perf_counter()
         r = judge(subs, c.get("cond") or {"V_L": 1.0}, T, _probe=probe)
         dt = (time.perf_counter() - t0) * 1000.0
@@ -108,6 +117,8 @@ def run_all(cases_path: str | None = None, with_probe: bool = True) -> list[dict
             "reacted": r.get("reacted"), "pH": r.get("final_pH"),
             "steps_n": len(r.get("steps", [])), "digest": _result_digest(r),
         }
+        if count_sof:
+            rec["sof"] = engine.SOF_CALLS[0] if engine.SOF_CALLS else 0
         if probe is not None and probe:   # OVERRIDE 直出路径无探针画像
             rec["exit"] = probe["exit"]
             rec["iters"] = probe["iters"]
@@ -122,13 +133,14 @@ def run_all(cases_path: str | None = None, with_probe: bool = True) -> list[dict
             rec["resid_blocked"] = _live(probe["active"], "blocked")
             rec["resid_trace"] = _live(probe["active"], "trace")
         out.append(rec)
+    engine.SOF_CALLS = None
     return out
 
 
 def dump(path_out: str = "converg-baseline.json",
-         cases_path: str | None = None) -> str:
+         cases_path: str | None = None, count_sof: bool = True) -> str:
     """全量 dump：逐例记录 + 总摘要（计时分位数/残差分布/哈希指纹）。"""
-    recs = run_all(cases_path)
+    recs = run_all(cases_path, count_sof=count_sof)
     ms = sorted(x["ms"] for x in recs)
     res = sorted(x.get("resid_live", 0.0) for x in recs)
     n = len(recs)
@@ -144,6 +156,7 @@ def dump(path_out: str = "converg-baseline.json",
         "n_gt500": sum(1 for m in ms if m > 500),
         "iters_total": sum(iters),
         "iters_p99": iters[int(n * 0.99)],
+        "sof_total": sum(x.get("sof", 0) for x in recs),
         "resid_p50": round(res[n // 2], 3),
         "resid_p90": round(res[int(n * 0.9)], 3),
         "resid_max": round(res[-1], 3),

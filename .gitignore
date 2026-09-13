@@ -16,3 +16,7 @@ _p10*.py
 _s.json
 _f33.json
 _v16.json
+# 审计/性能的临时捕获文件（`_fails.txt` 是 tools/quick.py 的**持久**记录，
+# 故意跟踪；其余 `_*.txt` 都是临时重定向输出，不该进历史）
+_*.txt
+!_fails.txt

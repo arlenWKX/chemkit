@@ -124,9 +124,102 @@ def _eq_match(expected: str, actual: str | None) -> bool:
     return es == as_ or (es[0], es[1]) == (as_[1], as_[0])
 
 
+def _eq_vec(eq: str) -> dict | None:
+    """方程式 → 净向量（消耗为正、生成为负；`Fraction` 精确系数）。
+
+    用于 `eq_has` 的**张成判定**（见 `_step_spanned`）。"""
+    from fractions import Fraction
+    r, p = _parse_equation(eq)
+    if not r or not p:
+        return None
+    v: dict = {}
+    for s, nu in r.items():
+        v[s] = v.get(s, Fraction(0)) + Fraction(nu).limit_denominator(10 ** 6)
+    for s, nu in p.items():
+        v[s] = v.get(s, Fraction(0)) - Fraction(nu).limit_denominator(10 ** 6)
+    return {s: x for s, x in v.items() if x != 0}
+
+
+def _step_spanned(need: dict, steps: list[dict]) -> bool:
+    """`need` 能否由实际步骤的**非负线性组合**得到（化学等价分解的判据）。
+
+    **为什么需要它**（architecture §7 V/W）：`eq_has` 原本要求被断言的步骤
+    **逐字出现**在分步叙述里，于是断言锁住了"某一轮数值轨迹恰好走出来的
+    那条路线"。实测：把投料做 ±1e-11 相对扰动（1 mol 差 1 nmol，物理上无
+    意义），T13/P11 的 `eq_has` 就翻红；把二分提前 1e-11 收敛，N19/Z31 同样
+    翻红。而路线完全可以**化学等价地分解**——例如
+
+        H⁺ + [Al(OH)₄]⁻ → Al(OH)₃ + H₂O
+        ≡  (4H⁺ + [Al(OH)₄]⁻ → 4H₂O + Al³⁺) + (3OH⁻ + Al³⁺ → Al(OH)₃)
+           + 3(H⁺ + OH⁻ → H₂O)
+
+    两者描述同一净变换。判据应当是"叙述**覆盖**了这个变换"，而不是"逐字
+    出现这一条"。实现：把各步与需求都写成净向量（精确有理数），解
+    Σ cᵢ·stepᵢ = need；有解且 cᵢ ≥ 0 即通过（负系数 = 要倒着走某一步，
+    那不是一条合法叙述）。纯 stdlib 精确算术，无容差。
+    """
+    cols = [_eq_vec(a) for a in steps]
+    cols = [c for c in cols if c]
+    if not cols:
+        return False
+    # **规范方向**（§7 O-5）：H⁺ + OH⁻ → H₂O 是呈现规范而非化学，故叙述可以
+    # 自由地"加上/减去"这一条——提供 (H⁺ + OH⁻ − H₂O) 与 −(·) 两个方向 ⟹
+    # `4H⁺ + [Al(OH)₄]⁻ → 4H₂O + Al³⁺` 与 `3OH⁻ + Al³⁺ → Al(OH)₃` 的组合
+    # 即可覆盖 `H⁺ + [Al(OH)₄]⁻ → Al(OH)₃ + H₂O`（N19 型路线）。
+    from fractions import Fraction
+    gauge = {"H^+": Fraction(1), "OH^-": Fraction(1), "H_2O": Fraction(-1)}
+    n_step = len(cols)
+    cols.append(gauge)
+    cols.append({k: -v for k, v in gauge.items()})
+    species = sorted(set(need) | {s for c in cols for s in c})
+    rows = [[c.get(s, 0) for c in cols] for s in species]
+    rhs = [need.get(s, 0) for s in species]
+    n = len(cols)
+    # 增广矩阵上做精确高斯消元（列主元）
+    aug = [rows[i] + [rhs[i]] for i in range(len(species))]
+    piv_col: list[int] = []
+    r = 0
+    for cidx in range(n):
+        piv = None
+        for i in range(r, len(aug)):
+            if aug[i][cidx] != 0:
+                piv = i
+                break
+        if piv is None:
+            continue
+        aug[r], aug[piv] = aug[piv], aug[r]
+        pv = aug[r][cidx]
+        aug[r] = [x / pv for x in aug[r]]
+        for i in range(len(aug)):
+            if i != r and aug[i][cidx] != 0:
+                f = aug[i][cidx]
+                aug[i] = [a - f * b for a, b in zip(aug[i], aug[r])]
+        piv_col.append(cidx)
+        r += 1
+        if r == len(aug):
+            break
+    # 一致性：全零行而右端非零 ⟹ 无解
+    for i in range(r, len(aug)):
+        if all(x == 0 for x in aug[i][:n]) and aug[i][n] != 0:
+            return False
+    sol = [0] * n
+    for i, cidx in enumerate(piv_col):
+        sol[cidx] = aug[i][n]
+    # 非负约束只施加于**真实步骤**：规范方向（H⁺+OH⁻⇌H₂O）是自由的记账
+    # 自由度，允许负系数——否则 `A + B − 3·gauge` 型分解会被误判为不合法。
+    if any(x < 0 for x in sol[:n_step]):
+        return False          # 需要倒着走某一步 ⟹ 不是合法叙述
+    # 代回校验（数值上由精确算术保证，防御性再算一遍）
+    for s in species:
+        got = sum(c.get(s, 0) * k for c, k in zip(cols, sol))
+        if got != need.get(s, 0):
+            return False
+    return True
+
+
 def check_equations(c: dict, rxn: Reaction, errs: list[str]) -> None:
     """离子方程式断言：eq（净方程，可为 null 要求无净方程）与
-    eq_has（多步方程必须包含的步骤式）。"""
+    eq_has（多步方程式必须**覆盖**的变换，见 `_step_spanned`）。"""
     if "eq" in c:
         exp = c["eq"]
         if exp is None:
@@ -135,8 +228,12 @@ def check_equations(c: dict, rxn: Reaction, errs: list[str]) -> None:
         elif not _eq_match(exp, rxn.net_equation):
             errs.append(f"净方程不符：实际 {rxn.net_equation} 期望 {exp}")
     for exp in c.get("eq_has", []):
-        if not any(_eq_match(exp, a) for a in rxn.equations):
-            errs.append(f"多步方程缺 {exp}（实际 {rxn.equations}）")
+        if any(_eq_match(exp, a) for a in rxn.equations):
+            continue                      # 逐字出现（快路径）
+        need = _eq_vec(exp)
+        if need is not None and _step_spanned(need, rxn.equations):
+            continue                      # 被叙述的步骤组合覆盖（化学等价分解）
+        errs.append(f"多步方程缺 {exp}（实际 {rxn.equations}）")
 
 
 def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
