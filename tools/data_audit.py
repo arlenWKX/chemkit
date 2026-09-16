@@ -272,6 +272,13 @@ def main() -> None:
         info.append("[死注解] 未接线（不生效）：" + "、".join(_dead[:6]))
     else:
         info.append("[动力学] kinetics 键全部已接线（无死注解）")
+    # 速率档清单（§7 X-37 (a) 段）：`rate` 目前是**声明**（无消费者）；
+    # 单列出来使"声明了哪些慢通道"可见可对账，(b) 段限幅生效时逐条比对。
+    _rates = [f"{c.get('ox')}/{c.get('red')}·{k}={v}"
+              for c in load_tables().couples
+              for k, v in (c.get("rate") or {}).items()]
+    info.append("[速率档] " + ("；".join(_rates) if _rates
+                              else "（暂无声明）"))
     th = load("thermo.json")
     counts["thermo"] = len(th)
     import re as _re
