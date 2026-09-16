@@ -427,6 +427,23 @@ core ← data ← candidates ← normalize ← speciation / acidbase / templates
 `topres.py` / `perf.py` / `snap.py` / `xver.py`（残差、性能、快照、跨版本
 对照）、`quick.py`（子集测试）、`case.py` / `cands.py` / `extent.py`（单例深探）。
 
+**轮次工具链（单一入口，v0.5.0 起固定）**：`tools/dev.py`——
+```
+python tools/dev.py guide                    # 本轮协议（10 行，含禁令）
+python tools/dev.py suite [用例前缀...]       # 全量/子集套件：摘要 + 失败明细
+python tools/dev.py perf                     # 确定性指标 vs HEAD 基线（墙钟不作门槛）
+python tools/dev.py case 21 T89 [--all]      # 步表(logK/S/conv) + 账本净差 + 两版净方程 + 断言判定
+python tools/dev.py snapshot .tmp_a.json     # 全库关键输出快照（含净方程，前后对比用）
+python tools/dev.py cmp .tmp_a.json .tmp_b.json
+python tools/dev.py anchor on|off|status     # pKw 锚定一键切换（幂等）
+python tools/dev.py eqcheck                  # 全库方程守恒精确核验
+python tools/dev.py hygiene [--fix]          # 行尾噪声/临时文件卫生
+python tools/dev.py patch spec.py [--check]  # 声明式补丁（先全量校验再原子落盘）
+```
+每个子命令首行强制打印 `pKw` 约定（避免"这轮跑的是哪个约定"的误读），控制台
+只输出 ASCII 记号（方程一律 `.plain()`），输出自带上限。协议与踩坑清单见
+`tools/README.md`。
+
 ### 数据表（`chemkit/data/`）
 
 | 文件 | 内容 | 规模 |

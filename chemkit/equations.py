@@ -1327,8 +1327,16 @@ def _build_equations(steps: list[dict], r: dict
     # ---- 大系数美化（v0.3.8）：浮点系数或 max>20 的混合通道净差 →
     # 主通道呈现（移除次要物种 + 平衡子空间投影 + 小整数比；配平硬保证，
     # 见 _beautify_big_coeff）。找不到干净形式保持原样（诚实优先）。
-    if net_str is not None and ("." in net_str
-                                or _max_coef(net_str) > 20):
+    # **入口判据看结构，不看渲染串**（v0.5.0 修复）：`net_str` 自 v0.5.0 起是
+    # TeX（`\mathrm{…} \rightarrow …`），而 `_max_coef` 走 `_parse_equation`
+    # 的箭头表（`->`/`<=>`/`→`/`⇌`/`=`），TeX 箭头一律认不出 ⟹ 恒返回 0
+    # ⟹ "系数 >20 也要美化"这条分支**静默失效**，只有含小数点的串才进得来。
+    # 后果实测：21 AgBr+浓氨水 的整数化结果 `34NH₃+13AgBr+8H₂O ⇌ 13Br⁻+
+    # 13[Ag(NH₃)₂]⁺+8NH₄⁺+8OH⁻`（max=34，无小数点）漏出到净方程，而同一体系
+    # 在 pKw 未锚定时因系数是 4.278 带小数点而正常美化 ⟹ 同一条化学结论
+    # （2NH₃+AgBr ⇌ [Ag(NH₃)₂]⁺+Br⁻）随阈值出现/消失。
+    _mx0, _int0 = _coef_stats(_nc, _np)
+    if net_str is not None and (not _int0 or _mx0 > 20):
         bp = _beautify_big_coeff(consumed, produced)
         if bp is not None:
             bc, bp_ = bp
@@ -1336,7 +1344,7 @@ def _build_equations(steps: list[dict], r: dict
             pretty = (None if _bn2 is None
                       else render_equation(_bn2[0], _bn2[1], mode="plain"))
             # 接受条件（v0.5.0 放宽并改为"看产物质量"）：
-            #   ① 干净——渲染给的是整数形式（无小数点）
+            #   ① 干净——系数全整数
             #   ② 小系数——max ≤ 20
             #   ③ 覆盖——被保留的物种承载净差的主要部分（≥50%），
             #      否则"主通道"名不副实，不如呈现诚实混合比
@@ -1347,8 +1355,8 @@ def _build_equations(steps: list[dict], r: dict
             # `505.535H^+ + 217.944Fe^{2+} + 36.324Cr_2O_7^{2-} -> …`
             # （非整系数 + 大系数）。物种数不是"是否干净"的判据，
             # 系数是否整数、是否够小、是否覆盖主通道才是。
-            if (pretty is not None and "." not in pretty
-                    and _max_coef(pretty) <= 20
+            _mxb, _intb = _coef_stats(bc, bp_)
+            if (_intb and _mxb <= 20
                     and _beautify_covers(consumed, produced, bc, bp_)):
                 net_str = pretty
                 _bn = _normalize_equation(bc, bp_)
@@ -1368,12 +1376,18 @@ def _beautify_covers(consumed: dict, produced: dict,
     return tot <= 0 or keep >= frac * tot * 0.5
 
 
-def _max_coef(eq: str) -> float:
-    """方程式字符串的最大系数（解析失败返回 0）。"""
-    rr, pp = _parse_equation(eq)
-    if not rr and not pp:
-        return 0.0
-    return max(list(rr.values()) + list(pp.values()))
+def _coef_stats(*sides: dict) -> tuple[float, bool]:
+    """系数统计 → (最大系数, 是否全整数)。
+
+    v0.5.0：判"要不要美化/美化是否干净"必须看**结构**。原实现用
+    `_max_coef(渲染串)`，而 `net_str` 自 v0.5.0 起是 TeX（`\\mathrm{…}
+    \\rightarrow …`）⟹ `_parse_equation` 的箭头表（`->`/`<=>`/`→`/`⇌`/`=`）
+    认不出 TeX 箭头，恒返回空 ⟹ 恒得 0.0（详见 `_build_equations` 里的
+    大系数美化入口注释）。结构判定无此问题，也不依赖渲染模式。
+    """
+    vals = [v for side in sides for v in side.values()]
+    return (max(vals, default=0.0),
+            all(abs(v - round(v)) < 1e-9 for v in vals))
 
 
 def _balanced_quick(consumed: dict, produced: dict,
