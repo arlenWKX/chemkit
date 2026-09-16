@@ -106,7 +106,7 @@ def audit_pka(rows, bad, dup) -> int:
     return len(rows)
 
 
-def audit_ksp(rows, bad, dup) -> int:
+def audit_ksp(rows, bad, dup, info) -> int:
     seen = defaultdict(list)
     for e in rows:
         solid, (cat, an), pk = e["solid"], e["pair"], e["pKsp"]
@@ -134,14 +134,17 @@ def audit_ksp(rows, bad, dup) -> int:
         if dq:
             rep("电荷", f"{solid} -> {x}{cat} + {y}{an}：电荷 {dq}", bad)
         if pk <= 0:
-            rep("值域", f"{solid} pKsp={pk} ≤ 0", bad)
+            # pKsp ≤ 0 = "易溶盐"的合法写法（Ksp>1 ⟹ 常规浓度下不沉淀），
+            # 例如 NaHCO₃ 实测溶解度 1.14 mol/L ⟹ Ksp ≈ 1.3、pKsp ≈ −0.11。
+            # 降级为信息项（保留数值供人工复核），不占硬错误名额。
+            info.append(f"[易溶盐] {solid} pKsp={pk} ≤ 0（Ksp>1，不沉淀）")
     for k, v in seen.items():
         if len(v) > 1:
             rep("重复", f"固相 {k} 出现 {len(v)} 次：{v}", dup)
     return len(rows)
 
 
-def audit_beta(rows, bad, dup) -> int:
+def audit_beta(rows, bad, dup, info) -> int:
     seen = defaultdict(list)
     for e in rows:
         c, cen, lig, nu = e["complex"], e["center"], e["ligand"], e["nu"]
@@ -160,7 +163,8 @@ def audit_beta(rows, bad, dup) -> int:
         if dq:
             rep("电荷", f"{cen} + {nu}{lig} -> {c}：电荷差 {dq}", bad)
         if e["logb"] <= 0:
-            rep("值域", f"{c} logβ={e['logb']} ≤ 0", bad)
+            # logβ ≤ 0 = "该配离子相对自由离子不稳定"的显式表达（抑制通道）
+            info.append(f"[负 β] {c} logβ={e['logb']} ≤ 0（不稳定，抑制通道）")
     for k, v in seen.items():
         if len(v) > 1:
             rep("重复", f"配位键 {k} 出现 {len(v)} 次：{v}", dup)
@@ -249,17 +253,28 @@ def main() -> None:
     info: list[str] = []
     counts = {}
     counts["pka"] = audit_pka(load("pka.json"), bad, dup)
-    counts["ksp"] = audit_ksp(load("ksp.json"), bad, dup)
-    counts["beta"] = audit_beta(load("beta.json"), bad, dup)
+    counts["ksp"] = audit_ksp(load("ksp.json"), bad, dup, info)
+    counts["beta"] = audit_beta(load("beta.json"), bad, dup, info)
     counts["couples"] = audit_couples(load("couples.json"), bad, dup, info)
     th = load("thermo.json")
     counts["thermo"] = len(th)
     import re as _re
     for k in th:
-        if _re.search(r"\((aq|s|l)\)$", k):
-            rep("死键", f"thermo 键 {k}：代码只查 (g) 后缀，"
-                        f"(aq)/(s)/(l) 从未被读取", bad)
-        elif not _el(k):
+        m = _re.search(r"\(([A-Za-z]+)\)$", k)
+        if m is not None:
+            base, ph = k[:m.start()], m.group(1)
+            if ph == "g":
+                # (g) 是**设计内**的气相键：thermo.py 的逸出气相拆分校正
+                # 按 s + "(g)" 读取 ΔHf(g)（账本态基线 + (g−aq)·esc）
+                if not _el(base):
+                    rep("解析失败", f"thermo 键 {k}（(g) 基式 {base}）", bad)
+                else:
+                    info.append(f"[气相键] {k}：逸出气相拆分校正读取（设计内）")
+            else:
+                rep("死键", f"thermo 键 {k}：代码只查 (g) 后缀，"
+                            f"({ph}) 从未被读取", bad)
+            continue
+        if not _el(k):
             rep("解析失败", f"thermo 键 {k}", bad)
 
     print("== 审计规模 ==")
