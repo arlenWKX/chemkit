@@ -3803,4 +3803,5 @@ max 6.101、n(\|S\|>1) 21、digest_all 08ae2fa06b5ed584；
 
 **发版前固定动作**（成本已量化）：`dev.py suite`（锚定 + 未锚定各一次，各 ~25 s）
 + `dev.py eqcheck` + `hess_audit --T 273.15 --T 363.15 --with-templates`（4 s 级）
-+ `data_audit.py`（硬错误 5 条为已知等价/冗余，可加白名单）。
++ `data_audit.py`（**硬错误 0 条**：第 55 轮把 5 条已裁决项白名单化——4 条等价
+写法 + 1 条电对冗余，理由写在代码里，与 `hess_audit` 的"已知手调族"同惯例）。

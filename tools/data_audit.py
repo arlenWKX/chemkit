@@ -280,7 +280,17 @@ def main() -> None:
     print("== 审计规模 ==")
     for k, v in counts.items():
         print(f"   {k:9s} {v}")
-    print(f"\n== 硬错误 {len(bad)} 条 ==")
+    # 已裁决项（§7 X-34，第 48/49 轮逐条判读）：单列，不占硬错误名额。
+    # 判据必须写在上面——白名单是"记录结论"，不是"掩盖问题"。
+    KNOWN = (
+        "IO_3^- -> I_2", "ClO_3^- -> Cl_2", "BrO_3^- -> Br_2",
+        "NO_3^- -> N_2O",          # 式量 n vs 最小整数比 n：等价（logK 已对账）
+        "PbO_2 -> PbSO_4",         # 电对冗余：派生通道 + D51 用例已覆盖
+    )
+    known = [m for m in bad if any(k in m for k in KNOWN)]
+    bad = [m for m in bad if m not in known]
+    print(f"\n== 硬错误 {len(bad)} 条 =="
+          f"；已裁决 {len(known)} 条（§7 X-34：4 条等价写法 + 1 条电对冗余）")
     for m in bad[:60]:
         print("  " + m)
     if len(bad) > 60:
