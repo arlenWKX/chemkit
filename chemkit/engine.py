@@ -310,7 +310,23 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             _ph0 = _cls0[0] if _cls0 is not None else estimate_pH(
                 ledger, H_excess, V, T, T_K)
             if _ph0 > 9.0:
-                x_max = min(x_max, -H_excess / nu_H)
+                # v0.5.0 X-26：碱储备上限只能由**热力学可能的**自由碱授予。
+                # 账本里有 Ksp 阳离子时用与呈现层同一函数 `_presentation_He`
+                # 复核 He：若这份"自由碱"与在账阳离子不可能共存（q 远超 Ksp），
+                # 它是欠收敛幻影 ⟹ 不授予上限。EU01 实测链条：幻影碱 −0.39 mol
+                # 把两性步 `Zn²⁺+4H₂O→[Zn(OH)₄]²⁻+4H⁺` 的 x_max 放到 0.0975 mol
+                # （真平衡 ~5e-9），其释出的 H⁺ 又把 pH 瞬时推到 ~0.4、打开硝酸根
+                # 闸门（pH≤1.5）⟹ Eu²⁺ 被回氧化。真实强碱体系（NaOH 溶铝锌、
+                # Ca+水）阳离子已沉淀至 Q≈Ksp，复核原样放行（全量实测：走步侧
+                # "全局幻影修复"会打坏 95 例碱体系，本收窄版不碰走步状态）。
+                _he_ok = H_excess
+                if not _ksp_cations(T).isdisjoint(ledger):
+                    _he_ok = _presentation_He(ledger, H_excess, V, T, T_K)
+                if _he_ok < 0.0:
+                    x_max = min(x_max, -_he_ok / nu_H)
+                    if _he_ok != H_excess and _TRACE:
+                        print(f'  [phantom-base-cap] He {H_excess:+.4g} -> '
+                              f'{_he_ok:+.4g} (x_max={x_max:.4g})')
         if x_max <= X_MIN:
             return 0.0, x_max
 
@@ -701,6 +717,17 @@ _COND_KEYS = {"V_L", "T_K", "T_C", "c_H", "c_OH", "pH", "p_kpa",
 # 结果的 cond 元数据（由独立温度模块 thermo.py 事后消费，不影响求解）；
 # kinetics 控制动力学层（slow/gate/膜封锁等标记是否生效）；
 # gas_escape 控制自产气体逸出（False=闭口体系，气体保留在溶液账本）。
+
+
+_KSP_CATS: frozenset | None = None
+
+
+def _ksp_cations(T: Tables) -> frozenset:
+    """Ksp 表里的全部阳离子（幻影碱复核的廉价前置判据，模块级缓存）。"""
+    global _KSP_CATS
+    if _KSP_CATS is None:
+        _KSP_CATS = frozenset(e["pair"][0] for e in T.ksp)
+    return _KSP_CATS
 
 
 def judge(substances: list[dict], conditions: dict | None, T: Tables,

@@ -381,6 +381,19 @@ def cmd_patch(spec: str, check: bool = False) -> int:
     if check:
         print("[--check] 校验通过，未写入")
         return 0
+    # 落盘前**复验 JSON**（禁令 9b 的机械化）：数据表补丁最常见的失误是漏逗号/
+    # 未转义引号——本轮实测三次（beta.json 一次、couples.json 两次）。任一条
+    # JSON 不合法即整体中止，绝不把非法 JSON 写进仓库。
+    import json as _json
+    for path, text in staged.items():
+        if path.endswith(".json"):
+            try:
+                _json.loads(text)
+            except Exception as e:                       # noqa: BLE001
+                print(f"!! {path}: 补丁后不是合法 JSON -> 中止（未写入任何文件）")
+                print(f"   {e}")
+                return 1
+            print(f"   ok {path}: JSON 复验通过")
     for path, text in staged.items():
         io.open(os.path.join(ROOT, path), "w", encoding="utf-8",
                 newline="").write(text)
