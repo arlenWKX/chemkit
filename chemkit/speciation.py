@@ -293,6 +293,11 @@ def estimate_pH(ledger: dict, H_excess: float, V: float, T, T_K: float,
 # §7 X 的 pH 跳变要归因到"换的哪一条分支"，否则只能看到跳变本身。
 PH_TAGS: list | None = None
 
+# 分支 4 的 h_c/o_c **来源**（**仅审计**，同 PH_TAGS：生产路径恒 None）。
+# 记录 (物种, 贡献类型, 该物种给出的自由度浓度)——pH 冻结在 pKw/2 附近时，
+# 必须先看清"赢下 max 的是谁"，否则只能对着 6.2 猜（§7 X-31）。
+PH_SRC: list | None = None
+
 
 def _tag(why: str) -> None:
     if PH_TAGS is not None:
@@ -396,6 +401,7 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     buf: list = []
     _floor_V = 1e-12 * V
     _role_get = rolemap.get
+    _src = PH_SRC      # 诊断开关：一次全局查找，循环内只判 None
     for sp, m in ledger.items():
         if m <= _floor_V:
             continue
@@ -407,13 +413,23 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         if Ka is not None:
             if Ka is _STRONG_ACID:
                 h_c = max(h_c, c)
+                if _src is not None:
+                    _src.append((sp, "强酸", c))
             else:
-                h_c = max(h_c, (-Ka + sqrt(Ka * Ka + 4 * Ka * c)) / 2)
+                _v = (-Ka + sqrt(Ka * Ka + 4 * Ka * c)) / 2
+                h_c = max(h_c, _v)
+                if _src is not None:
+                    _src.append((sp, "Ka", _v))
         if Kb is not None:
             if Kb >= 1.0:                                # 水解近完全（S2-、C2^2- 等）
                 o_c = max(o_c, c)
+                if _src is not None:
+                    _src.append((sp, "Kb≥1", c))
             else:
-                o_c = max(o_c, (-Kb + sqrt(Kb * Kb + 4 * Kb * c)) / 2)
+                _v = (-Kb + sqrt(Kb * Kb + 4 * Kb * c)) / 2
+                o_c = max(o_c, _v)
+                if _src is not None:
+                    _src.append((sp, "Kb", _v))
             # 共轭缓冲对（仅碱在账时检查其共轭酸是否也在账）
             if conj_pair is not None:
                 acid_conj, pka_c = conj_pair
@@ -429,9 +445,15 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 # 会把 Ag+ 类高估 ~1/sqrt(Kh·c) 倍（D26：Ag+ 被估成 pH 3
                 # 的酸，驱动铬酸根幻影质子化死循环）。多价金属分步水解
                 # 经可溶羟基中间体，实测行为近弱酸二次式，保持不变。
-                h_c = max(h_c, Kh * c)
+                _v = Kh * c
+                h_c = max(h_c, _v)
+                if _src is not None:
+                    _src.append((sp, "Kh(1)", _v))
             else:
-                h_c = max(h_c, (-Kh + sqrt(Kh * Kh + 4 * Kh * c)) / 2)
+                _v = (-Kh + sqrt(Kh * Kh + 4 * Kh * c)) / 2
+                h_c = max(h_c, _v)
+                if _src is not None:
+                    _src.append((sp, f"Kh({qc})", _v))
             continue
         if amph_v is not None and c > 1e-6:
             amph.append((c, amph_v))

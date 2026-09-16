@@ -92,7 +92,9 @@ python tools/dev.py patch spec.py            # 原子落盘（任一条不满足
 
 ## 4. 已有审计工具的定位（`dev.py` 之外的深挖）
 
-`eqcheck.py`（守恒）、`hess_audit.py`（派生候选 Hess）、`hydrate_audit.py`
+`eqcheck.py`（守恒）、`hess_audit.py`（**Hess 自洽，必须带温度**：派生候选 +
+静态模板，`--T 273.15` / `--T 363.15` 是发版前固定动作，各 ~4 s）、
+`hydrate_audit.py`
 （相歧义/边界敏感性）、`data_audit.py`、`charge_audit.py`、`escape_audit.py`、
 `titr.py`、`phlog.py`、`osc.py`、`phdiag.py`、`cliff.py`、`topres.py`、
 `perf.py`、`snap.py`、`xver.py`、`fragility.py`（±1e-11/1e-9 投料扰动脆弱性）、
@@ -101,3 +103,10 @@ python tools/dev.py patch spec.py            # 原子落盘（任一条不满足
 `gas_audit.py`（**气体活度标准态对账**：`--scan` 给全部产气用例的
 `a(引擎) vs a(p/p°)` 与 Δlog，是"标准态统一"改动的爆炸半径清单）、
 `case.py` / `cands.py` / `extent.py`（单例深探，`dev.py case` 已覆盖常用部分）。
+
+**候选 logK 的参考态纪律（§7 X-31 的机械化守卫）**：任何构造 `Cand` 的地方，
+`logK` 必须是 **298.15 K 参考值**，OH⁻→H⁺ 之类的折算一律交给 `pkw_coeff`
+通道在 `logK_T` 里做**一次**。把运行温度的 `pKw_of(T_K)` 烘进基值同时挂
+`pkw_coeff` 会在 T≠298.15 时折算两次，而 298.15 K 恰好恒等（pKw ≡ 14.0）
+⟹ 套件全绿、单温 Hess 审计也全绿。`hess_audit.py --T 363.15` 是这条纪律
+唯一的机械化守卫（模板族用 `--templates`，含派生用 `--with-templates`）。

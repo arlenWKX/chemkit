@@ -537,14 +537,22 @@ def _build_static_cands(T_K: float, T, pKw: float) -> list:
         dH_sol = e.get("dH")
         dH_p = -dH_sol if dH_sol is not None else None
         if an == "OH^-":
+            # 基值必须是 **298 K 参考态**（PKW_298），OH⁻→H⁺ 折算交给
+            # pkw_coeff 通道在 logK_T 里按运行温度做一次。原实现把运行温度
+            # 的 pKw 直接烘进基值，同时仍挂 pkw_coeff ⟹ T≠298.15 时水电离
+            # 项被折算两次，偏差 = ∓n_an·(pKw(T)−14.0)（363 K、n_an=2 时
+            # 3.15 个对数单位，K 差 1400 倍）。J14（363 K）的幻影铅酸根
+            # 即由此而来：decomplex 基值虚高 ν·ΔpKw=4.72，pH 6.2 下把
+            # Pb²⁺ 当成可自发水解成 [Pb(OH)₃]⁻ 的酸。同文件 4.3b 与
+            # candidates.py 的八个派生通道一律用 PKW_298 + coeff，此处对齐。
             out.append((Cand("precip", {cat: n_cat, WATER: n_an},
                              {solid: 1, H_ION: n_an},
-                             pK - n_an * pKw, -n_an, dH=dH_p,
+                             pK - n_an * PKW_298, -n_an, dH=dH_p,
                              meta={"solid": solid}),
                         frozenset((cat,))))
             out.append((Cand("dissolve", {solid: 1, H_ION: n_an},
                              {cat: n_cat, WATER: n_an},
-                             n_an * pKw - pK, n_an, dH=dH_sol,
+                             n_an * PKW_298 - pK, n_an, dH=dH_sol,
                              meta={"solid": solid}),
                         frozenset((solid,))))
         else:
@@ -586,13 +594,14 @@ def _build_static_cands(T_K: float, T, pKw: float) -> list:
         dH_b = b.get("dH")
         dH_nb = -dH_b if dH_b is not None else None
         if lig == "OH^-":
+            # 同 4.3：基值取 298 K 参考态，ν 个 OH⁻ 的折算由 pkw_coeff 承担一次
             out.append((Cand("complex", {center: 1, WATER: nu},
                              {comp: 1, H_ION: nu},
-                             b["logb"] - nu * pKw, -nu, dH=dH_b),
+                             b["logb"] - nu * PKW_298, -nu, dH=dH_b),
                         frozenset((center,))))
             out.append((Cand("decomplex", {comp: 1, H_ION: nu},
                              {center: 1, WATER: nu},
-                             nu * pKw - b["logb"], nu, dH=dH_nb),
+                             nu * PKW_298 - b["logb"], nu, dH=dH_nb),
                         frozenset((comp,))))
         else:
             out.append((Cand("complex", {center: 1, lig: nu}, {comp: 1},
