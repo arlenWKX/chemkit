@@ -639,6 +639,39 @@ def _film_acid_soluble(fp: str, aOH: float, T, T_K: float = 298.15) -> bool:
     return _ksp_asat(cell, aOH, T_K) > 1.0
 
 
+_rate_map_cache: list = []          # [id(T), {ox: {配对物种: η}}]
+
+
+def _rate_eta(pick: Cand, direction: int, T) -> float | None:
+    """§7 X-37：该候选是否落在 `rate` 慢通道上？命中返回 η，否则 None。
+
+    慢 = 每步限幅、可累积（**不动点不变**）；与 `closed*`（无限时间也
+    不发生）严格区分。`RATE_DIM` 默认关闭 ⟹ 本函数恒返回 None。
+    """
+    from .candidates import RATE_DIM, RATE_ETA
+    if not RATE_DIM:
+        return None
+    ox = pick.meta.get("ox_couple")
+    if ox is None:
+        return None
+    m = _rate_map_cache[1] if _rate_map_cache and _rate_map_cache[0] == id(T) \
+        else None
+    if m is None:
+        m = {}
+        for c in T.couples:
+            for kk, vv in (c.get("rate") or {}).items():
+                m.setdefault(c.get("ox"), {})[kk] = RATE_ETA.get(vv, 1.0)
+        _rate_map_cache[:] = [id(T), m]
+    d_ox = m.get(ox)
+    if not d_ox:
+        return None
+    side = pick.r if direction > 0 else pick.pr
+    for s in side:
+        if s in d_ox:
+            return d_ox[s]
+    return None
+
+
 # ========================================================== 动力学层：blocked
 
 def blocked_extent(pick: Cand, direction: int, evals: list, T_K: float, T,
@@ -1537,6 +1570,12 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             for s in rr0:
                 if s in T.solids:
                     blocked_solids[s] = film_ps
+          # X-37 (b)-2 速率维度：慢通道每步限幅（extent × η，下限保护）。
+          # **不动点不变**，只改到达路径与可观测程度；RATE_DIM 关闭时
+          # `_rate_eta` 立即返回 None ⟹ 生产路径逐位不变。
+          _eta = _rate_eta(pick, d, T)
+          if _eta is not None and ext > 0.0:
+              ext = max(ext * _eta, 1e-9)
           # 振荡外推加速：短周期（2/3 通道）等比衰减爬行（沉淀↔逆转化乒乓、
           # 溶解↔双沉淀三循环等，步长比 ρ→1）时，几何级数剩余工作量
           # ≈ ext·ρ/(1−ρ)，一次补齐直抵不动点附近，避免数百步微步爬行；
