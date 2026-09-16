@@ -31,7 +31,14 @@ F 求值与 solve_extent 的口径对齐：redox 用 estimate_state 的
 """
 from __future__ import annotations
 
+import os as _os
+
 from .speciation import estimate_pH, estimate_state
+
+# 联立求解诊断（默认 None，零行为影响）：CHEM_TRACE_JOINT=1 时逐迭代打印
+# (resid, λ, x, pH)——"联立为什么不收敛"只能靠迭代史回答（NR57 锚点实测：
+# `[joint-ph-fail] m=2 resid=3.063`，需要知道是停滞、行搜索失败还是病态）。
+_JTRACE = bool(_os.environ.get("CHEM_TRACE_JOINT"))
 
 # 联立解参数（改动前先跑 converg dump 基线差分）
 JOINT_TOL = 0.05        # 收敛阈：max|F| < 0.05（log 单位；J06 欠收敛 0.59）
@@ -306,6 +313,9 @@ def _solve_ph(ledger: dict, H_excess: float, actives: list, V: float,
         return "fail", x, resid0
     resid_best = resid0
     stagn = 0
+    if _JTRACE:
+        print(f"  [joint-ph-start] m={m} resid0={resid0:.4g} ph0={ph0:.4g} "
+              f"eqs={[getattr(c, 'kind', '?') for c, _d in actives]}")
 
     for _ in range(JOINT_MAX_ITER):
         # 数值 Jacobian：(m+1)×(m+1)——前 m 列平衡程度（S 行仿射/闭合
@@ -371,6 +381,10 @@ def _solve_ph(ledger: dict, H_excess: float, actives: list, V: float,
                 return "boundary", x, resid
             return "fail", x, resid
         resid = _resid(F)
+        if _JTRACE:
+            print(f"    [joint-ph-it] resid={resid:.4g} lam={lam:.3g} "
+                  f"x=[{' '.join(f'{v:+.4g}' for v in x)}] ph={ph0:.4g} "
+                  f"stagn={stagn}")
         if resid < 0.7 * resid_best:
             resid_best = resid
             stagn = 0

@@ -375,6 +375,30 @@ def cmd_patch(spec: str, check: bool = False) -> int:
     return 0
 
 
+# --------------------------------------------------------------- run
+def cmd_run(script: str, args: list[str]) -> int:
+    """在 UTF-8 控制台环境下跑任意脚本（探针 / 审计工具 / 补丁 spec）。
+
+    存在的理由：Windows 控制台默认 GBK，临时探针脚本里一个 `H⁺` 就能让
+    整个脚本以 UnicodeEncodeError 崩掉（本工具自身已重配置 stdout，但
+    被 `python xxx.py` 直接跑的脚本没有）。统一从这里跑，这类错误消失。
+    """
+    _banner(f"run {script}")
+    if not os.path.exists(script):
+        print(f"!! 找不到脚本：{script}")
+        return 2
+    import runpy
+    argv0 = sys.argv
+    sys.argv = [script] + args
+    try:
+        runpy.run_path(script, run_name="__main__")
+    except SystemExit as e:                              # 脚本自带退出码
+        return int(e.code or 0)
+    finally:
+        sys.argv = argv0
+    return 0
+
+
 # --------------------------------------------------------------- guide
 _GUIDE = """\
 本轮协议（固定动作，别即兴）：
@@ -408,6 +432,8 @@ def main(argv: list[str]) -> int:
     args = [a for a in rest if not a.startswith("-")]
     if verb == "guide":
         return cmd_guide()
+    if verb == "run":
+        return cmd_run(args[0], args[1:])
     if verb == "suite":
         return cmd_suite(args)
     if verb == "perf":

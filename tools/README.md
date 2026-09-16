@@ -22,6 +22,7 @@ python tools/dev.py guide             # 打印下面的协议（忘记时先跑�
 | `eqcheck` | 全库 `eq`/`eq_has` 精确有理守恒 | 违规反映到退出码 |
 | `hygiene [--fix]` | 行尾噪声、临时文件 | `--fix` 一键 `git checkout` 还原仅换行差异的文件 |
 | `patch spec.py [--check]` | 声明式补丁 | 先全量校验（计数断言）再原子落盘；`--check` 只校验 |
+| `run script.py [args]` | 任意脚本在 UTF-8 控制台跑 | 消除"探针里一个 `H⁺` 就 UnicodeEncodeError"这一类失误 |
 
 **每个子命令首行都打印 `pKw` 约定**（`锚定 14.0` / `未锚定 14.0042`）——
 "这轮跑的到底是哪个约定"是本项目最容易误读的一件事。
@@ -90,4 +91,6 @@ python tools/dev.py patch spec.py            # 原子落盘（任一条不满足
 `perf.py`、`snap.py`、`xver.py`、`fragility.py`（±1e-11/1e-9 投料扰动脆弱性）、
 `tension.py`（`--census` 张力普查 / `--class` 分类）、`roots.py`（求根审计）、
 `cand_audit.py`（候选不变量）、`eq_semantics.py`（changed/reacted/方程语义矩阵）、
+`gas_audit.py`（**气体活度标准态对账**：`--scan` 给全部产气用例的
+`a(引擎) vs a(p/p°)` 与 Δlog，是"标准态统一"改动的爆炸半径清单）、
 `case.py` / `cands.py` / `extent.py`（单例深探，`dev.py case` 已覆盖常用部分）。
