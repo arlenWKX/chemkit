@@ -126,10 +126,19 @@ def _expand_kinetics(e: dict) -> dict:
       red_pH_min       还原通道 pH 下限
       rev_gate         逆向闸门（产物选择性）
     均为"无限时间也不发生"的化学硬事实，与热力学无关。
+    **未在上面列出的键不会生效**（只进 `kinetics_all` 留档）——
+    新增动力学注解必须同时在此处接线并加审计，否则是死数据。
     """
     k = e.pop("kinetics", None)
     if not k:
         return e
+    # 保真留档（§7 X-35 第 57/58 轮）：上面只转**已知**字段，未列出的键
+    # 曾经静默丢失（closed_with_red_above_pH 因此两轮排查都没生效）。
+    # kinetics_all 是**惰性**记录：没有任何消费者读它 ⟹ 行为逐位不变；
+    # 它的用途是让"注了却没被消费"这件事可被审计出来（见 data_audit.py）。
+    # 注意**不要**把它挂回 e["kinetics"]：templates.py 有一处构建期按
+    # e["kinetics"] 读取，挂回去会让那条分支复活并在缓存里冻死 pH 判据。
+    e["kinetics_all"] = dict(k)
     if k.get("ox_closed"):
         e["ox_inert"] = True
     if k.get("red_closed"):

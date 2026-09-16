@@ -28,6 +28,7 @@ sys.path.insert(0, ".")
 from chemkit.core import (charge_of, elements_of,  # noqa: E402
                           FormulaError, parse_species)
 from chemkit.candidates import _ksp_xy            # noqa: E402
+from chemkit.data import load_tables              # noqa: E402
 
 DATA = "chemkit/data"
 WATER = "H_2O"
@@ -256,6 +257,21 @@ def main() -> None:
     counts["ksp"] = audit_ksp(load("ksp.json"), bad, dup, info)
     counts["beta"] = audit_beta(load("beta.json"), bad, dup, info)
     counts["couples"] = audit_couples(load("couples.json"), bad, dup, info)
+    # 死注解守卫（§7 X-35 第 57/58 轮）：data.py 只把**已知** kinetics 键
+    # 转成扁平字段，未列出的键只进 kinetics_all、不生效——必须点名，
+    # 否则就是"注了却没人消费"的隐形死数据（第 51 轮即此，两轮才查出）。
+    _KNOWN_KIN = {"ox_closed", "red_closed", "below_T",
+                  "below_T_only_red", "closed_with_red", "closed_with_ox",
+                  "closed_except_red", "red_pH_min", "rev_gate",
+                  "h2_passivation", "h2o_red_oh_min", "ox_pH_max"}
+    _dead = [f"{c.get('ox')}/{c.get('red')}.{kk}"
+             for c in load_tables().couples
+             for kk in (c.get("kinetics_all") or {})
+             if kk not in _KNOWN_KIN]
+    if _dead:
+        info.append("[死注解] 未接线（不生效）：" + "、".join(_dead[:6]))
+    else:
+        info.append("[动力学] kinetics 键全部已接线（无死注解）")
     th = load("thermo.json")
     counts["thermo"] = len(th)
     import re as _re
