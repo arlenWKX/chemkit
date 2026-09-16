@@ -56,6 +56,10 @@ from .templates import (_redox_pair_static, _redox_templates,
 
 _TRACE = bool(_os.environ.get("CHEM_TRACE"))
 
+# B4 判据的"纯形态变化"类（proton/dissolve/complex/decomplex）：逐步 `chem`
+# 标记与 `reacted` 判据共用同一份定义（§7 X-19），避免两处口径漂移。
+_SPEC_KINDS = frozenset({"proton", "dissolve", "complex", "decomplex"})
+
 # ---- 确定性性能计数器（v0.5.0 性能审计，architecture §7 W-4）----------
 # 墙钟在共享沙箱里逐轮抖动 ±10–15%（同一份代码三次全量：均值
 # 29.1 / 32.5 / 33.9 ms），**不足以裁决"求根改动是否真的省了"**。
@@ -828,7 +832,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                       "logK": round(logK_T(pick, T_K), 2),
                       "S": round(S, 2), "extent": round(ext, 6),
                       "conversion": round(min(1.0, ext / x_max), 4) if x_max > 0 else 1.0,
-                      "abs_conv": round(abs_conv, 4)})
+                      "abs_conv": round(abs_conv, 4), "chem": None})
         # 来源追踪：产物继承反应物的投料来源集（中间体由此携带血统，
         # 供 reacted（狭义化学反应）的"跨投料相互作用"判据使用）；并按候选
         # 累计净程度（正反向对消），判据在收敛后统一应用
@@ -847,6 +851,20 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         for s in pp:
             if s not in (WATER, H_ION):
                 origins.setdefault(s, set()).update(_fs)
+        # 逐步"是否狭义化学反应"（B4 判据的逐步版，供呈现层做净方程口径裁剪
+        # ——见 §7 X-19）：kind ∉ {proton,dissolve,complex,decomplex} 或**反应物**
+        # 跨 ≥2 投料来源，或单一来源成淀（盐类水解成淀属化学变化）。
+        # 判据用**反应物自身的来源集**（排除 H⁺/H₂O）：`origins[H_ION]` 会被
+        # 所有触碰质子账本的步骤污染（AgBr 体系里 1e-5 的派生步就把 AgBr 带进
+        # 来），照着 `_fs` 判会把"氨的水解"误判成跨投料反应，NH₄⁺ 于是混进
+        # 净方程配比（§7 X-19 实测）。
+        _fs_r: set = set()
+        for s in rr:
+            if s not in (WATER, H_ION):
+                _fs_r |= origins.get(s, set())
+        steps[-1]["chem"] = bool(
+            pick.kind not in _SPEC_KINDS or len(_fs_r) >= 2
+            or pick.kind == "precip")
         _cn = chem_net.get(pick.key)
         if _cn is None:
             chem_net[pick.key] = [0.0, pick.kind, _fs]
@@ -1939,7 +1957,6 @@ def _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
     # 例外：单一来源的 precip 步骤 = 盐类水解成淀（Fe^{3+}+3H2O ⇌ Fe(OH)3+3H+
     # 生成新相新物质，教材标准可逆反应）——计为化学反应；单一来源的 proton
     # 纯形态分布（Na2CO3 溶液中 HCO3- 分率）无新相生成，仍视为形态变化
-    _SPEC_KINDS = {"proton", "dissolve", "complex", "decomplex"}
     chemical = False
     for st in steps:   # 规范化阶段的酸碱中和（steps0，无 key 入账）
         if st["kind"] == "neutralize" and st.get("extent", 0) >= ANN_MIN_EXTENT:

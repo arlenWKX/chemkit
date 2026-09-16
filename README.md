@@ -137,7 +137,7 @@ r = judge([{"name": "HCl", "mol": 1.0}, {"name": "NaOH", "mol": 1.0}],
 | `net_equation` | `Equation \| None` | 总净离子反应方程式（**结构**：`left`/`right` 系数 + `reversible` 布尔 + `kind`）。**先结构化后渲染**——`str()`/`.tex()` = TeX（Markdown `$$…$$` 可显示），`.plain()` = 不带上下标标注的纯字符串 fallback；`reversible=True` 渲染 `<=>`（平衡过程），`False` 渲染 `->`（完全反应）。全部显著步骤的净和：中间体自然抵消，H₂O 显式配平，OH⁻ 从 H⁺ 正则形还原，系数最简整数比。无显著反应为 None |
 | `net_equation_raw` | `Equation \| None` | 同一净差的**原始版**（不做精编口径裁剪）：与 `net_equation` 不一致 ⟺ 该体系只有痕量副过程 |
 | `equations` | `list[Equation]` | 分步离子方程式（结构，按贡献降序）。许多反应用多步概括更贴近书写习惯（如 Ca(OH)₂+CO₂ 是 `CO_2 + 2OH^- -> CO_3^{2-} + H_2O` 与 `Ca^{2+} + CO_3^{2-} -> CaCO_3` 两步） |
-| `steps` | `list[dict]` | 引擎逐步过程（kind / equation / logK / S / extent / conversion） |
+| `steps` | `list[dict]` | 引擎逐步过程（kind / equation / logK / S / extent / conversion / **chem**）。`chem=True`＝该步是**狭义化学反应**（B4 判据：kind ∉ {proton,dissolve,complex,decomplex}，或**反应物**跨 ≥2 投料来源，或单一来源成淀），`False`＝单纯形态变化（解离/水解/配位再分布） |
 
 ### 标注层
 
