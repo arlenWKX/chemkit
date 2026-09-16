@@ -397,6 +397,15 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
     # 恒为首次构建序，与无缓存路径 bit 级等价，见 speciation.py 文档）
     _bt_cache: dict = {}
     _touch = frozenset(s for s, _, _ in changing)
+    # X-33 自抵消禁令（容量匹配版）
+    _nu_h_net = float(pp.get(H_ION, 0.0)) - float(rr.get(H_ION, 0.0))
+    _no_base = _no_acid = None
+    if _nu_h_net > 0:
+        _cap = _speciation.complex_capacity(T)
+        _prod_cx = frozenset(s for s, d, _ in changing if d > 0 and s in _cap)
+        if _prod_cx and sum(_cap[s] * d for s, d, _ in changing
+                            if d > 0 and s in _cap) >= _nu_h_net - 1e-12:
+            _no_base = _prod_cx
     if SELFBUF_AUDIT is not None:
         # 自缓冲步普查：判定"产物配离子的总吸收容量 ≥ 本步净释出 H⁺"
         # （§7 X-33）。生产路径恒为 None ⟹ 零成本、零行为差异。
@@ -478,7 +487,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 pH_x, led_v = _ph_closed(H_excess + nu_H * x), led_work
             else:
                 pH_x, led_v, _ = estimate_state(led_work, H_excess + nu_H * x,
-                                                V, T, T_K, _bt_cache, _touch)
+                                                V, T, T_K, _bt_cache, _touch,
+                                                _no_base, _no_acid)
             if _atrace is not None:
                 _tags = _speciation.PH_TAGS
                 _atrace.append((x, pH_x, _sol(x),
@@ -500,7 +510,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             _speciation.PH_TAGS = []
         pH_x = (_ph_closed(H_excess + nu_H * x) if _ph_closed is not None
                 else estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
-                                 _bt_cache, _touch))
+                                 _bt_cache, _touch, _no_base, _no_acid))
         if _atrace is not None:
             _tags = _speciation.PH_TAGS
             _he = H_excess + nu_H * x

@@ -27,7 +27,9 @@ from .acidbase import build_families, charge_pH
 def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
                       multilevel: bool = False, T_K: float = 298.15,
                       cache: dict | None = None,
-                      touch: frozenset | None = None) -> tuple:
+                      touch: frozenset | None = None,
+                      no_base: frozenset | None = None,
+                      no_acid: frozenset | None = None) -> tuple:
     """He>0：强酸被在账弱碱（Kb 大者先）吸收 B+H+→HB；He<0：强碱被在账弱酸
     （Ka 大者先）吸收 HA+OH-→A-+H2O。全吸收 → Henderson 定 pH（返回）；
     残余超过 1e-3 mol/L → None（交回直读分支）；无储备 → None。
@@ -47,9 +49,18 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
     返回 (pH|None, 残余He, 虚拟账本)。滴定在虚拟账本上真实记账（base→acid
     或 acid→base 转化），全吸收后分支 4 必须用虚拟账本评估残余酸碱性——
     否则强酸恰好中和全部弱碱时，原账本里的弱碱会虚报碱性（pH 11 假象）。
-    pH 非 None：缓冲对 Henderson 定 pH；pH=None 且残余≈0：落分支4（用虚拟账本）。"""
+    pH 非 None：缓冲对 Henderson 定 pH；pH=None 且残余≈0：落分支4（用虚拟账本）。
+
+    **自抵消禁令（§7 X-33）**：`no_base`/`no_acid` 是本步**产物**里"能吞下
+    本步全部释出质子"的配离子集，由 `solve_extent` 按容量匹配判定后传入。
+    判定式：Σ(产物系数 × νH⁺) ≥ 本步净释出 H⁺。命中时这些产物不得充当
+    碱储备——否则 x mol 水解产物恰能吸收 x mol 共生 H⁺，He_res ≡ 0 与 x
+    无关 ⟹ pH 与步长解耦（R06 实测：整条二分线上 pH 恒 5.000、S 到 50%
+    转化才归零）。化学图像：释出的 H⁺ 留在溶液里（电荷平衡 ⟹ h = 水解量）。"""
     if abs(H_excess) < 1e-12:
         return None, H_excess, ledger
+    _nb = no_base or frozenset()
+    _na = no_acid or frozenset()
     # 静态预计算（每数据表一次）：碱储备列表、酸储备列表、beta_pka 配离子储备。
     # 原实现每次调用全表扫描并做 max/min/列表解析与 startswith 过滤，是最大热点
     if getattr(T, "_titr_static", None) is None:
@@ -148,6 +159,10 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
         # 沉淀等步骤释放的 H+ 实际由配离子解离吸收（如 [Cu(NH3)4]2+），
         # 不纳入会使 solve_extent 内部 pH 崩塌、反应假停滞（Cu2+ + 少量氨水）
         heap, cnt = _titration_heap(ledger, _b_entries, cache, "b", touch)
+        if _nb:
+            heap = [e for e in heap
+                    if not (e[2] in _nb and isinstance(e[3], tuple))]
+            heapq.heapify(heap)
         if not heap:
             return None, he, ledger   # 无弱碱储备：直接返回原账本（避免无谓拷贝）
         ledger2 = dict(ledger)
@@ -184,7 +199,7 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
                 plateau = (-neg_pka, base, acid)
             elif multilevel and take > 0.0 and acid not in pushed:
                 nxt = _bases_map.get(acid)
-                if nxt is not None:
+                if nxt is not None and acid not in _nb:
                     pushed.add(acid)
                     heappush(heap, (-_beff[acid], cnt, acid, nxt[2]))
                     cnt += 1
@@ -200,6 +215,9 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
         he = -he
         heap, cnt = _titration_heap(ledger, _a_entries, cache, "a", touch,
                                     nominal=pKw + 2)
+        if _na:
+            heap = [e for e in heap if e[2] not in _na]
+            heapq.heapify(heap)
         if not heap:
             return None, -he, ledger
         ledger2 = dict(ledger)
@@ -220,7 +238,7 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             elif multilevel and take > 0.0 and base not in pushed:
                 # 产物仍是酸（可再去质子化）→ 重新入堆（仅多级模式）
                 nxt = _acids_map.get(base)
-                if nxt is not None:
+                if nxt is not None and base not in _na:
                     pushed.add(base)
                     heappush(heap, (_aeff[base], cnt, base, nxt[2]))
                     cnt += 1
@@ -309,8 +327,11 @@ def complex_capacity(T) -> dict:
 
 def estimate_pH(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 cache: dict | None = None,
-                touch: frozenset | None = None) -> float:
-    return estimate_state(ledger, H_excess, V, T, T_K, cache, touch)[0]
+                touch: frozenset | None = None,
+                no_base: frozenset | None = None,
+                no_acid: frozenset | None = None) -> float:
+    return estimate_state(ledger, H_excess, V, T, T_K, cache, touch,
+                          no_base, no_acid)[0]
 
 
 # 分支标注（**仅审计**：`tools/roots.py` 之外恒为 None，生产路径零成本）。
@@ -330,7 +351,9 @@ def _tag(why: str) -> None:
 
 def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                    cache: dict | None = None,
-                   touch: frozenset | None = None) -> tuple[float, dict, float]:
+                   touch: frozenset | None = None,
+                   no_base: frozenset | None = None,
+                   no_acid: frozenset | None = None) -> tuple[float, dict, float]:
     """返回 (pH, 滴定后的虚拟账本, 残余He)。虚拟账本是 pH 一致的自由形态分布；
     残余He是弱酸/弱碱储备吸收后仍未中和的游离强酸/强碱（酸碱平衡后的真实 He）。"""
     pKw = pKw_of(T_K)    # 1) 强酸连续形态分布后，游离 H+ 全部由 He 记账（分子分数不贡献游离 H+，
@@ -339,7 +362,8 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     #    顺序吸收；被全吸收则由最后缓冲对的 Henderson 式定 pH；
     #    全吸收但无有效缓冲对 → 用残余 He（≈0）落分支 4，而非原 He 直读
     tit, He_res, ledger = _buffer_titration(ledger, H_excess, V, T, pKw,
-                                            T_K=T_K, cache=cache, touch=touch)
+                                            T_K=T_K, cache=cache, touch=touch,
+                                            no_base=no_base, no_acid=no_acid)
     if tit is not None:
         _tag("滴定/Henderson")
         return tit, ledger, He_res
