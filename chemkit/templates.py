@@ -117,6 +117,17 @@ def _redox_pair_static(T):
                 kin = c.get("kinetics")
                 if kin and partner["red"] in kin.get("closed_with_red", ()):
                     closed_red = True
+                # pH 条件化封闭（§7 X-35 第 51 轮）：速率论断依赖介质，
+                # pH **高于**阈值时对该还原剂封闭、酸性侧照旧。
+                # 事实依据（两条用例互为对照）：Eu²⁺ 在酸性介质迅速还原
+                # H⁺ 析氢（EU05，pH 1.3），在近中性介质被动力学稳定
+                # （EU01，pH≈6，可稳定数小时）；无条件封闭会把 EU05
+                # 一起封死（round 36 实测回退）。
+                if kin:
+                    for _r, _pth in kin.get("closed_with_red_above_pH",
+                                            {}).items():
+                        if partner["red"] == _r and pH > _pth:
+                            closed_red = True
             if skip:
                 continue
             # only_vs_red 温度闸门预解析（T_min 对指定还原剂生效，
