@@ -1,4 +1,4 @@
-# chemkit 0.4.4
+# chemkit 0.5.0
 
 水溶液反应判定与产物计算引擎（Python，**零第三方依赖**——纯标准库实现，
 含精确有理数零空间配平）。
@@ -403,20 +403,20 @@ core ← data ← candidates ← normalize ← speciation / acidbase / templates
 | 模块 | 行数 | 职责 | 关键对象 / 不变量 |
 |---|---|---|---|
 | `chemkit.interfaces` | 60 | **用户侧唯一门面**，内部实现不从此导出 | `Engine` 与全部公开对象 |
-| `chemkit.core` | 336 | 化学式解析、**手写免分数整数消元零空间**配平、温度函数 | `elements_of` / `charge_of` / `balance` / `FormulaError` |
-| `chemkit.data` | 414 | 数据表加载、kinetics 字段展开、晶格阴离子电对与 van't Hoff 焓的 Hess 派生、Henry 温度修正 | `load_tables()` / `Tables` |
+| `chemkit.core` | 337 | 化学式解析、**手写免分数整数消元零空间**配平、温度函数 | `elements_of` / `charge_of` / `balance` / `FormulaError` |
+| `chemkit.data` | 418 | 数据表加载、kinetics 字段展开、晶格阴离子电对与 van't Hoff 焓的 Hess 派生、Henry 温度修正 | `load_tables()` / `Tables` |
 | `chemkit.candidates` | 889 | 引擎地基：全局常数唯一事实源、`Cand` 与 `logK(T)` 三通道、半反应配平、拆盐兜底、Hess 派生候选 | `Cand` / `logK_T()` / `build_derived()`；派生候选的 logK **必须**等于基候选的线性组合（`tools/hess_audit.py` 常驻核验，H46 病灶即此） |
 | `chemkit.normalize` | 272 | 投料 → 引擎账本（电离 / 中和 / 浓酸分子态曲线 / 电离映射） | `normalize()`；`Σz·n + He + c_H = 0` 的建立处 |
-| `chemkit.acidbase` | 383 | **精确酸碱求解地基**：质子化族（pKa 连通块）+ 逐级 pKa 严格多级分布 + 电荷平衡闭式解 pH | `build_families()` / `dist_charge()` / `charge_pH()`；13/13 教科书对照（NaAc 8.882 / NH₄Cl 5.125 / NaHCO₃ 8.350 …）。**诊断/校验用，未接入主路径**（替换判据见 architecture §7 F） |
-| `chemkit.speciation` | 576 | pH 机器：缓冲滴定记账（强度序堆 + 增量移动）、四分支 pH 估计、多级形态分布、分子态强酸再电离 | `estimate_state()` / `estimate_pH()`；族总量守恒是滴定记账的基本不变量（`tools/titr.py` 逐调用对账） |
-| `chemkit.templates` | 961 | 候选宇宙：红氧模板四级缓存 + 三层枚举 memo | `enumerate_candidates()` |
-| `chemkit.engine` | 1786 | 判定主循环：S 评估、二分程度求解、驱动力排序 walk（震荡冻结 / 膜封锁 / 气体扫气 / 爬行外推 / 联立跳步） | `judge()`；`_exec` 是 walk 步与联立跳步共用的唯一记账入口 |
-| `chemkit.joint` | 385 | 联立平衡求解器：耦合平衡集作为非线性方程组（变量 = 各平衡净程度），阻尼 Newton + 数值 Jacobian + 回溯行搜索 + 非负投影，奇异走 Tikhonov 最小二乘 | `joint_solve()` / `_solve_ph()`；三态返回（内点跳步 / boundary 冻结 / fail 无操作） |
-| `chemkit.equations` | 1449 | 方程式装配：步骤聚合、瞬态中间体折叠、H/O 配平、系数有理化、净离子方程式 | `_build_equations()`；化简只是**候选生成器**，唯一裁决是守恒闸门 `_drop_budget_ok` |
-| `chemkit.system` | 390 | 高层 API：`Engine` 对象、`Reaction` 包装、`System` 连续投料、共用求解管线 | `Engine` / `Reaction` / `System` / `react()`（三层 API 直落同一管线，无包装链） |
+| `chemkit.acidbase` | 487 | **精确酸碱求解地基**：质子化族（pKa 连通块）+ 逐级 pKa 严格多级分布 + 电荷平衡闭式解 pH | `build_families()` / `dist_charge()` / `charge_pH()`；13/13 教科书对照（NaAc 8.882 / NH₄Cl 5.125 / NaHCO₃ 8.350 …）。**诊断/校验用，未接入主路径**（替换判据见 architecture §7 F） |
+| `chemkit.speciation` | 637 | pH 机器：缓冲滴定记账（强度序堆 + 增量移动）、四分支 pH 估计、多级形态分布、分子态强酸再电离 | `estimate_state()` / `estimate_pH()`；族总量守恒是滴定记账的基本不变量（`tools/titr.py` 逐调用对账） |
+| `chemkit.templates` | 971 | 候选宇宙：红氧模板四级缓存 + 三层枚举 memo | `enumerate_candidates()` |
+| `chemkit.engine` | 2267 | 判定主循环：S 评估、二分程度求解、驱动力排序 walk（震荡冻结 / 膜封锁 / 气体扫气 / 爬行外推 / 联立跳步） | `judge()`；`_exec` 是 walk 步与联立跳步共用的唯一记账入口 |
+| `chemkit.joint` | 399 | 联立平衡求解器：耦合平衡集作为非线性方程组（变量 = 各平衡净程度），阻尼 Newton + 数值 Jacobian + 回溯行搜索 + 非负投影，奇异走 Tikhonov 最小二乘 | `joint_solve()` / `_solve_ph()`；三态返回（内点跳步 / boundary 冻结 / fail 无操作） |
+| `chemkit.equations` | 1721 | 方程式装配：步骤聚合、瞬态中间体折叠、H/O 配平、系数有理化、净离子方程式 | `_build_equations()`；化简只是**候选生成器**，唯一裁决是守恒闸门 `_drop_budget_ok` |
+| `chemkit.system` | 404 | 高层 API：`Engine` 对象、`Reaction` 包装、`System` 连续投料、共用求解管线 | `Engine` / `Reaction` / `System` / `react()`（三层 API 直落同一管线，无包装链） |
 | `chemkit.thermo` | 300 | 独立温度模块：反应热事后分析与绝热耦合（平衡 ⇌ 能量外层温度不动点） | `analyze()` / `coupled()`；与平衡路径完全解耦 |
-| `chemkit.converg` | 243 | 收敛质量基准与全量差分：残差画像 dump / diff / top | `resid_live` 口径（排除 frozen / slow / blocked / trace 四类），动 walk 语义前的差分基线制度 |
-| `chemkit.testsuit` | 651 | 测试套件（默认不随包加载） | `python -m chemkit.testsuit [用例库] [--out 结果.json]` |
+| `chemkit.converg` | 256 | 收敛质量基准与全量差分：残差画像 dump / diff / top | `resid_live` 口径（排除 frozen / slow / blocked / trace 四类），动 walk 语义前的差分基线制度 |
+| `chemkit.testsuit` | 871 | 测试套件（默认不随包加载） | `python -m chemkit.testsuit [用例库] [--out 结果.json]` |
 
 **审计工具（`tools/`，非包内代码）**：`eqcheck.py`（期望方程式精确有理守恒
 核验）、`hess_audit.py`（派生候选 Hess 一致性）、`hydrate_audit.py`（水合/
@@ -620,7 +620,7 @@ Illinois 会跳进口袋上方的正区、收敛到**第二个**穿过点 ⟹ **
 
 ## 版本
 
-当前包内版本号 **0.4.4**。版本历史与逐版细节见 **`changelog.md`**；
+当前包内版本号 **0.5.0**。版本历史与逐版细节见 **`changelog.md`**；
 未完成项、失败实验记录与下一步规格见 **`architecture.md` §7**。
 
 **升级纪律**：0.5.0 的门槛是**求解算法的实质飞跃**（性能、泛用性、鲁棒性
