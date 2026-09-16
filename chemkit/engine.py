@@ -47,7 +47,8 @@ from .speciation import (_buffer_titration, estimate_pH, estimate_state,
                          _respeciate_strong_acids, _full_speciation,
                          _RESPECIATE_ACIDS, _pksp, closed_pH,
                          weak_species_set, exact_proton_pH)
-from .joint import joint_solve, _solve_ph, JOINT_MAX_M, JOINT_MIN_M
+from .joint import (joint_solve, _solve_ph, _state, JOINT_MAX_M,
+                        JOINT_MIN_M, JOINT_TOL)
 from .templates import (_redox_pair_static, _redox_templates,
                         _oxide_dissolve_info, _build_static_cands,
                         _gate_species, enumerate_candidates, _gate_check,
@@ -791,11 +792,16 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 却乒乓 300+ 步把 Fe 溶掉 0.34）。pH 序列用 snaps 懒评估（drain
     # 循环内迭代 pH 不刷新——逐快照重估才可见摆动；每 8 步去抖）。
     hexec: list[bool] = []
+    # 净质子循环窗口（v0.5.0 X-23）：(Cand, 方向, extent, 步 S)。净反应跳步
+    # 需要各腿的 H⁺ 计量与 extent 权重，而 hist 只存忽略 H⁺/H₂O 的净键。
+    hcyc: list = []
+    _eval_snap: list = []   # X-23：本迭代被评估的候选（门槛判据见 _cycle_jump）
     # 走步画像诊断计数（v0.4.2 探针扩展，纯诊断零行为影响——不进
     # digest，仅供 converg/慢例分析）：联立尝试/冻结事件/实质微步数；
     # CHEM_TRACE_WINDOWS=1 时每 32 步窗口导出 (drift, turnover) 标定数据
     _diag = {"joint_tries": 0, "joint_ok": 0, "freeze_events": 0,
-             "micro_steps": 0, "windows": []}
+             "micro_steps": 0, "windows": [], "cycle_jumps": 0,
+             "cycle_freeze": 0, "cycle_dx": 0.0}
     _WINDOWS = bool(_os.environ.get("CHEM_TRACE_WINDOWS"))
 
     def _netkey(c, direction):
@@ -873,6 +879,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         chem_net[pick.key][0] += d * ext
         hist.append((nk, ext))
         hexec.append(H_ION in rr or H_ION in pp)
+        hcyc.append((pick, d, ext, S))
         if ext >= 0.01:
             _last_mat_step = len(hist)   # 实质步标记（慢标注负结论的失效钩子）
         snaps.append((dict(ledger), H_excess))
@@ -1063,6 +1070,186 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         disabled.clear(); dis_why.clear()   # 状态实质移动：全量解禁让 S 重验（既有自校正）
         return True
 
+    # ---- 净质子循环的净反应跳步（v0.5.0 X-23）----------------------------
+    # 机理与实测见 §7 X-23。识别判据是**质子中性**（近窗 H⁺ 净通量 ≈ 0），
+    # 不是步类型：真实单向酸碱/氧化还原进程的 H⁺ 通量不抵消，天然不被误收。
+    _CYC_W = 24          # 近窗步数（与既有联立/悬崖检测器同节奏）
+    _CYC_MAX = 0.02      # 微步上限（大步推进不受此机制管辖）
+    _CYC_LEG_MAX = 4     # 腿数上限（>4 条不是'一个循环'，是微步捆）
+    _CYC_SHARE = 0.15    # 每腿最小份额（占窗口总 extent）——紧耦合判据
+    _CYC_OTHER_S = 1.0   # 门槛：循环之外存在 |S| ≥ 此值的强通道则不动
+                         #（1 个 log 单位的驱动；移除条件见 §7 X-23）
+
+    def _cycle_nuH(c, d) -> float:
+        rr = c.r if d > 0 else c.pr
+        pp = c.pr if d > 0 else c.r
+        return pp.get(H_ION, 0.0) - rr.get(H_ION, 0.0)
+
+    def _cycle_legs():
+        """近窗质子中性微步循环 → ({净键: [Cand, 方向, 累计 extent]},
+        {净键: 质子中性权重 w（Σw = 1）})，或 None。
+
+        权重 = 窗口累计 extent 投影到 **H⁺ 守恒子空间**（Σwᵢ·ν_H,ᵢ = 0）。
+        循环的净反应无 H⁺（"质子中性循环"的定义）；按窗口经验比例推进会把
+        窗口里的 H⁺ 失衡一起搬过去（首版实测：NR57 两腿 0.9715 vs 0.97094
+        ⟹ 跳完 He 余 +0.0011 ⟹ 呈现 pH 3.0 的幻影强酸）。
+        """
+        if len(hcyc) < _CYC_W:
+            return None
+        win = hcyc[-_CYC_W:]
+        if max(e for _c, _d, e, _S in win) >= _CYC_MAX:
+            return None
+        legs: dict = {}
+        fH = aH = esum = 0.0
+        for c, d, e, _S in win:
+            nu = _cycle_nuH(c, d)
+            rr = c.r if d > 0 else c.pr
+            pp = c.pr if d > 0 else c.r
+            fH += nu * e
+            aH += (abs(rr.get(H_ION, 0.0)) + abs(pp.get(H_ION, 0.0))) * e
+            esum += e
+            k = _netkey(c, d)
+            it = legs.get(k)
+            if it is None:
+                legs[k] = [c, d, e]
+            else:
+                it[2] += e
+        if len(legs) < 2 or esum <= 1e-12 or aH <= 1e-12:
+            return None
+        if abs(fH) > 0.1 * aH:       # 非质子中性：真实单向酸碱/氧化还原进程
+            return None
+        # 纯度闸：真循环是**少数几条腿**的紧耦合。F14 MgCO₃ 实测：窗口里 6~12
+        # 条互不相同的微步净键其 H⁺ 通量也恰好抵消，被判成"循环"后把一捆反应
+        # 当净反应推进，状态被推到怪处（净方程退化成 571 项非整数式）。
+        if len(legs) > _CYC_LEG_MAX:
+            return None
+        if min(it[2] for it in legs.values()) < _CYC_SHARE * esum:
+            return None
+        keys = list(legs)
+        nu = [_cycle_nuH(legs[k][0], legs[k][1]) for k in keys]
+        w = [legs[k][2] for k in keys]
+        nn = sum(v * v for v in nu)
+        if nn > 1e-12:               # 投影到 H⁺ 守恒子空间（最小改动）
+            corr = sum(a * b for a, b in zip(w, nu)) / nn
+            w = [a - corr * b for a, b in zip(w, nu)]
+        s = sum(w)
+        if s <= 1e-12 or any(a <= 0.0 for a in w):
+            return None              # 投影把某腿推负 ⟹ 非正当循环，不动
+        return legs, {k: a / s for k, a in zip(keys, w)}
+
+    def _cycle_leg_S(legs: dict, wts: dict, frac: float) -> list:
+        """净反应推进 frac（mol）后，在**同一状态同一相位**重算的各腿 S。
+        口径照抄 joint_solve._F：redox 走 estimate_state 虚拟账本、含 H⁺ 的用
+        estimate_pH 的 pH、其余 pH 无关（7.0）。"""
+        keys = list(legs)
+        act = [(legs[k][0], legs[k][1]) for k in keys]
+        xs = [frac * wts[k] for k in keys]
+        led, He = _state(ledger, H_excess, act, xs, H_ION, WATER)
+        pH_x = estimate_pH(led, He, V, T, T_K)
+        led_v = None
+        out = []
+        for k in keys:
+            c, d, _e = legs[k]
+            if c.kind == "redox":
+                if led_v is None:
+                    _, led_v, _ = estimate_state(led, He, V, T, T_K)
+                Sj = S_of(c, led_v, V, pH_x, T_K, T, gsup, p_ext_kpa, gas_escape)
+            elif H_ION in c.r or H_ION in c.pr:
+                Sj = S_of(c, led, V, pH_x, T_K, T, gsup, p_ext_kpa, gas_escape)
+            else:
+                Sj = S_of(c, led, V, 7.0, T_K, T, gsup, p_ext_kpa, gas_escape)
+            out.append(Sj if d > 0 else -Sj)
+        return out
+
+    def _cycle_Snet(legs: dict, wts: dict, frac: float) -> float:
+        """合驱动 = 净反应的 S（S 对计量线性；权重已 H⁺ 中性 ⟹ 与 pH 精确无关）。"""
+        keys = list(legs)
+        return sum(wts[k] * s for k, s in
+                   zip(keys, _cycle_leg_S(legs, wts, frac)))
+
+    def _cycle_leg_max(legs: dict, k) -> float:
+        """单腿物料上限（mol）：反应物侧非水非 H⁺ 物种的耗尽点。"""
+        c, d, _e = legs[k]
+        rr = c.r if d > 0 else c.pr
+        return min((ledger.get(s, 0.0) / nu for s, nu in rr.items()
+                    if s not in (WATER, H_ION) and nu > 0
+                    and ledger.get(s, 0.0) > 0.0), default=0.0)
+
+    def _cycle_jump() -> bool:
+        """近窗质子中性循环 → 沿净反应跳到 S_net = 0；S_net(0) ≤ 0 → 冻结。"""
+        got = _cycle_legs()
+        if got is None:
+            return False
+        legs, wts = got
+        # 门槛：循环之外还有 |S| ≥ _CYC_OTHER_S 的强通道时不做任何动作
+        # （既非跳也非冻），交回既有数值仲裁。O02 实测：Fe 再溶解循环 S0=+4.84
+        # 热力学确实有利，但该体系的化学事实由**动力学**定（H₂ 在 Fe 上过电位
+        # ~0.4 V + 氧化膜 → 近中性水中几乎不析氢），引擎动力学层尚无"金属专属
+        # H₂ 过电位"闸；NR57 同类循环之外只有 S≈0.1 的边缘候选 ⟹ 门槛两侧
+        # 余量 ~2 个 log。移除条件见 §7 X-23。
+        s_other = max((abs(S) for c, d, S in _eval_snap
+                       if _netkey(c, d) not in legs), default=0.0)
+        if s_other >= _CYC_OTHER_S:
+            if _TRACE:
+                print(f'  [cycle-skip] other channel |S|={s_other:.2f} '
+                      f'>= {_CYC_OTHER_S}')
+            return False
+        s0 = _cycle_Snet(legs, wts, 0.0)
+        if abs(s0) <= JOINT_TOL:
+            # 引擎自身的平衡容差（|S| < 0.05 视为已平衡）：既非跳也非冻。
+            # RX13 实测：S_net = −0.009/−0.251/−1.353 被误冻结，把仍在工作的
+            # 通道锁死（Ag 产率 0.15+ → 0.127）。
+            return False
+        if s0 < 0.0:
+            # 循环已达/越过自身平衡：冻结（与既有 freeze 同"宣告平衡"语义）
+            win = {k for k in legs if k not in frozen_perm}
+            if win:
+                for k in win:
+                    frozen_perm.add(k)
+                    frozen_perm.add((k[1], k[0]))
+                _diag["freeze_events"] += 1
+                _diag["cycle_freeze"] += 1
+                if _TRACE:
+                    print(f'  [cycle-freeze] {len(win)} keys S_net={s0:+.3f}')
+            return False
+        hi = min((_cycle_leg_max(legs, k) / wts[k] for k in legs), default=0.0)
+        if hi <= 0.0:
+            return False
+        if _cycle_Snet(legs, wts, hi) > 0.0:
+            return False        # 到物料上限仍有利：交给走步逐步吃（不越界）
+        lo, hi_f = 0.0, hi
+        while hi_f > 1e-12:     # 找括号（左端 S_net > 0 已知）
+            mid = 0.5 * hi_f
+            if _cycle_Snet(legs, wts, mid) > 0.0:
+                lo = mid
+                break
+            hi_f = mid
+        if lo <= 0.0:
+            return False        # 极近平衡（S_net 立刻转负）：留给走步微调
+        for _ in range(60):     # 二分
+            mid = 0.5 * (lo + hi_f)
+            if _cycle_Snet(legs, wts, mid) > 0.0:
+                lo = mid
+            else:
+                hi_f = mid
+            if (hi_f - lo) < 1e-12 * max(1.0, hi):
+                break
+        frac = 0.5 * (lo + hi_f)
+        if frac < X_MIN:
+            return False
+        leg_S = _cycle_leg_S(legs, wts, 0.0)     # 步表 S 用跳步前状态的各腿值
+        keys = list(legs)
+        for k, Sj in zip(keys, leg_S):
+            c, d, _e = legs[k]
+            _exec(c, d, frac * wts[k], _cycle_leg_max(legs, k), Sj,
+                  _netkey(c, d))
+        _diag["cycle_jumps"] += 1
+        _diag["cycle_dx"] += frac
+        disabled.clear(); dis_why.clear()   # 状态实质移动：全量解禁自校正（同 joint）
+        if _TRACE:
+            print(f'  [cycle-jump] {len(legs)} legs S0={s0:+.3f} dx={frac:.5g} mol')
+        return True
+
     for _sweep_round in range(20):
       seen_sig: dict = {}
       idle = 0   # 连续零执行迭代计数：签名不变 ⇒ disabled/frozen 永不刷新，
@@ -1175,6 +1362,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 continue
             evals.append((c, d, S))
         slow_seen = slow_seen or slow_now
+        # 本迭代被评估的候选快照（X-23 跳步门槛用：判断'循环之外是否还有
+        # 真正在跑的强通道'；只读诊断/门槛，不改 walk 语义）
+        _eval_snap = list(evals) + list(deferred_evals)
         if not evals:
             if deferred_evals:
                 # 无快候选：让位档出手，并按可观察慢反应标注
@@ -1605,6 +1795,14 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 if not _joint_fire_ph():
                     _joint_ph_blacklist.add(_sig_ph)
 
+        # ---- 触发点④：净质子循环的净反应跳步（v0.5.0 X-23）----
+        # 与①②③并列但**判据不同**：那三条要求 m ≥ 2 个 |S| ≥ 0.02 的平衡，
+        # 而本类循环的一条腿是饱和线限幅转移（S ≡ 0）⟹ 结构上被它们排除
+        # （NR57 实测 3891 步里只试了 2 次）。本触发点按"质子中性循环"识别，
+        # 沿净反应一维求根跳步；冷却由机制自身提供——跳步会记入一个 ≥0.02
+        # 的大步，近窗随即不再满足微步条件。
+        _cycle_jump()
+
       # 不动点收敛后扫气一轮：逸出离账会移动平衡（Le Chatelier），
       # 有新增逸出则再跑一轮不动点；无新增即全局收敛
       _n0 = sum(escaped.values())
@@ -1623,6 +1821,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         _probe["joint_ok"] = _diag["joint_ok"]
         _probe["freeze_events"] = _diag["freeze_events"]
         _probe["micro_steps"] = _diag["micro_steps"]
+        _probe["cycle_jumps"] = _diag["cycle_jumps"]
+        _probe["cycle_freeze"] = _diag["cycle_freeze"]
+        _probe["cycle_dx"] = round(_diag["cycle_dx"], 6)
         if _diag["windows"]:
             _probe["windows"] = _diag["windows"]
     if slow_seen:
