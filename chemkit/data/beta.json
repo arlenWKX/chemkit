@@ -104,7 +104,8 @@
   "center": "Co^{2+}",
   "ligand": "NH_3",
   "nu": 6,
-  "logb": 5.1
+  "logb": 4.39,
+  "note": "Lurie 手册累积 logβ6=4.39（I=0；原 5.1 偏高 0.71）。**β6<β5 是文献事实**（教材阶梯 K₅≈0.4、K₆≈0.07，Co(II) d⁷ 后两级配位不利）⟹ 六氨合物在浓氨水中是次要形态，不是主产物（Co33 用例据此重裁）"
  },
  {
   "complex": "[AlF_6]^{3-}",
@@ -769,8 +770,8 @@
   "center": "Co^{2+}",
   "ligand": "NH_3",
   "nu": 1,
-  "logb": 2.1,
-  "note": "第一级"
+  "logb": 1.99,
+  "note": "Lurie 手册累积 logβ1=1.99（I=0；原 2.1）"
  },
  {
   "complex": "[Co(NH_3)_2]^{2+}",
@@ -778,23 +779,31 @@
   "ligand": "NH_3",
   "nu": 2,
   "logb": 3.5,
-  "note": "第二级"
+  "note": "Lurie 累积 logβ2=3.5（与本库原值一致）"
+ },
+ {
+  "complex": "[Co(NH_3)_3]^{2+}",
+  "center": "Co^{2+}",
+  "ligand": "NH_3",
+  "nu": 3,
+  "logb": 4.43,
+  "note": "Lurie 累积 logβ3=4.43（v0.5.0 补齐：原表缺 ν=3 一档）"
  },
  {
   "complex": "[Co(NH_3)_4]^{2+}",
   "center": "Co^{2+}",
   "ligand": "NH_3",
   "nu": 4,
-  "logb": 5.0,
-  "note": "四级"
+  "logb": 5.07,
+  "note": "Lurie 累积 logβ4=5.07（原 5.0）"
  },
  {
   "complex": "[Co(NH_3)_5]^{2+}",
   "center": "Co^{2+}",
   "ligand": "NH_3",
   "nu": 5,
-  "logb": 5.8,
-  "note": "五级"
+  "logb": 5.13,
+  "note": "Lurie 累积 logβ5=5.13（原 5.8 偏高 0.67）；Co(II) 氨合物在浓氨水中的**主形态**（K₆<1）"
  },
  {
   "complex": "[Co(CN)_6]^{3-}",

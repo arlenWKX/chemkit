@@ -60,6 +60,11 @@ python tools/dev.py guide             # 打印下面的协议（忘记时先跑�
    stash 失败或 pop 冲突会丢工作）。
 8. **`converg.dump()` 会覆盖受控基线**：只跑 `dev.py perf`（默认写临时文件）。
 9. 一次只改一个点；改完立刻 `suite` + `perf`，不要攒着一起测。
+9b. **大 JSON 数据表（tests.json/beta.json/couples.json）不要用"索引算术改一个
+    可变字符串"**：`s[:i] + new + s[j:]` 这类写法在一处失败后位置全错——本轮实测
+    把 beta.json 写成非法 JSON（整包 import 失败，只能 `git checkout` 复原）。
+    正确做法：先 `grep`/`read` 拿到**原文与行号**，再用 `edit` 工具按唯一片段改；
+    或写"按键名定位 → 断言片段唯一 → 替换 → **先 `json.loads` 复验再落盘**"的脚本。
 10. 提交前 `hygiene --fix`：Windows 上 `write` 工具会把 CRLF 文件写成 LF，
     `git status` 显示 `M` 但 `git diff` 为空——这类噪声不该进提交。
 
