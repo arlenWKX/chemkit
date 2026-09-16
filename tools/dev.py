@@ -353,18 +353,31 @@ def cmd_patch(spec: str, check: bool = False) -> int:
         print("!! spec 里没有 PATCHES")
         return 2
     # 先全量校验（原子性：任一条不满足则一行都不落盘）
+    # 换行风格统一：spec 通常是 LF，而 Windows 检出/`write` 产出的文件可能是
+    # CRLF——旧串按**归一化文本**匹配（匹配、计数、替换都在归一化文本上做，
+    # 落盘时再还原原风格），免去"旧串出现 0 次"这类与内容无关的失败。
     staged: dict[str, str] = {}
+    nl_of: dict[str, str] = {}
     for item in patches:
         path, old, new = item[0], item[1], item[2]
         n = item[3] if len(item) > 3 else 1
         full = os.path.join(ROOT, path)
-        cur = staged.get(path) or io.open(full, encoding="utf-8", newline="").read()
-        got = cur.count(old)
+        raw = staged.get(path)
+        if raw is None:
+            raw = io.open(full, encoding="utf-8", newline="").read()
+            nl_of[path] = "\r\n" if "\r\n" in raw else "\n"
+        crlf = nl_of[path] == "\r\n"
+        cur = raw.replace("\r\n", "\n")
+        old_n = old.replace("\r\n", "\n")
+        new_n = new.replace("\r\n", "\n")
+        got = cur.count(old_n)
         if got != n:
             print(f"!! {path}: 旧串出现 {got} 次，期望 {n} 次 -> 中止（未写入任何文件）")
             return 1
-        staged[path] = cur.replace(old, new)
-        print(f"   ok {path}: {got} 处替换（{len(old)}B -> {len(new)}B）")
+        nxt = cur.replace(old_n, new_n)
+        staged[path] = nxt.replace("\n", "\r\n") if crlf else nxt
+        print(f"   ok {path}: {got} 处替换（{len(old)}B -> {len(new)}B）"
+              + ("  [CRLF]" if crlf else ""))
     if check:
         print("[--check] 校验通过，未写入")
         return 0
