@@ -89,6 +89,11 @@ ROOT_AUDIT: dict | None = None
 # 走步全局化（联立不动点）才谈落地。本钩子只**普查规模**，不改任何行为。
 SELFBUF_AUDIT: list | None = None
 
+# ---- 走步残差轨迹（仅 tools/ 诊断启用；生产路径恒为 None）---------
+# 每次评估集构建后记录 (迭代号, 可执行候选数, Σ|S|)：残差驱动的条件
+# 阻尼（§7 X-35）要先验证"Σ|S| 未下降"能不能把震荡与正常推进分开。
+RESID_TRACE: list | None = None
+
 # 二分收敛容差（相对 x_max 的绝对值下限见 solve_extent）：见 §7 W-4 的
 # 论证与实测。置 0.0 可复现"跑满迭代到浮点饱和"的旧路径（实验用）。
 _EXTENT_TOL_REL = 1e-11
@@ -1421,6 +1426,10 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 continue
             evals.append((c, d, S))
         slow_seen = slow_seen or slow_now
+        if RESID_TRACE is not None:
+            RESID_TRACE.append((_it_total, len(evals),
+                                round(sum(abs(_s)
+                                          for _c, _d, _s in evals), 6)))
         if not evals:
             if deferred_evals:
                 # 无快候选：让位档出手，并按可观察慢反应标注
