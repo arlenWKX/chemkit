@@ -79,6 +79,16 @@ SOF_CALLS: list[int] | None = None
 # 在同一括号上同时跑两种方法，记录根差、求值次数与网格符号翻转数。
 ROOT_AUDIT: dict | None = None
 
+# ---- 自缓冲步普查钩子（仅 tools/selfbuf.py 启用；生产路径恒为 None）-----
+# §7 X-33 的病灶：候选产物里的 β_pka 配离子若**总吸收容量 ≥ 本步净释出 H⁺**，
+# 滴定就会把这批质子原地退回给产物自己（He_res ≡ 0 与步长无关）⟹ pH 与该步
+# 长度彻底解耦，水解/两性步跑到"产物/反应物 = 10^(pH−pK)"的幻影量
+# （J14 铅酸根 ν=3、X-32 铝酸根 ν=4、EU01 锌酸根 ν=4）。
+# 修法（把这些产物从碱储备堆里摘掉）已实测**正确但会 destabilize 贪心走步**：
+# EU01 由 36 步 → 173 步、Eu²⁺ 0.0999 → 0.0318（见 X-33 实测表）⟹ 必须先有
+# 走步全局化（联立不动点）才谈落地。本钩子只**普查规模**，不改任何行为。
+SELFBUF_AUDIT: list | None = None
+
 # 二分收敛容差（相对 x_max 的绝对值下限见 solve_extent）：见 §7 W-4 的
 # 论证与实测。置 0.0 可复现"跑满迭代到浮点饱和"的旧路径（实验用）。
 _EXTENT_TOL_REL = 1e-11
@@ -382,6 +392,22 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
     # 恒为首次构建序，与无缓存路径 bit 级等价，见 speciation.py 文档）
     _bt_cache: dict = {}
     _touch = frozenset(s for s, _, _ in changing)
+    if SELFBUF_AUDIT is not None:
+        # 自缓冲步普查：判定"产物配离子的总吸收容量 ≥ 本步净释出 H⁺"
+        # （§7 X-33）。生产路径恒为 None ⟹ 零成本、零行为差异。
+        _nh = float(pp.get(H_ION, 0.0)) - float(rr.get(H_ION, 0.0))
+        if _nh > 0:
+            _cap = _speciation.complex_capacity(T)
+            _hit = [(s, d, _cap[s]) for s, d, _ in changing
+                    if d > 0 and s in _cap]
+            if _hit and sum(cap * d for _s, d, cap in _hit) >= _nh - 1e-12:
+                SELFBUF_AUDIT.append({
+                    "kind": c.kind, "nu_h": _nh,
+                    "prod": tuple(sorted(s for s, _d, _c in _hit)),
+                    "cap": sum(cap * d for _s, d, cap in _hit),
+                    "eq": (c.meta.get("src") or c.kind),
+                    "r": dict(c.r), "pr": dict(c.pr),
+                })
     # 非 redox 候选且不含 H+ 时 S 与 pH 无关（S_of 中 pH 仅用于 H+ 项；
     # estimate_pH 不改账本），二分全程跳过缓冲滴定（每次 f 调用省一次
     # 全套件最大热点）。redox 即使无 H+ 也必须走 estimate_state——

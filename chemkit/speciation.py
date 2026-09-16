@@ -283,6 +283,30 @@ def _titration_heap(ledger: dict, entries: dict, cache: dict | None, ckey: str,
     return rows, cnt
 
 
+def complex_capacity(T) -> dict:
+    """beta_pka 配离子储备的**每摩尔吸收质子数** {complex: νH⁺}（每表一次）。
+
+    §7 X-33 用它判定"本步是不是自缓冲步"：候选产物里 β_pka 配离子的总吸收
+    容量 ≥ 本步净释出的 H⁺ 时，滴定会把这批质子原地退回给产物自己
+    ⟹ He_res ≡ 0 与步长无关、pH 与步长解耦（J14 铅酸根、X-32 铝酸根、
+    EU01 锌酸根同机制）。当前仅 `tools/selfbuf.py` 普查规模用（生产路径不调用）。
+    """
+    cap = getattr(T, "_cx_cap", None)
+    if cap is None:
+        cap = {}
+        for dc in build_derived(T):
+            if not dc.meta.get("src", "").startswith("beta_pka:"):
+                continue
+            nu_h = dc.r.get(H_ION, 0)
+            if nu_h <= 0:
+                continue
+            comps = [s for s in dc.r if s not in (H_ION, WATER)]
+            if len(comps) == 1:
+                cap[comps[0]] = nu_h
+        T._cx_cap = cap
+    return cap
+
+
 def estimate_pH(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 cache: dict | None = None,
                 touch: frozenset | None = None) -> float:

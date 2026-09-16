@@ -102,7 +102,10 @@ python tools/dev.py patch spec.py            # 原子落盘（任一条不满足
 `cand_audit.py`（候选不变量）、`eq_semantics.py`（changed/reacted/方程语义矩阵）、
 `gas_audit.py`（**气体活度标准态对账**：`--scan` 给全部产气用例的
 `a(引擎) vs a(p/p°)` 与 Δlog，是"标准态统一"改动的爆炸半径清单）、
-`case.py` / `cands.py` / `extent.py`（单例深探，`dev.py case` 已覆盖常用部分）。
+`case.py` / `cands.py` / `extent.py`（单例深探，`dev.py case` 已覆盖常用部分）、
+`selfbuf.py`（**自缓冲步普查**：判据"产物配离子的总吸收容量 ≥ 本步释出 H⁺"，
+`He_res ≡ 0` 与步长无关的退化步；全库 **133/1173 例（11.3%）** 命中，
+主体是四羟基阴离子族 Al/Pb/Cr/Zn/Ga/Sn/Be —— §7 X-33。纯普查，零行为变更）。
 
 **候选 logK 的参考态纪律（§7 X-31 的机械化守卫）**：任何构造 `Cand` 的地方，
 `logK` 必须是 **298.15 K 参考值**，OH⁻→H⁺ 之类的折算一律交给 `pkw_coeff`
