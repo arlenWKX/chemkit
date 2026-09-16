@@ -795,7 +795,6 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 净质子循环窗口（v0.5.0 X-23）：(Cand, 方向, extent, 步 S)。净反应跳步
     # 需要各腿的 H⁺ 计量与 extent 权重，而 hist 只存忽略 H⁺/H₂O 的净键。
     hcyc: list = []
-    _eval_snap: list = []   # X-23：本迭代被评估的候选（门槛判据见 _cycle_jump）
     # 走步画像诊断计数（v0.4.2 探针扩展，纯诊断零行为影响——不进
     # digest，仅供 converg/慢例分析）：联立尝试/冻结事件/实质微步数；
     # CHEM_TRACE_WINDOWS=1 时每 32 步窗口导出 (drift, turnover) 标定数据
@@ -1077,8 +1076,6 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     _CYC_MAX = 0.02      # 微步上限（大步推进不受此机制管辖）
     _CYC_LEG_MAX = 4     # 腿数上限（>4 条不是'一个循环'，是微步捆）
     _CYC_SHARE = 0.15    # 每腿最小份额（占窗口总 extent）——紧耦合判据
-    _CYC_OTHER_S = 1.0   # 门槛：循环之外存在 |S| ≥ 此值的强通道则不动
-                         #（1 个 log 单位的驱动；移除条件见 §7 X-23）
 
     def _cycle_nuH(c, d) -> float:
         rr = c.r if d > 0 else c.pr
@@ -1181,19 +1178,6 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         if got is None:
             return False
         legs, wts = got
-        # 门槛：循环之外还有 |S| ≥ _CYC_OTHER_S 的强通道时不做任何动作
-        # （既非跳也非冻），交回既有数值仲裁。O02 实测：Fe 再溶解循环 S0=+4.84
-        # 热力学确实有利，但该体系的化学事实由**动力学**定（H₂ 在 Fe 上过电位
-        # ~0.4 V + 氧化膜 → 近中性水中几乎不析氢），引擎动力学层尚无"金属专属
-        # H₂ 过电位"闸；NR57 同类循环之外只有 S≈0.1 的边缘候选 ⟹ 门槛两侧
-        # 余量 ~2 个 log。移除条件见 §7 X-23。
-        s_other = max((abs(S) for c, d, S in _eval_snap
-                       if _netkey(c, d) not in legs), default=0.0)
-        if s_other >= _CYC_OTHER_S:
-            if _TRACE:
-                print(f'  [cycle-skip] other channel |S|={s_other:.2f} '
-                      f'>= {_CYC_OTHER_S}')
-            return False
         s0 = _cycle_Snet(legs, wts, 0.0)
         if abs(s0) <= JOINT_TOL:
             # 引擎自身的平衡容差（|S| < 0.05 视为已平衡）：既非跳也非冻。
@@ -1362,9 +1346,6 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 continue
             evals.append((c, d, S))
         slow_seen = slow_seen or slow_now
-        # 本迭代被评估的候选快照（X-23 跳步门槛用：判断'循环之外是否还有
-        # 真正在跑的强通道'；只读诊断/门槛，不改 walk 语义）
-        _eval_snap = list(evals) + list(deferred_evals)
         if not evals:
             if deferred_evals:
                 # 无快候选：让位档出手，并按可观察慢反应标注

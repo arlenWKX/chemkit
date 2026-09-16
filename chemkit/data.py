@@ -148,6 +148,10 @@ def _expand_kinetics(e: dict) -> dict:
         e["slow_except_red"] = k["closed_except_red"]
     if "red_pH_min" in k:
         e["red_pH_min"] = k["red_pH_min"]
+    if k.get("h2_passivation"):
+        # 金属-水析氢的钝化窗 [lo, hi]：pH 落在窗内时，该金属被
+        # H⁺/H₂ 族氧化析氢的通道动力学封闭（膜 + 过电位）。
+        e["h2_passivation"] = k["h2_passivation"]
     if "h2o_red_oh_min" in k:
         e["h2o_red_oh_min"] = k["h2o_red_oh_min"]
     if "ox_pH_max" in k:

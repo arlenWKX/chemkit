@@ -712,6 +712,16 @@ def enumerate_candidates(ledger: dict, H_excess: float, pH: float, V: float, T_K
         # 内联 _couple_gate_dyn -> _gate_check(a.get("gate"), ...) 消除 1.9M 次调用
         if fwd and not _gate_check(a.get("gate"), a, ledger, pH, V, T):
             fwd = False
+        # v0.5.0 X-24：金属-水析氢的**钝化窗**（数据：还原剂电对上的
+        # h2_passivation=[lo,hi]）。当氧化剂电对是 H⁺/H₂ 族（含其 H₂O/OH⁻
+        # 变体写法）且 pH 落在窗内时，该金属的析氢氧化通道动力学封闭——
+        # 酸侧（pH ≤ lo）与浓碱侧（pH ≥ hi）照旧。事实依据：Zn/Fe/Pb 在近中性
+        # 水中几乎不析氢（膜 + 过电位），而稀酸（Fe/Pb/E29）与 NaOH（X02/H19）
+        # 中剧烈放氢。
+        if fwd and kinetics and a["ox"] == H_ION:
+            _pw = b.get("h2_passivation")
+            if _pw is not None and _pw[0] < pH < _pw[1]:
+                fwd = False
         # 固相形态规则仅适用于溶剂/酸背景（a 为 H+）；强氧化剂在场时
         # 金属被氧化为游离离子是正常的（例：Cu+AgNO3 -> Cu2+ + Ag）
         if fwd and a_ox == H_ION and not _product_form_ok(b, aOH, T, T_K):

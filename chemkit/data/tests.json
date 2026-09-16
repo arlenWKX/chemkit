@@ -12279,8 +12279,7 @@
   "cond": {
    "V_L": 1.0
   },
-  "eq": null,
-  "note": "Pb 不如 Zn 活泼",
+  "note": "Pb 不如 Zn 活泼；【v0.5.0 断言口径】原 eq=null（要求无净方程）已删：引擎按 v0.5.0 口径叙述饱和线上的痕量可逆平衡（Zn²⁺+2OH⁻ ⇌ Zn(OH)₂，5e-4 mol），判定层（changed/reacted/degree）两种 pKw 约定一致 ⟹ 按 §7 X-17 (1) 只锁判定层。化学事实『Pb 在近中性 ZnSO₄ 中不析氢』由 couples.json 钝化窗（§7 X-24）承载",
   "changed": false
  },
  {
@@ -13501,8 +13500,7 @@
   "cond": {
    "V_L": 1.0
   },
-  "eq": "2H^+ + Fe -> Fe^{2+} + H_2",
-  "note": "",
+  "note": "；【v0.5.0 断言口径】原 eq「2H⁺+Fe→Fe²⁺+H₂」已删：那是缺动力学时把铁-水析氢当快通道的旧行为产物，与同条 changed:false 自相矛盾。现由 couples.json 的 Fe 钝化窗（§7 X-24）给出正确判定；唯一叙述是饱和线上的痕量 Fe(OH)₂ 水解（阈值敏感，按 X-17 (1) 不锁）",
   "changed": false
  },
  {
