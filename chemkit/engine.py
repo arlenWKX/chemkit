@@ -642,7 +642,7 @@ def _film_acid_soluble(fp: str, aOH: float, T, T_K: float = 298.15) -> bool:
 _rate_map_cache: list = []          # [id(T), {ox: {配对物种: η}}]
 
 
-def _rate_eta(pick: Cand, direction: int, T) -> float | None:
+def _rate_eta(pick: Cand, direction: int, T, pH: float = 7.0) -> float | None:
     """§7 X-37：该候选是否落在 `rate` 慢通道上？命中返回 η，否则 None。
 
     慢 = 每步限幅、可累积（**不动点不变**）；与 `closed*`（无限时间也
@@ -660,7 +660,15 @@ def _rate_eta(pick: Cand, direction: int, T) -> float | None:
         m = {}
         for c in T.couples:
             for kk, vv in (c.get("rate") or {}).items():
-                m.setdefault(c.get("ox"), {})[kk] = RATE_ETA.get(vv, 1.0)
+                if isinstance(vv, dict):
+                    # 带介质条件：{tier, pH_min}——pH < pH_min 时该通道照常
+                    # （酸性里一阶因子大、反应快；见 §7 X-37 EU05/EU02）
+                    m.setdefault(c.get("ox"), {})[kk] = (
+                        RATE_ETA.get(vv.get("tier", "slow"), 1.0),
+                        vv.get("pH_min"))
+                else:
+                    m.setdefault(c.get("ox"), {})[kk] = (RATE_ETA.get(vv, 1.0),
+                                                        None)
         _rate_map_cache[:] = [id(T), m]
     d_ox = m.get(ox)
     if not d_ox:
@@ -668,7 +676,10 @@ def _rate_eta(pick: Cand, direction: int, T) -> float | None:
     side = pick.r if direction > 0 else pick.pr
     for s in side:
         if s in d_ox:
-            return d_ox[s]
+            _eta, _ph_min = d_ox[s]
+            if _ph_min is not None and pH < _ph_min:
+                return None          # 酸性侧照常（快通道，EU05）
+            return _eta
     return None
 
 
@@ -1573,7 +1584,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
           # X-37 (b)-2 速率维度：慢通道每步限幅（extent × η，下限保护）。
           # **不动点不变**，只改到达路径与可观测程度；RATE_DIM 关闭时
           # `_rate_eta` 立即返回 None ⟹ 生产路径逐位不变。
-          _eta = _rate_eta(pick, d, T)
+          _eta = _rate_eta(pick, d, T, pH)
           if _eta is not None and ext > 0.0:
               ext = max(ext * _eta, 1e-9)
           # 振荡外推加速：短周期（2/3 通道）等比衰减爬行（沉淀↔逆转化乒乓、
