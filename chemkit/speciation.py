@@ -371,8 +371,11 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             if an != "OH^-":
                 continue
             _x, _y = _ksp_xy(e)
+            # Kh = c/Kw 通道常数；第二元 = **每阳离子释放的质子数** n = y/x
+            # （与 charge_of(cat) 在全表上逐条相等，此处直接取 y/x 以免
+            #  将来出现 M₂O 型条目时指数悄悄错位）
             hyd_map[cat] = (10.0 ** ((_pksp(e, T_K) - _y * pKw) / _x),
-                            charge_of(cat))
+                            _y / _x)
         # 共轭酸碱对映射（缓冲对识别）：base -> (acid, pKa)，取最强一级
         conj: dict[str, tuple[str, float]] = {}
         for e in T.pka:
@@ -438,22 +441,29 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                     buf.append((pka_c + log10(c / ca), min(c, ca)))
             continue
         if Kh_qc is not None:
-            Kh, qc = Kh_qc
-            if qc == 1:
+            Kh, npp = Kh_qc
+            if npp <= 1.0:
                 # 一价金属水解到底即纯固相（活度 1），无累积共轭碱：
                 # cat + H2O → ½M2O + H+ 给出 h = Kh·c；套弱酸二次式
                 # 会把 Ag+ 类高估 ~1/sqrt(Kh·c) 倍（D26：Ag+ 被估成 pH 3
-                # 的酸，驱动铬酸根幻影质子化死循环）。多价金属分步水解
-                # 经可溶羟基中间体，实测行为近弱酸二次式，保持不变。
+                # 的酸，驱动铬酸根幻影质子化死循环）。
                 _v = Kh * c
                 h_c = max(h_c, _v)
                 if _src is not None:
                     _src.append((sp, "Kh(1)", _v))
             else:
+                # 多价金属分步水解经可溶羟基中间体，实测行为近弱酸二次式
+                # （h² = Kh·c），保持不变。**注意这不是 n 质子的质量作用式**
+                # ——n≥3 的真式为 h^n = Kh·(c − h/n)（Al³⁺ 1 mol/L：真式
+                # pH 3.00，本式 4.50）。§7 X-32 实测：单独换成 n 次根会
+                # 把 Al³⁺/Fe³⁺ 拉回文献值（1 M 3.00、0.1 M Fe³⁺ 1.68），
+                # 但同时翻红 R06（3.33 越界 0.03）与 D32 —— 因为本式原本
+                # **补偿**了缺失的可溶羟基络合物（beta 表只有四羟基阴离子，
+                # 全表无 MOH²⁺/M(OH)₂⁺）。两者必须成对落地，见 X-32 交接。
                 _v = (-Kh + sqrt(Kh * Kh + 4 * Kh * c)) / 2
                 h_c = max(h_c, _v)
                 if _src is not None:
-                    _src.append((sp, f"Kh({qc})", _v))
+                    _src.append((sp, f"Kh({npp:g})", _v))
             continue
         if amph_v is not None and c > 1e-6:
             amph.append((c, amph_v))
