@@ -1555,6 +1555,11 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             # 仅溶解/沉淀类微步执行（微溶盐终态）；质子/氧化还原微步仍跳过——
             # 后者执行会经签名变化逐对渗漏（NH4Ac 双水解曾被渗到 pH 9.4）
             if ext <= X_MIN or pick.kind not in ("dissolve", "precip"):
+                # X-29（停滞计数按迭代而非拾取次数）**已实现并实测**：修好了
+                # T34（残差 3.65→0.39）与 MX01，Co 体系收敛到文献预言的五氨合为主
+                # 形态 —— 但使 J14 走进宏步两性绕行而变红（旧版"绿"是靠过早 idle
+                # 截断绕行，理由不对）。待"宏步循环净反应闸"落地后一并启用，
+                # 详见 §7 X-29。
                 idle += 1
                 if idle >= 8:
                     # （触发点② idle 退出前精修已回退——v0.3.8 全量差分否决：
