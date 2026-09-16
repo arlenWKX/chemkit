@@ -169,6 +169,28 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
     return logK_T(c, T_K) - logQ
 
 
+# ========================================================== 残差口径（唯一定义）
+def resid_live_ok(a: dict) -> bool:
+    """质量口径 `resid_live` 的单一定义（converg._live 与本模块探针共用）。
+
+    口径 = "求解器**承诺要解**的两侧平衡"：
+      two_sided  —— 驱动方向两侧物种都在场（单侧在场是反应物耗尽/产物未生，
+                    属正常终态，判残差无意义）；
+      ¬frozen    —— 引擎宣告平衡止震（极限环/实测仲裁）；
+      ¬slow      —— 动力学层判定永不执行、只作标注；
+      ¬blocked   —— 致密膜抑制溶剂氧化通道（钝化模型）；
+      ext_max ≥ ANN_MIN_EXTENT —— 驱动方向反应物的化学计量上限够显著
+                    （痕量物种对可以有巨大 |S| 而只能走 ~1e-6 mol，属"无关"）。
+
+    `disabled` **计入**（J06 型欠收敛正是"微步禁用把仍有驱动的平衡锁死"），
+    这是已知真实病灶，不能靠口径优化掉——但来源要看得见：见探针 resid_src
+    与 dis_why（"已达平衡"/"限幅"/"零推进" 三分）。
+    """
+    return bool(a["two_sided"] and not a["frozen"]
+                and not a.get("slow") and not a.get("blocked")
+                and a.get("ext_max", 0.0) >= ANN_MIN_EXTENT)
+
+
 # ========================================================== ④ 平衡程度求解
 
 def _sweep_gases(ledger: dict, escaped: dict, gsup: frozenset,
@@ -2006,6 +2028,11 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
         "active": active,
         "max_abs_S": max((abs(a["S"]) for a in active if a["two_sided"]),
                          default=0.0),
+        # 残差来源（只读诊断，§7 X-28）：质量口径下 |S| 最大的候选画像——
+        # 欠收敛普查要能"每例自报来源"，否则只能在外面猜。
+        "resid_src": max(
+            (a for a in active if resid_live_ok(a)),
+            key=lambda a: abs(a["S"]), default=None),
         "frozen_n": sum(1 for a in active if a["frozen"]),
         "disabled_n": sum(1 for a in active if a["disabled"]),
     })

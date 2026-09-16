@@ -77,9 +77,9 @@ def _live(active: list, only: str | None = None) -> float:
     必须看得见）。行末 `ext_max` 恒为真，故对 trace 类用 `only="trace"`。
     """
     def _ok(a: dict) -> bool:
-        return (a["two_sided"] and not a["frozen"]
-                and not a.get("slow") and not a.get("blocked")
-                and a.get("ext_max", float("inf")) >= ANN_MIN_EXTENT)
+        # 单一定义移到 engine.resid_live_ok（§7 X-28）：口径只此一处，
+        # 探针 resid_src 与质量指标复用同一函数，不会再漂移。
+        return engine.resid_live_ok(a)
 
     def _pick(a: dict) -> bool:
         if only == "trace":
