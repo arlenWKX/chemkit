@@ -565,6 +565,28 @@ def _beautify_big_coeff(consumed: dict[str, float],
     if mx <= 0:
         return None
     minor = [s for s, v in zip(all_sp, a_all) if v < 0.3 * mx]
+    # ---- X-41：主要载体不可移除 ----
+    # 判据只看 gross 峰值比例会把**主产物**判成"次要"：T34 的三配络合物
+    # gross 0.7778 < 0.3×2.754（阈值来自反应物 SCN⁻ 的毛量），移除后投影 +
+    # 有理化给出 `5SCN⁻ + 3Fe³⁺ → 2[Fe(SCN)₂]⁺ + [Fe(SCN)]²⁺`——元素与电荷
+    # 全守恒（守恒闸抓不到），却把占 Fe 90% 的主产物整个删掉 ⟹ 显示的是
+    # **另一个反应**。这里保护"每种元素在每一侧的主要载体"：
+    #   元素 el 的**反应物侧**最大贡献者、**产物侧**最大贡献者，一律不可移除。
+    # 只加约束、不放宽任何东西：N10 型（PbBr₂ 混合配位）的主要载体本就保留。
+    if minor:
+        # **只保护两样**：最大宗的反应物与最大宗的产物（按毛量）。
+        # 试过更宽的两版判据，都过宽（各有实测失败集），故收窄到直接病灶：
+        #   · "每种元素在每一侧的最大载体" -> 打红 N09/N30/D32/H26/H43/NR95
+        #     （合法美化路径本来就会丢某些元素的侧向主载体）；
+        #   · 加规范物种豁免后仍打红 21/N30/D32/H43/NR95。
+        # 而 X-41 的病征恰恰只有一个：**最大宗产物被整个删掉**（T34 的三配
+        # 络合物 0.7778，占 Fe 90%），剩下的式子虽守恒却是另一个反应。
+        _topc = max((s for s in consumed if s not in (H_ION, OH_ION, WATER)),
+                    key=lambda s: consumed[s], default=None)
+        _topp = max((s for s in produced if s not in (H_ION, OH_ION, WATER)),
+                    key=lambda s: produced[s], default=None)
+        _keep = {s for s in (_topc, _topp) if s is not None}
+        minor = [s for s in minor if s not in _keep]
     if not minor:
         return None
     minor.sort(key=lambda s: consumed.get(s, 0.0) + produced.get(s, 0.0))
@@ -577,6 +599,13 @@ def _beautify_big_coeff(consumed: dict[str, float],
                      key=lambda t: sum(consumed.get(s, 0.0)
                                        + produced.get(s, 0.0) for s in t))
     removal_sets += triples[:60]
+    # **移除全部次要物种**（主通道的天然定义）：原实现只枚举到三连，微量副产物
+    # 多于三个时（T34 的 bis/mono/Fe(OH)₃/HSCN 四个）就找不到干净形式，退化
+    # 成带小数的大系数原始式。**放在候选表末尾**：它是"兜底的主通道"，只在
+    # 单/双/三连都找不到干净形式时才用——这样既有解释（N30/D32 等已接受的形式）
+    # 逐位不变，只有原本"美化失败"的体系受益（X-41 的 T34 即此）。
+    if len(minor) > 3:
+        removal_sets.append(tuple(minor))
     for rm in removal_sets:
         rms = set(rm)
         c2 = {s: v for s, v in consumed.items() if s not in rms}
