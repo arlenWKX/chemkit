@@ -116,3 +116,20 @@ python tools/dev.py patch spec.py            # 原子落盘（任一条不满足
 `pkw_coeff` 会在 T≠298.15 时折算两次，而 298.15 K 恰好恒等（pKw ≡ 14.0）
 ⟹ 套件全绿、单温 Hess 审计也全绿。`hess_audit.py --T 363.15` 是这条纪律
 唯一的机械化守卫（模板族用 `--templates`，含派生用 `--with-templates`）。
+
+## 3. 性能借支审计（X-39）：开关与两列判据
+
+**判据必须两列**：省了多少（`iters`/`sof`）**与**藏了多少（`resid_*`/断言/`digest`）。
+反例是"微步排空"——看起来是纯性能手段，实测是**正确性的一部分**（关掉更慢且更错）。
+
+常驻诊断开关（默认关 = 现行为，逐位不变；置 1 关掉该手段）：
+
+```powershell
+$env:CHEM_NO_MICRO_FAST="1"; python tools/dev.py perf   # 微步二分早停（清白：+18.5% sof、零真相变化）
+$env:CHEM_NO_DRAIN="1";      python tools/dev.py perf   # 微步排空（承重：+48% iters 且残差变差）
+$env:CHEM_NO_CRAWL="1";      python tools/dev.py perf   # 爬行几何外推（≈0.1%，删除候选）
+```
+
+其余诊断开关：`CHEM_TRACE=1`（pick/冻结/微步逐步轨迹）、`CHEM_TRACE_WINDOWS=1`
+（逐 32 步窗口的 drift/turnover 标定）、`CHEM_TRACE_JOINT=1`（联立逐迭代残差）。
+判据与实测数字见 [`log.md`](log.md) X-39。
