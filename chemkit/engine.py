@@ -59,7 +59,6 @@ _TRACE = bool(_os.environ.get("CHEM_TRACE"))
 # ---- X-39 审计开关（默认全开 = 现行为；置 1 = 关掉该性能手段）----
 # 用途：把"用正确性借性能"的手段逐项关掉做全量对照（代价 vs 残差/断言）。
 _NO_MICRO_FAST = bool(_os.environ.get("CHEM_NO_MICRO_FAST"))
-_NO_CRAWL = bool(_os.environ.get("CHEM_NO_CRAWL"))
 _NO_DRAIN = bool(_os.environ.get("CHEM_NO_DRAIN"))
 
 # B4 判据的"纯形态变化"类（proton/dissolve/complex/decomplex）：逐步 `chem`
@@ -948,14 +947,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 发生后”重评，收敛终局前统一复核一次，保证终态标注不漏报
     slow_ann: dict = {}
     _last_mat_step = -1
-    # 爬行收敛加速（窗口几何外推）状态：每执行步的 (账本快照, He)；
-    # 40 步为一窗，窗间 L1 范数等比衰减（非精确周期的不规则爬行——
-    # 精确短周期已由上方 [osc] 外推覆盖）时，几何尾部 Σρ^k·D ≈ D·ρ/(1−ρ)
-    # 一次补齐；外推置零负值钳制，失准由不动点两侧 S 变号自纠回。
-    # D 是平衡步计量的线性组合，任意缩放仍原子/电荷守恒（钳制物种除外）
     snaps: list = []
-    last_jump = -1
-    _CRAWL_W = 40
     # pH 悬崖乒乓检测状态（v0.4.0 第五检测器）：每执行步的 H⁺ 参与标记
     # （走步级兜底 pH 机器的端点不连续，He 跨 1e-3 时 pH 3.0↔6 跳变——
     # 跨键喂食循环里各步的 S 评估用了不同相位快照，各自为正而联合为负。
@@ -1989,63 +1981,14 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 if window and not _settle_cycle(window):   # 先问联立（X-38）
                     _freeze(window, "ph-cliff")
 
-        # ---- 爬行收敛加速（窗口几何外推，非精确周期的慢收敛体系） ----
-        # 触发条件：深度入局（≥2 窗历史）+ 冷却期满（上次外推后 ≥1 窗新步）
-        # + 近窗全部微步（<0.02 mol，排除中途大步使外推失义）。
-        # 守卫三重：窗差 D 的 L1 范数相对前窗等比衰减 ρ∈(0.25, 0.85)；
-        # 净/毛比 n1 ≥ 0.4×窗内步量绝对值和（纯爬行逐步向前、净差与步量
-        # 同量级；正逆步对消的震荡窗净差≪步量和——外推方向≠不动点方向，
-        # Ag32 曾因 ρ=0.9 的 9× 外推沿震荡方向冲出物料守恒）；外推倍率
-        # 封顶 4×（ρ→1 时几何尾部爆炸，宁可分多窗跳）。
-        if (not _NO_CRAWL
-                and len(snaps) >= 2 * _CRAWL_W + 1
-                and len(hist) - last_jump >= _CRAWL_W
-                and max(e for _, e in hist[-_CRAWL_W:]) < 0.02):
-            led1, he1 = snaps[-1]
-            led2, he2 = snaps[-1 - _CRAWL_W]
-            led3, he3 = snaps[-1 - 2 * _CRAWL_W]
-            D = {}
-            n1 = 0.0
-            for s, m in led1.items():
-                d1 = m - led2.get(s, 0.0)
-                if abs(d1) > 1e-12:
-                    D[s] = d1
-                    n1 += abs(d1)
-            d_he1 = he1 - he2
-            n1 += abs(d_he1)
-            n2 = sum(abs(m - led3.get(s, 0.0)) for s, m in led2.items())
-            n2 += abs(he2 - he3)
-            gross = sum(abs(e) for _, e in hist[-_CRAWL_W:])
-            if (n1 > 1e-9 and n2 > 1e-9 and gross > 1e-9
-                    and 0.25 < n1 / n2 < 0.85 and n1 >= 0.4 * gross):
-                rho = n1 / n2
-                scale = min(rho / (1.0 - rho), 4.0)
-                # v0.4.0 守恒守卫：D 的线性缩放保持原子守恒的前提是不把
-                # 任何物种推负——v0.3.8 的"钳零"路径在弱配+沉淀强耦合体系
-                # （N34 的 decomplex↔derived 配对交换循环）上把 Zn-Cl 池
-                # 成员推负后钳零，Zn 总量凭空 +0.26、净方程系数 16091。
-                # 净减物种的安全倍率上界（0.95 折扣留收敛余量），倍率降到
-                # 线性域内——外推加速保留，守恒硬保证
-                _safe = 4.0
-                for _s, _d in D.items():
-                    if _d < -1e-12 and not _s.startswith('__'):
-                        _cap = 0.95 * ledger.get(_s, 0.0) / (-_d)
-                        if _cap < _safe:
-                            _safe = _cap
-                scale = min(scale, _safe)
-                if scale >= 0.05:
-                    for s, d in D.items():
-                        if s.startswith("__"):
-                            continue   # 影子库存由 _respeciate 每轮重建
-                        tgt = ledger.get(s, 0.0) + d * scale
-                        ledger[s] = tgt if tgt > 0.0 else 0.0
-                    H_excess += d_he1 * scale
-                    disabled.clear(); dis_why.clear()   # 状态实质改变，解禁全部让 S 重验
-                    if _TRACE:
-                        print(f'  [crawl-jump] rho={rho:.3f} +{scale:.1f}x '
-                              f'D[{len(D)}] n1/gross={n1/max(gross,1e-9):.2f} '
-                              f'HeΔ={d_he1:.2e}')
-                last_jump = len(hist)
+        # ---- 爬行收敛加速（窗口几何外推）：**已删除**（第 133 轮）----
+        # 此处曾把"窗间 L1 范数等比衰减"的几何尾部一次补齐（Σρ^k·D ≈
+        # D·ρ/(1−ρ)），带三重守卫（ρ∈(0.25,0.85)、净/毛 ≥0.4、倍率 ≤4×）。
+        # 逐例 A/B 实测（§7 X-39 第 6 项）：全库 1176 例里只影响 **2 例**——
+        # E35 `ZnSO4+H2S 氨性` 省 17 迭代；Ni41 `NiCl2+NaHCO3` 反而多 5 迭代
+        # 且残差更差（resid_live 0.574 → 0.644）。合计 iters +12、sof +0.06%，
+        # 而它让轨迹依赖窗口缓存（digest 随之变）。收益 0.1% 换一台路径相关
+        # 机器 ⟹ 删除；短周期乒乓仍由上方 [osc] 外推与联立/冻结机制覆盖。
 
         # ---- 联立求解加速·触发点①（爬行检测，迭代型）----
         # it≥64 且近 24 步全微步（<0.02）且 ≥2 个不同规范净键（耦合循环，

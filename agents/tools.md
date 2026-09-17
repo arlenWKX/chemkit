@@ -127,8 +127,12 @@ python tools/dev.py patch spec.py            # 原子落盘（任一条不满足
 ```powershell
 $env:CHEM_NO_MICRO_FAST="1"; python tools/dev.py perf   # 微步二分早停（清白：+18.5% sof、零真相变化）
 $env:CHEM_NO_DRAIN="1";      python tools/dev.py perf   # 微步排空（承重：+48% iters 且残差变差）
-$env:CHEM_NO_CRAWL="1";      python tools/dev.py perf   # 爬行几何外推（≈0.1%，删除候选）
 ```
+
+**爬行窗口几何外推**（原 `CHEM_NO_CRAWL`）已按同一判据**删除**（第 133 轮）：
+逐例 A/B 实测全库 1176 例里只影响 2 例（E35 省 17 迭代、Ni41 反而多 5 迭代且
+残差更差），合计 +0.1% 却让轨迹依赖窗口缓存 ⟹ 57 行机器（含状态变量与开关）
+一次删净，删除处留了记录。
 
 其余诊断开关：`CHEM_TRACE=1`（pick/冻结/微步逐步轨迹）、`CHEM_TRACE_WINDOWS=1`
 （逐 32 步窗口的 drift/turnover 标定）、`CHEM_TRACE_JOINT=1`（联立逐迭代残差）。
