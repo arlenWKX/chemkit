@@ -454,12 +454,18 @@ def main(argv: list[str]) -> int:
         print(__doc__)
         return 0
     verb, rest = argv[0], argv[1:]
+    if verb == "run":
+        # v0.5.2 修：`run` 必须是**逐字透传**——此前统一做 `-` 前缀过滤，
+        # 脚本自己的 `--top 12` 会被吃掉（`--top` 当旗标丢弃、"12" 成了
+        # 未知位置参数），于是任何带选项的审计工具都跑不起来。
+        if not rest:
+            print("!! 用法: python tools/dev.py run <脚本> [参数...]")
+            return 2
+        return cmd_run(rest[0], rest[1:])
     flags = {a for a in rest if a.startswith("-")}
     args = [a for a in rest if not a.startswith("-")]
     if verb == "guide":
         return cmd_guide()
-    if verb == "run":
-        return cmd_run(args[0], args[1:])
     if verb == "suite":
         return cmd_suite(args)
     if verb == "perf":

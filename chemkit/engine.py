@@ -185,13 +185,26 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
 
 
 # ========================================================== 残差口径（唯一定义）
+# **冻结 ≠ 已达平衡**（§7 X-38）：冻结是**防震荡**手段，不是"这条通道平衡了"
+# 的结论。走步把二者混同，于是冻结集成了质量口径的盲区——N30/D32 实测
+# `Fe^{3+} + 3SCN^- -> [Fe(SCN)_3]` 两侧在场、|S| = 4.02、可动量 0.167 mol，
+# 被冻结后以 `no-cands` 退出，而指标报的是另一条 `|S| = 0.0 / 已达平衡`
+# 的候选 ⟹ 全绿而化学错在主产物上（`tools/frozen_audit.py` 全库普查：
+# 36 例/95 条通道，其中 89% 是这种盲区）。
+# 判据：冻结通道的 |S| 落在**引擎自身的平衡容差量级**（0.1，与 n(|S|>0.1)
+# 同一把尺子）之内才算"宣告平衡"；|S| 更大 = 把它计回残差，让指标说真话。
+RESID_FROZEN_TOL = 0.1
+
+
 def resid_live_ok(a: dict) -> bool:
     """质量口径 `resid_live` 的单一定义（converg._live 与本模块探针共用）。
 
     口径 = "求解器**承诺要解**的两侧平衡"：
       two_sided  —— 驱动方向两侧物种都在场（单侧在场是反应物耗尽/产物未生，
                     属正常终态，判残差无意义）；
-      ¬frozen    —— 引擎宣告平衡止震（极限环/实测仲裁）；
+      ¬frozen 或 |S| > RESID_FROZEN_TOL
+                 —— 引擎宣告平衡止震（极限环/实测仲裁）**只有在真的接近
+                    平衡时**才豁免；冻结在强驱动上属"把问题藏起来"（X-38）；
       ¬slow      —— 动力学层判定永不执行、只作标注；
       ¬blocked   —— 致密膜抑制溶剂氧化通道（钝化模型）；
       ext_max ≥ ANN_MIN_EXTENT —— 驱动方向反应物的化学计量上限够显著
@@ -201,9 +214,13 @@ def resid_live_ok(a: dict) -> bool:
     这是已知真实病灶，不能靠口径优化掉——但来源要看得见：见探针 resid_src
     与 dis_why（"已达平衡"/"限幅"/"零推进" 三分）。
     """
-    return bool(a["two_sided"] and not a["frozen"]
-                and not a.get("slow") and not a.get("blocked")
-                and a.get("ext_max", 0.0) >= ANN_MIN_EXTENT)
+    if not a["two_sided"] or a.get("slow") or a.get("blocked"):
+        return False
+    if a.get("ext_max", 0.0) < ANN_MIN_EXTENT:
+        return False
+    if a["frozen"] and abs(a.get("S", 0.0)) <= RESID_FROZEN_TOL:
+        return False
+    return True
 
 
 # ========================================================== ④ 平衡程度求解
