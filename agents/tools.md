@@ -133,3 +133,19 @@ $env:CHEM_NO_CRAWL="1";      python tools/dev.py perf   # 爬行几何外推（�
 其余诊断开关：`CHEM_TRACE=1`（pick/冻结/微步逐步轨迹）、`CHEM_TRACE_WINDOWS=1`
 （逐 32 步窗口的 drift/turnover 标定）、`CHEM_TRACE_JOINT=1`（联立逐迭代残差）。
 判据与实测数字见 [`log.md`](log.md) X-39。
+
+## 4. 顺序依赖审计（`tools/order_audit.py`）
+
+**结果是否依赖用例执行顺序**（静态层/缓存/预热路径）——这类缺陷不会在单例复跑里
+显形（同进程内逐例独立、同调用重复稳定），只在跨进程换序时冒出来。历史锚点：
+J14 `PbCl₂@363K` 曾冷启动 pH 3.0 / Pb²⁺ 0.015631、预热后 pH 6.21 / 0.027474
+（后随 X-31 消失；见 X-39 结案）。
+
+```bash
+python tools/order_audit.py            # 自跑 normal/reverse/shuffle 三个子进程并比较
+python tools/order_audit.py --dump reverse .tmp_r.json
+python tools/order_audit.py --cmp A B  # 退出码 0=无差异、1=有差异
+```
+
+指纹 = 逐例 `(pH, degree, changed, reacted, 净方程, 步数, H_excess, 终态物种表)`。
+**改动静态层、缓存，或任何按 `T_K`/物种缓存的东西之后跑一次**。
