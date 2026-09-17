@@ -24,6 +24,28 @@ from .acidbase import build_families, charge_pH
 
 # ========================================================== pH 估计器（§3.2，教科书近似）
 
+def _buffer_holds(pH: float, a: float, b: float, pKw: float) -> bool:
+    """Henderson 缓冲式在该 pH 上是否成立（X-40）。
+
+    **成立前提**：缓冲剂浓度 ≫ 隐含自由质子（或氢氧根）浓度。否则该酸实际
+    已基本完全解离，"比值定 pH"的近似失去意义——极端例子：0.005 M 的
+    HSCN/SCN⁻ 1:1（pKa = −1.85）Henderson 给 pH −1.85（[H⁺] = 71 M！），
+    而真实解是 pH ≈ 2.3。
+
+    **实测病根**（D32）：走步出口 `He = +9e−09 mol`（纳摩尔级游离酸，物理上
+    无意义）触发 plateau，Henderson 用账本里**既有的** 4.5e−5/5.0e−3 比值给出
+    pH 0.196 ⟹ 隐含 [H⁺] = 0.64 M，超过该对总量两个数量级、也与账本质子账本
+    （He ≈ 0）差 2.2 个 pH 单位：**微量残余把 1 mol 级体系的 pH 钉死**。
+    拒绝后落分支 4（在滴定后的完整分布上评估）⟹ D32 得 NH₄⁺ 弱酸的 pH 4.6。
+
+    第 1 版曾用"对总量 > 其他酸碱物种总量"，实测过严（打红 H88 醋酸铵双缓冲、
+    T34/T25/H77/E35/N39/F21 的多对体系——它们本就有"对 vs 对"的合法竞争）。
+    """
+    h = 10.0 ** (-pH)
+    oh = 10.0 ** (pH - pKw)
+    return max(h, oh) <= max(a, b)
+
+
 def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
                       multilevel: bool = False, T_K: float = 298.15,
                       cache: dict | None = None,
@@ -209,7 +231,9 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             hb = ledger2.get(acid, 0.0)
             if b_rest > _floor and hb > _floor:
                 pH = pka + log10(b_rest / hb)
-                return min(max(pH, -1.0), pKw + 1.0), he, ledger2
+                # X-40：Henderson 只在"缓冲剂 ≫ 隐含 [H⁺]/[OH⁻]"时成立
+                if _buffer_holds(pH, b_rest, hb, pKw):
+                    return min(max(pH, -1.0), pKw + 1.0), he, ledger2
         return None, he, ledger2   # 全吸收（he≈0）→ 分支4；有残余 → 直读
     else:        # 弱酸吸收强碱：pKa 越小 Ka 越大，先中和
         he = -he
@@ -248,7 +272,9 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             b = ledger2.get(base, 0.0)
             if a_rest > _floor and b > _floor:
                 pH = pka + log10(b / a_rest)
-                return min(max(pH, -1.0), pKw + 1.0), -he, ledger2
+                # X-40：同弱碱吸收分支（对称）
+                if _buffer_holds(pH, a_rest, b, pKw):
+                    return min(max(pH, -1.0), pKw + 1.0), -he, ledger2
         return None, -he, ledger2
 
 

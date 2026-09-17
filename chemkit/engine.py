@@ -195,6 +195,11 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
 # 同一把尺子）之内才算"宣告平衡"；|S| 更大 = 把它计回残差，让指标说真话。
 RESID_FROZEN_TOL = 0.1
 
+# 冻结的"宣告平衡"容差上限（X-38 病根二）：|S| 超过它就不许被冻结（也不许
+# 保持冻结）。比 RESID_FROZEN_TOL 松——冻结一条 |S| ≈ 0.3 的通道止震是合理的，
+# 冻结一条 |S| = 3.5 的通道就是撒谎。
+FREEZE_MAX_S = 0.5
+
 
 def resid_live_ok(a: dict) -> bool:
     """质量口径 `resid_live` 的单一定义（converg._live 与本模块探针共用）。
@@ -925,6 +930,11 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # ① 冻结时该通道就在错处（|S| 大）；② 冻结时它确实近平衡，但**后续步把状态
     # 带走了**而冻结是永久的 ⟹ 宣告失效。只写不读（除探针导出），零行为影响。
     _frozen_at: dict = {}
+    _frz_reval = 0            # 上次"冻结有效期复核"的步序号（见 _exec 之后）
+    _revive = 0               # 退出闸里"解冻强驱动键继续走"的次数
+    _expired_n = 0            # 周期复核作废冻结的次数（上限见下）
+    _REVIVE_MAX = 6           # 成本闸已换成判据（零推进键不入强键集），
+    #                           上限只作最后防线
     # 慢标注采样节奏记忆：(key, d) -> 上次阈值下评的 hist 位点。
     # 原实现 slow_seen 恒 False 的体系（慢通道永不可达显著量）每迭代对
     # 全部慢候选重解（Fe31：104 迭代×12 候选=1209 次 solve_extent，占
@@ -1053,7 +1063,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     _joint_fires = 0
     _joint_blacklist: set = set()   # 失败循环签名（canonical keys 排序元组）
 
-    def _joint_collect(cycle_keys=None):
+    def _joint_collect(cycle_keys=None, skip_frozen: bool = True):
         # 活性平衡集：两侧在场、未冻结、非 slow/deferred、未被膜封锁。
         # 全收（含近平衡者——它们是跳步的耦合约束方程：排除会让跳步把它们
         # 扰离平衡、走步反向执行拆掉跳步，J06 曾三跳三拆零净效果）；驱动
@@ -1071,8 +1081,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 continue
             nk_c = (c.netkey_fwd if c.netkey_fwd <= c.netkey_rev
                     else c.netkey_rev)   # 规范净键：fwd/rev 归一
-            if nk_c in frozen_perm:   # 冻结集含双方向，规范键必在其一
-                continue
+            if skip_frozen and nk_c in frozen_perm:
+                continue   # 冻结集含双方向，规范键必在其一（走步语义）
             if cycle_keys is not None and nk_c not in cycle_keys:
                 continue
             ps = c.pres_specs
@@ -1189,6 +1199,60 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         if not live:
             return False
         return _joint_fire(live, freeze_on_boundary=True)
+
+    def _strong_keys(thr: float = FREEZE_MAX_S) -> set:
+        """当前**既有强驱动又有实在动量**（|S| > thr ∧ ext_max ≥ 显著度）
+        的规范净键集合。
+
+        与 `_joint_collect` 同口径（两侧在场、非 slow/blocked、非冻结、按 |S|
+        取前 JOINT_MAX_M），再按驱动方向的化学计量上限过滤——只认"还解得动"
+        的键：`|S|` 大而 `ext_max ≈ 0` 是**痕量伪驱动**（引擎注释即此，D38 型），
+        把它算进来只会让退出闸空转。度量与质量口径 `resid_live_ok` 同一把尺子。"""
+        out = set()
+        # skip_frozen=False 是关键：本函数要问的正是"**冻结集里**还有谁强驱动"
+        # ——默认口径会先把它们跳过（自指缺陷，第 126 轮实测：三处修正全盲）。
+        for c, _d, S in _joint_collect(None, skip_frozen=False):
+            if abs(S) <= thr:
+                continue
+            dr = c.r if S > 0 else c.pr
+            lim = [ledger.get(s, 0.0) / nu for s, nu in dr.items()
+                   if s not in (WATER, H_ION) and nu > 0]
+            if not lim or min(lim) < ANN_MIN_EXTENT:
+                continue
+            # 引擎自己的"零推进（S 强而 x*≈0）"分类：解冻也走不动（S 强但
+            # 二分根 ≈ 0）。把它算进来只会让"冻↔解"空转（Ni41 无此过滤时
+            # 139 次冻结 / 1614 步）。判据取自 dis_why 的 reason 首元素。
+            if any("零推进" in str((dis_why.get((c.key, dd)) or ("",))[0])
+                   for dd in (1, -1)):
+                continue
+            out.add(c.netkey_fwd if c.netkey_fwd <= c.netkey_rev
+                    else c.netkey_rev)
+        return out
+
+    def _freeze(keys, why: str) -> int:
+        """**唯一冻结入口**（X-38 病根二）：强驱动键不冻，且记录冻结时刻。
+
+        返回实际冻结的键数。跳过强驱动键是本节的核心修正——冻结的语义是
+        "在当前状态宣告该平衡已达成"，而 |S| > FREEZE_MAX_S 就是它没达成的
+        明证；把它们一起冻掉等于引擎自己撒谎（U11 的 `[ZnCl_4]^{2-}` 1.385、
+        N30/D32 的 `[Fe(SCN)_3]` 3.53 被冻成"已平衡"）。留下的强驱动键交给
+        联立（已在检测命中时先问过）或如实计入残差。"""
+        strong = _strong_keys()
+        stamp = len(hist)
+        n = 0
+        for k in keys:
+            if k in frozen_perm or k in strong:
+                continue
+            frozen_perm.add(k)
+            frozen_perm.add((k[1], k[0]))
+            _frozen_at[k] = _frozen_at[(k[1], k[0])] = stamp
+            n += 1
+        if n:
+            _diag["freeze_events"] += 1
+            if _TRACE:
+                print(f'  [freeze-{why}] {n} keys '
+                      f'(强驱动跳过 {len(keys) - n})')
+        return n
 
     def _joint_fire_ph() -> bool:
         """触发点③：社区级 pH 一致化联立。返回 True = 状态实质移动。"""
@@ -1560,6 +1624,34 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                             if ext_s >= ANN_MIN_EXTENT:
                                 slow_seen = True
                                 break
+                # ---- 退出闸：不许带着"冻结的强驱动键"退出（X-38 病根二）----
+                # `no-cands` 是"没有候选可走"的自然收敛点，但冻结集里的键是被
+                # **人为**移出候选表的：V31 只走 9 步就到这里，而它的
+                # `Cl_2/VO_2^+` 通道 |S| = 1.247 正被冻着（短走步根本等不到
+                # 每 16 步一次的周期复核）；N30 则是冻结时通道还单侧在场。
+                # 退出前用同一把尺子复核：还有强驱动冻结键就解冻继续走——
+                # 宁可多走几步，也不许把非平衡当收敛交出去。上限
+                # `_REVIVE_MAX = 2` 防"零推进"型强键（S 强而 x*≈0，引擎自己的
+                # dis_why 分类）把走步拖成"冻↔解"churn——实测 Ni41 无上限时
+                # 139 次冻结 / 1614 步，而有上限的 N30/D14 依然一次到位。
+                if frozen_perm and _revive < _REVIVE_MAX:
+                    _st = _strong_keys()
+                    _hit = [k for k in _st if k in frozen_perm]
+                    if _hit:
+                        _revive += 1
+                        for k in _hit:
+                            frozen_perm.discard(k)
+                            frozen_perm.discard((k[1], k[0]))
+                            _frozen_at.pop(k, None)
+                            _frozen_at.pop((k[1], k[0]), None)
+                        _diag["freeze_expired"] = (
+                            _diag.get("freeze_expired", 0) + len(_hit))
+                        disabled.clear(); dis_why.clear()
+                        idle = 0
+                        if _TRACE:
+                            print(f'  [freeze-revive] {len(_hit)} 个强驱动'
+                                  f'冻结键解冻（第 {_revive} 次复核）')
+                        continue
                 _exit_reason = "no-cands"   # 快慢候选全部耗尽（自然收敛点）
                 break
 
@@ -1747,6 +1839,25 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
 
         idle = 0
         _exec(pick, d, ext, x_max, S, nk)
+        # ---- 冻结有效期复核（X-38 病根二）----
+        # 冻结宣告的是"**当前状态**下该平衡已达成"。实质步会移动状态，
+        # `disabled` 一直是这个生命周期（每次实质步全量解禁自校正），而
+        # `frozen_perm` 是永久的：N30 冻于第 12 步、之后 96 步把状态带走，
+        # 退出时该通道 |S| = 3.53（偏离平衡 3.5 个 log 单位）却无人复核。
+        # 每 16 步用同一把尺子（_strong_keys）复核：涨过阈值者立即作废。
+        if (frozen_perm and len(hist) - _frz_reval >= 16
+                and _expired_n < 4):
+            _frz_reval = len(hist)
+            _expired_n += 1
+            for k in _strong_keys():
+                if k in frozen_perm:
+                    frozen_perm.discard(k)
+                    frozen_perm.discard((k[1], k[0]))
+                    _frozen_at.pop(k, None)
+                    _frozen_at.pop((k[1], k[0]), None)
+                    _diag["freeze_expired"] = _diag.get("freeze_expired", 0) + 1
+                    if _TRACE:
+                        print('  [freeze-expired]', k[0][:1])
         # 极限环检测（仅在实质步后判定）：账本签名精确复现 ⇒ 确定性求解器
         # 进入零净推进循环，永久冻结窗口内全部净反应让其他通道接手；
         # 窗口为空（微步原地）则不动作，交由 disabled/微步机制处理
@@ -1757,12 +1868,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             # 先问联立（X-38）：能跳到内点不动点就不冻——冻结的语义是"宣告
             # 平衡"，而极限环往往只是逐候选贪心在可解的耦合族上转圈。
             if window and not _settle_cycle(window):
-                for k in window:
-                    frozen_perm.add(k)
-                    frozen_perm.add((k[1], k[0]))
-                    _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
-                _diag["freeze_events"] += 1
-                if _TRACE: print('  [freeze-limit-cycle]', window)
+                _freeze(window, "limit-cycle")
         else:
             seen_sig[sig_now] = len(hist)
         # 实测震荡判定（近窗）：最近 10 步内正反向执行程度接近抵消
@@ -1775,11 +1881,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         gross = ext_fwd + ext_rev
         if gross >= 0.05 and abs(ext_fwd - ext_rev) <= 0.1 * gross:
             if not _settle_cycle({nk, rev}):     # 先问联立（X-38）
-                frozen_perm.add(nk)
-                frozen_perm.add(rev)
-                _frozen_at[nk] = _frozen_at[rev] = len(hist)
-                _diag["freeze_events"] += 1
-                if _TRACE: print('  [freeze-perm]', nk, 'gross', round(gross, 3))
+                _freeze({nk, rev}, f"perm gross={gross:.3g}")
         # 循环震荡检测：最近若干步为同一短周期（长度 2 或 3）反复且总推进量
         # 低于显著阈值 → 冻结该周期涉及的全部净反应（E35 类阶梯每周期有实质
         # 推进，不受影响；34 类 A->B->A->B 原地空转被捕获）
@@ -1790,15 +1892,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 unit = tail[:period]
                 recent_ext = [e for _, e in hist[-w:]]
                 if tail == unit * 3 and sum(recent_ext) < 1e-3:
-                    if _settle_cycle(set(unit)):     # 先问联立（X-38）
-                        pass
-                    else:
-                        for k in set(unit):
-                            frozen_perm.add(k)
-                            frozen_perm.add((k[1], k[0]))
-                            _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
-                        _diag["freeze_events"] += 1
-                        if _TRACE: print('  [freeze-cycle]', unit)
+                    if not _settle_cycle(set(unit)):     # 先问联立（X-38）
+                        _freeze(set(unit), "cycle")
 
         # 物种级周转冻结（v0.3.8）：多平衡乒乓（不同净键互为往返——extent
         # 层净/毛恒 1 但物种账本原地踏步；Ag32 的配位-氧化银 876 次乒乓：
@@ -1836,14 +1931,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     if nk_c not in frozen_perm:
                         window.add(nk_c)
                 if window:
-                    for k in window:
-                        frozen_perm.add(k)
-                        frozen_perm.add((k[1], k[0]))
-                        _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
-                    _diag["freeze_events"] += 1
-                    if _TRACE:
-                        print(f'  [freeze-turnover] {len(window)} keys '
-                              f'drift/turnover={drift / max(turnover, 1e-9):.4f}')
+                    _freeze(window, f"turnover {drift / max(turnover, 1e-9):.4f}")
 
         # ---- 窗口净移/毛周转标定导出（CHEM_TRACE_WINDOWS=1，纯诊断）----
         # 每 32 步窗口的 (drift, turnover)：真爬行（净/毛 > 0.5）、螺旋
@@ -1892,15 +1980,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                           if hexec[-_PHW:][_i]}
                 window -= {k for k in window if k in frozen_perm}
                 if window and not _settle_cycle(window):   # 先问联立（X-38）
-                    for k in window:
-                        frozen_perm.add(k)
-                        frozen_perm.add((k[1], k[0]))
-                        _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
-                    _diag["freeze_events"] += 1
-                    if _TRACE:
-                        print(f'  [freeze-ph-cliff] {len(window)} keys '
-                              f'He-alt {_alt}/{_PHW - 1} '
-                              f'[{min(_he_seq):.2e},{max(_he_seq):.2e}]')
+                    _freeze(window, "ph-cliff")
 
         # ---- 爬行收敛加速（窗口几何外推，非精确周期的慢收敛体系） ----
         # 触发条件：深度入局（≥2 窗历史）+ 冷却期满（上次外推后 ≥1 窗新步）
@@ -2014,6 +2094,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         _probe["joint_ok"] = _diag["joint_ok"]
         _probe["freeze_events"] = _diag["freeze_events"]
         _probe["frozen_at"] = dict(_frozen_at)
+        _probe["freeze_expired"] = _diag.get("freeze_expired", 0)
+        _probe["freeze_revive"] = _revive
         _probe["micro_steps"] = _diag["micro_steps"]
         _probe["cycle_jumps"] = _diag["cycle_jumps"]
         _probe["cycle_freeze"] = _diag["cycle_freeze"]
