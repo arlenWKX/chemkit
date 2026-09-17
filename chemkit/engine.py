@@ -921,6 +921,10 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 阻断浓酸体系中同一反应因 H+ 挂侧不同生成多个配平形式互相逆转净零
     hist: list = []   # 已执行净反应键序列（用于循环震荡检测）
     frozen_perm: set = set()   # 实测/极限环/短周期震荡判定后永久冻结的净反应键
+    # 诊断（X-38 续）：冻结发生时的步序号（`len(hist)`）。用途：区分两种病根——
+    # ① 冻结时该通道就在错处（|S| 大）；② 冻结时它确实近平衡，但**后续步把状态
+    # 带走了**而冻结是永久的 ⟹ 宣告失效。只写不读（除探针导出），零行为影响。
+    _frozen_at: dict = {}
     # 慢标注采样节奏记忆：(key, d) -> 上次阈值下评的 hist 位点。
     # 原实现 slow_seen 恒 False 的体系（慢通道永不可达显著量）每迭代对
     # 全部慢候选重解（Fe31：104 迭代×12 候选=1209 次 solve_extent，占
@@ -1164,6 +1168,27 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     if root is not None:
                         fam.add(root)
         return fam
+
+    def _settle_cycle(keys) -> bool:
+        """循环/震荡检测命中时：**先问联立有没有内点不动点**。
+
+        X-38 实测（第 125 轮）：冻结检测器在 `it ≈ 7~20` 就开火（EU02 7、
+        U11 20、V31 11、O08 30），而联立触发点①②③要求 `it ≥ 64` 且**近 24 步
+        全微步**（<0.02）⟹ 这些例 `joint_tries = 0`：**联立从来没被问过**，
+        于是"能解的耦合族"被当成"数据张力"冻掉，终态偏离平衡 1.4~3.9 个
+        log 单位（U11 的 `[ZnCl_4]^{2-}` 可动量 0.999 mol、|S| = 1.385）。
+
+        语义修正：**冻结是最后手段，不是第一反应**——检测到循环说明"逐候选
+        贪心在这个耦合族上转圈"，而这正是联立求解器的适用场景。返回 True =
+        已跳到内点不动点（调用方不得再冻结）；False = 联立宣告 boundary
+        （不动点在物理域外 ⟹ 真数据张力，`_joint_fire` 内部已按
+        `freeze_on_boundary=True` 冻结）或无解/驱动不足 ⟹ 调用方按原语义冻结。
+        """
+        live = {(k if k <= (k[1], k[0]) else (k[1], k[0])) for k in keys}
+        live = {k for k in live if k not in frozen_perm}
+        if not live:
+            return False
+        return _joint_fire(live, freeze_on_boundary=True)
 
     def _joint_fire_ph() -> bool:
         """触发点③：社区级 pH 一致化联立。返回 True = 状态实质移动。"""
@@ -1729,10 +1754,13 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         if sig_now in seen_sig:
             window = {k for k, _ in hist[seen_sig[sig_now]:]}
             window -= {k for k in window if k in frozen_perm}
-            if window:
+            # 先问联立（X-38）：能跳到内点不动点就不冻——冻结的语义是"宣告
+            # 平衡"，而极限环往往只是逐候选贪心在可解的耦合族上转圈。
+            if window and not _settle_cycle(window):
                 for k in window:
                     frozen_perm.add(k)
                     frozen_perm.add((k[1], k[0]))
+                    _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
                 _diag["freeze_events"] += 1
                 if _TRACE: print('  [freeze-limit-cycle]', window)
         else:
@@ -1746,10 +1774,12 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         ext_rev = sum(e for k, e in recent if k == rev)
         gross = ext_fwd + ext_rev
         if gross >= 0.05 and abs(ext_fwd - ext_rev) <= 0.1 * gross:
-            frozen_perm.add(nk)
-            frozen_perm.add(rev)
-            _diag["freeze_events"] += 1
-            if _TRACE: print('  [freeze-perm]', nk, 'gross', round(gross, 3))
+            if not _settle_cycle({nk, rev}):     # 先问联立（X-38）
+                frozen_perm.add(nk)
+                frozen_perm.add(rev)
+                _frozen_at[nk] = _frozen_at[rev] = len(hist)
+                _diag["freeze_events"] += 1
+                if _TRACE: print('  [freeze-perm]', nk, 'gross', round(gross, 3))
         # 循环震荡检测：最近若干步为同一短周期（长度 2 或 3）反复且总推进量
         # 低于显著阈值 → 冻结该周期涉及的全部净反应（E35 类阶梯每周期有实质
         # 推进，不受影响；34 类 A->B->A->B 原地空转被捕获）
@@ -1760,11 +1790,15 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 unit = tail[:period]
                 recent_ext = [e for _, e in hist[-w:]]
                 if tail == unit * 3 and sum(recent_ext) < 1e-3:
-                    for k in set(unit):
-                        frozen_perm.add(k)
-                        frozen_perm.add((k[1], k[0]))
-                    _diag["freeze_events"] += 1
-                    if _TRACE: print('  [freeze-cycle]', unit)
+                    if _settle_cycle(set(unit)):     # 先问联立（X-38）
+                        pass
+                    else:
+                        for k in set(unit):
+                            frozen_perm.add(k)
+                            frozen_perm.add((k[1], k[0]))
+                            _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
+                        _diag["freeze_events"] += 1
+                        if _TRACE: print('  [freeze-cycle]', unit)
 
         # 物种级周转冻结（v0.3.8）：多平衡乒乓（不同净键互为往返——extent
         # 层净/毛恒 1 但物种账本原地踏步；Ag32 的配位-氧化银 876 次乒乓：
@@ -1788,6 +1822,10 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             if turnover >= 0.05 and drift <= 0.02 * turnover:
                 window = {k for k, _ in hist[-_FW:]}
                 window -= {k for k in window if k in frozen_perm}
+                # 先问联立（X-38）：社区级冻结是**动量大**的那一类（U11 的
+                # 0.999 mol、Co41 的 1.0 mol 都死在这里），能解就不许一刀切。
+                if window and _settle_cycle(window):
+                    continue
                 # v0.4.2 迭代 C：冻结范围升级为整个活性社区——多拼写
                 # 乒乓（同一化学转化的 H⁺/NH₄⁺ 挂侧变体）逐键冻结太慢
                 # （H46 死因②：冻结逐拼写进行），社区级一次止震。
@@ -1801,6 +1839,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     for k in window:
                         frozen_perm.add(k)
                         frozen_perm.add((k[1], k[0]))
+                        _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
                     _diag["freeze_events"] += 1
                     if _TRACE:
                         print(f'  [freeze-turnover] {len(window)} keys '
@@ -1852,10 +1891,11 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 window = {k for _i, (k, _e) in enumerate(hist[-_PHW:])
                           if hexec[-_PHW:][_i]}
                 window -= {k for k in window if k in frozen_perm}
-                if window:
+                if window and not _settle_cycle(window):   # 先问联立（X-38）
                     for k in window:
                         frozen_perm.add(k)
                         frozen_perm.add((k[1], k[0]))
+                        _frozen_at[k] = _frozen_at[(k[1], k[0])] = len(hist)
                     _diag["freeze_events"] += 1
                     if _TRACE:
                         print(f'  [freeze-ph-cliff] {len(window)} keys '
@@ -1973,6 +2013,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         _probe["joint_tries"] = _diag["joint_tries"]
         _probe["joint_ok"] = _diag["joint_ok"]
         _probe["freeze_events"] = _diag["freeze_events"]
+        _probe["frozen_at"] = dict(_frozen_at)
         _probe["micro_steps"] = _diag["micro_steps"]
         _probe["cycle_jumps"] = _diag["cycle_jumps"]
         _probe["cycle_freeze"] = _diag["cycle_freeze"]
