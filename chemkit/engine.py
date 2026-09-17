@@ -56,6 +56,11 @@ from .templates import (_redox_pair_static, _redox_templates,
                         _product_form_ok)
 
 _TRACE = bool(_os.environ.get("CHEM_TRACE"))
+# ---- X-39 审计开关（默认全开 = 现行为；置 1 = 关掉该性能手段）----
+# 用途：把"用正确性借性能"的手段逐项关掉做全量对照（代价 vs 残差/断言）。
+_NO_MICRO_FAST = bool(_os.environ.get("CHEM_NO_MICRO_FAST"))
+_NO_CRAWL = bool(_os.environ.get("CHEM_NO_CRAWL"))
+_NO_DRAIN = bool(_os.environ.get("CHEM_NO_DRAIN"))
 
 # B4 判据的"纯形态变化"类（proton/dissolve/complex/decomplex）：逐步 `chem`
 # 标记与 `reacted` 判据共用同一份定义（§7 X-19），避免两处口径漂移。
@@ -593,7 +598,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 lo = mid
             else:
                 hi = mid
-            if _micro_thr is not None and hi <= _micro_thr:
+            if (not _NO_MICRO_FAST and _micro_thr is not None
+                    and hi <= _micro_thr):
                 break   # 微步快通道：根的上界已坍缩到主循环微步阈值之下
         if _audit is not None:
             _x_ill = _audit_bracket(f, c, direction, x_max, lo, _audit[0], f_hi,
@@ -1812,7 +1818,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     # 入排空前提：respeciate 结构性空转（无强酸分子影子——
                     # 否则顶部再电离可能改账本，evals 会陈旧）；
                     # realize/枚举/pH 均为账本纯函数，冻结即不变
-                    if (ledger.get("__tot_HNO_3", 0.0) <= 0.0
+                    if (not _NO_DRAIN
+                            and ledger.get("__tot_HNO_3", 0.0) <= 0.0
                             and ledger.get("__tot_H_2SO_4", 0.0) <= 0.0):
                         _drain = True
                     else:
@@ -1990,7 +1997,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         # 同量级；正逆步对消的震荡窗净差≪步量和——外推方向≠不动点方向，
         # Ag32 曾因 ρ=0.9 的 9× 外推沿震荡方向冲出物料守恒）；外推倍率
         # 封顶 4×（ρ→1 时几何尾部爆炸，宁可分多窗跳）。
-        if (len(snaps) >= 2 * _CRAWL_W + 1
+        if (not _NO_CRAWL
+                and len(snaps) >= 2 * _CRAWL_W + 1
                 and len(hist) - last_jump >= _CRAWL_W
                 and max(e for _, e in hist[-_CRAWL_W:]) < 0.02):
             led1, he1 = snaps[-1]
