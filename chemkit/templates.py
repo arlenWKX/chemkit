@@ -1,6 +1,6 @@
 """chemkit.templates：候选宇宙（模板构建与枚举）。
 
-职能（四级缓存体系，architecture.md §性能）：
+职能（四级缓存体系，见 docs/architecture.md 与 docs/performance.md）：
     · _redox_pair_static：温度无关静态层（配平/电子数/dH/vs 闸门/
       恒慢标记预解析）——每数据表一次
     · _redox_templates：温度过滤层（T_min/慢速温度规则/halate/pKw

@@ -1,7 +1,9 @@
-# tools/README.md —— 开发工具链与"一轮"的固定协议
+# 开发工具链与"一轮"的固定协议
 
-> 目的：把 0.5.x 每轮都要做的事**固化成命令**，让工具调用不再靠现拼脚本。
+> 本文件属于 **AI 侧工作记忆**（`agents/`），不是给使用者看的文档。
+> 目的：把每轮都要做的事**固化成命令**，让工具调用不再靠现拼脚本。
 > 本文件里的教训全部来自实际踩坑（每条都浪费过时间/Token），照做即可避免。
+> 使用者的文档从 [`../docs/index.md`](../docs/index.md) 进入。
 
 ## 0. 一条命令的入口
 
@@ -36,7 +38,8 @@ python tools/dev.py guide             # 打印下面的协议（忘记时先跑�
 4) python tools/dev.py perf                  # 确定性指标（iters/sof/resid/digest）vs HEAD
 5) python tools/dev.py suite                 # 全量回归
 6) python tools/dev.py eqcheck && python tools/dev.py hygiene --fix
-7) 文档（`architecture.md` §7 新增小节 + `changelog.md`）→ 提交推送 → 汇报性能表
+7) 文档（[`log.md`](log.md) 新增小节 + [`../docs/changelog.md`](../docs/changelog.md)）
+   → 提交推送 → 汇报性能表
 ```
 
 汇报性能表固定四类量：**墙钟**（mean/p50/p90/max，声明为机器噪声）、
