@@ -694,10 +694,21 @@ def case_api() -> None:
     re3 = eng.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0, isothermal=False)
     ok19 = (re3.heat_kJ is not None and 5.0 <= re3.heat_kJ <= 6.2
             and re3.thermal.get("converged") is True)
-    raw4 = eng.judge([{"name": "Zn", "mol": 1.0},
-                      {"name": "H_2SO_4", "mol": 1.0}], {"V_L": 1.0})
+    # v0.5.2：用户侧删去与 react 重叠的 judge()，raw 账本改从 Reaction.raw 取
+    # ——通道测的是"引擎 raw dict 契约仍可达"，入口换成唯一入口。
+    raw4 = eng.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0).raw
     ok20 = (isinstance(raw4, dict) and raw4["reacted"] is True
-            and raw4["degree"] == 2 and raw4["override"] is None)
+            and raw4["degree"] == 2 and raw4["override"] is None
+            and {"steps", "H_excess", "cond"} <= set(raw4)
+            and raw4["cond"]["V_L"] == 1.0)
+    # v0.5.2：judge 的独有能力（无阴离子的质子条件量 c_H/c_OH/pH）不能在
+    # "删重复入口"时被顺手削掉——它必须从存活入口 react/System 可达。
+    rc_h = chemkit.react({"Zn": 0.1}, V=1.0, c_H=0.5)
+    rs_h = chemkit.System(V=1.0, c_H=0.5)
+    rs_h.add("Zn", 0.1)
+    ok21 = (rc_h.pH == rs_h.result.pH and rc_h.degree == rs_h.result.degree
+            and rc_h.raw["H_excess"] > 0.0)
+    ok22 = not hasattr(chemkit, "judge") and not hasattr(eng, "judge")
     for tag, ok in (("API System 累计投料再平衡", ok1),
                     ("API react 一步式+raw 过程", ok2),
                     ("API System 建立即反应", ok3),
@@ -717,7 +728,9 @@ def case_api() -> None:
                     ("API Engine.react 与函数式同语义", ok17),
                     ("API Engine.system 共享表与缓存", ok18),
                     ("API Engine 绝热耦合", ok19),
-                    ("API Engine.judge raw 直通", ok20)):
+                    ("API Engine.react().raw 账本直通", ok20),
+                    ("API c_H/c_OH/pH 质子条件量可达（react/System）", ok21),
+                    ("API 用户侧无 judge 重复入口", ok22)):
         if ok:
             PASS_N += 1
         else:
@@ -862,10 +875,25 @@ def main(cases_path: str | None = None, out_path: str | None = None) -> int:
 
 
 if __name__ == "__main__":
+    for _s in (sys.stdout, sys.stderr):
+        try:
+            _s.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:                                # pragma: no cover
+            pass
     args = sys.argv[1:]
+    if "-h" in args or "--help" in args:
+        # v0.5.2：此前 `--help` 会被当成用例库路径去 open() ⟹ 抛栈退出；
+        # 文档里写着这个入口，就得让它打印用法而不是崩。
+        print("用法: python -m chemkit.testsuit [用例库.json] [--out 结果.json]\n"
+              "  省略用例库 = 包内 data/tests.json + 温度域/酸碱地基/高层 API\n"
+              "  自检 + 环闭合检查；--out 另存结构化结果（cases/summary/checks）。")
+        sys.exit(0)
     out = None
     if "--out" in args:
         i = args.index("--out")
+        if i + 1 >= len(args):
+            print("!! --out 需要一个文件名参数")
+            sys.exit(2)
         out = args[i + 1]
         args = args[:i] + args[i + 2:]
     sys.exit(main(args[0] if args else None, out))

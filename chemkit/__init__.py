@@ -4,8 +4,8 @@
 （interfaces.TABLES 单例）。
 
 用户侧 API 的唯一门面是 chemkit.interfaces（v0.3.3 起）；v0.3.7 起
-统一入口为 **Engine 对象**——judge/react/system 三个层级是它的平级
-方法，无层层包装：
+统一入口为 **Engine 对象**——react/system 两个层级是它的平级方法，
+无层层包装：
 
     import chemkit
     eng = chemkit.Engine()                              # 持表一次、长期复用
@@ -24,11 +24,9 @@
     r.net_equation, r.equations    # Equation 结构，读取时 .tex()/.plain()
     r.consumption_raw, r.H_excess_raw                    # 引擎记账层
 
-底层 API（判定引擎直通）：
-    from chemkit import load_tables, judge
-    T = load_tables()                 # 默认加载包内 ./data
-    r = judge([{"name": "HCl", "mol": 1.0}, {"name": "NaOH", "mol": 1.0}],
-              {"V_L": 1.0, "T_K": 298.15, "p_kpa": 101.3}, T)
+引擎 raw dict（steps / H_excess / cond / override 等）经 **`r.raw`** 取；
+用户侧不再单列 `judge()`（v0.5.2 删去与 `react` 重叠的重复入口：
+两者走同一条求解管线，raw 层从 Reaction 上取即可）。
 
 辅助 API（化学式与方程式）：
     from chemkit import FormulaError, balance
@@ -38,12 +36,12 @@
     python -m chemkit.testsuit        # 运行 data/tests.json 全部用例 + 环闭合检查
 """
 from .interfaces import (
-    Tables, load_tables, judge, Engine,
+    Tables, load_tables, Engine,
     Reaction, System, react, default_tables, TABLES,
     FormulaError, balance,
 )
 
-__version__ = "0.4.4"
-__all__ = ["Tables", "load_tables", "judge", "Engine",
+__version__ = "0.5.2"
+__all__ = ["Tables", "load_tables", "Engine",
            "Reaction", "System", "react", "default_tables",
            "TABLES", "FormulaError", "balance", "__version__"]

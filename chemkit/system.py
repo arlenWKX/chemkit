@@ -1,9 +1,13 @@
 """chemkit.system：高层 API（Engine/react/System 与 Reaction 包装）。
 
 v0.3.6 起用户侧统一入口是 **Engine 对象**：持表一次、长期复用，
-judge / react / system 三个层级是它的**平级方法**——没有 react()→
-System()→judge() 的层层包装（一步式不再为了调 judge 而建一个带
-history 的 System；System 也不再经由 react 之类的上层函数中转）。
+react / system 两个层级是它的**平级方法**——没有 react()→System()
+的层层包装（一步式不再为了复用而建一个带 history 的 System）。
+
+v0.5.2 删去用户侧 `judge`：它与 `react` 走同一条求解管线，只是少了
+Reaction 包装，属于重复入口；raw dict 从 `Reaction.raw` 取。
+`chemkit.engine.judge` 仍是引擎内部实现（本模块 `_solve` 直接调用），
+不承诺跨版本稳定。
 依赖链：engine（judge）/equations（方程式）/thermo（绝热耦合）。
 """
 from __future__ import annotations
@@ -205,14 +209,25 @@ def _solve(subs: list[dict], cond: dict, tables: Tables,
 
 
 def _cond(V: float, T: float, T_C: float | None, p: float,
-          isothermal: bool, kinetics: bool, gas_escape: bool) -> dict:
-    """关键字参数风格 → judge conditions（三个模式开关一并写入）。"""
-    return {"V_L": float(V),
+          isothermal: bool, kinetics: bool, gas_escape: bool,
+          c_H: float | None = None, c_OH: float | None = None,
+          pH: float | None = None) -> dict:
+    """关键字参数风格 → judge conditions（三个模式开关一并写入）。
+
+    v0.5.2：`c_H`/`c_OH`/`pH`（初始强酸/强碱浓度、指定初始 pH）原先只有
+    `judge` 的 conditions 能传——用户侧删掉 judge 后这条能力必须有去处，
+    否则"删重复入口"会顺手削掉功能。三者都是**无阴离子的质子条件量**
+    （投料表本身表达不了的自由度），故作为 react/System 的参数保留。"""
+    cond = {"V_L": float(V),
             "T_K": float(T) if T_C is None else float(T_C) + 273.15,
             "p_kpa": float(p),
             "isothermal": bool(isothermal),
             "kinetics": bool(kinetics),
             "gas_escape": bool(gas_escape)}
+    for k, v in (("c_H", c_H), ("c_OH", c_OH), ("pH", pH)):
+        if v is not None:
+            cond[k] = float(v)
+    return cond
 
 
 def _subs(substances: dict[str, float]) -> list[dict]:
@@ -227,42 +242,37 @@ class Engine:
 
     进程内建一次、长期复用：持有数据表与全部构建缓存（电对模板、
     派生候选、枚举缓存均随 Tables 存活，同温度判定命中热路径），
-    三个 API 层级是它的平级方法，无层层包装：
+    两个 API 层级是它的平级方法，无层层包装：
 
         eng = chemkit.Engine()                        # 默认包内数据表
         r = eng.react({"NaOH": 0.1, "HCl": 0.1})      # 一步式
         sys = eng.system(V=1.0, T_C=25)               # 连续投料（共享缓存）
-        raw = eng.judge(subs, {"V_L": 1.0})           # 引擎 raw dict 直通
 
     参数：
         tables  数据表（默认包内 TABLES 单例；自定义表经 load_tables
                 构建，同一 Engine 换表需新建）
 
-    模块级 react/System/judge 函数与此对象方法完全同语义——只是
-    隐式使用全局默认表；需要换表/隔离缓存时用 Engine 对象。
+    模块级 react/System 函数与此对象方法完全同语义——只是隐式使用
+    全局默认表；需要换表/隔离缓存时用 Engine 对象。
     """
 
     def __init__(self, tables: Tables | None = None):
         self.tables: Tables = tables if tables is not None else TABLES
-
-    # ---- 底层直通：judge（纯函数，raw dict）----
-    def judge(self, substances: list[dict],
-              conditions: dict | None = None) -> dict:
-        """投料 + conditions → 引擎 raw dict（无包装；conditions 键
-        V_L/T_K/T_C/c_H/c_OH/pH/p_kpa/isothermal/kinetics/gas_escape）。"""
-        return judge(substances, conditions, self.tables)
 
     # ---- 一步式：react ----
     def react(self, substances: dict[str, float], *,
               V: float = 1.0, T: float = 298.15, T_C: float | None = None,
               p: float = 101.3, tables: Tables | None = None,
               isothermal: bool = True, kinetics: bool = True,
-              gas_escape: bool = True) -> "Reaction":
+              gas_escape: bool = True,
+              c_H: float | None = None, c_OH: float | None = None,
+              pH: float | None = None) -> "Reaction":
         """一步式反应：直接调求解管线并包装 Reaction（不建 System）。
         参数与模块级 react() 一致（tables 可临时换表，默认本表）。"""
         tb = tables if tables is not None else self.tables
         r = _solve(_subs(substances),
-                   _cond(V, T, T_C, p, isothermal, kinetics, gas_escape),
+                   _cond(V, T, T_C, p, isothermal, kinetics, gas_escape,
+                         c_H, c_OH, pH),
                    tb, isothermal)
         return Reaction(r, tb)
 
@@ -271,12 +281,15 @@ class Engine:
                V: float = 1.0, T: float = 298.15, T_C: float | None = None,
                p: float = 101.3, tables: Tables | None = None,
                isothermal: bool = True, kinetics: bool = True,
-               gas_escape: bool = True) -> "System":
+               gas_escape: bool = True,
+               c_H: float | None = None, c_OH: float | None = None,
+               pH: float | None = None) -> "System":
         """建立绑在本引擎上的 System（共享数据表与缓存）。"""
         return System(substances, V=V, T=T, T_C=T_C, p=p,
-                     tables=tables if tables is not None else self.tables,
-                     isothermal=isothermal, kinetics=kinetics,
-                     gas_escape=gas_escape)
+                      tables=tables if tables is not None else self.tables,
+                      isothermal=isothermal, kinetics=kinetics,
+                      gas_escape=gas_escape,
+                      c_H=c_H, c_OH=c_OH, pH=pH)
 
     def __repr__(self) -> str:
         return f"<Engine tables={self.tables!r}>"
@@ -326,13 +339,20 @@ class System:
                  tables: Tables | None = None,
                  isothermal: bool = True,
                  kinetics: bool = True,
-                 gas_escape: bool = True):
+                 gas_escape: bool = True,
+                 c_H: float | None = None,
+                 c_OH: float | None = None,
+                 pH: float | None = None):
         self.V_L: float = float(V)
         self.T_K: float = float(T) if T_C is None else float(T_C) + 273.15
         self.p_kpa: float = float(p)
         self.isothermal: bool = bool(isothermal)
         self.kinetics: bool = bool(kinetics)
         self.gas_escape: bool = bool(gas_escape)
+        # 无阴离子的质子条件量（mol/L）：初始强酸 / 初始强碱 / 指定初始 pH
+        self.c_H: float | None = None if c_H is None else float(c_H)
+        self.c_OH: float | None = None if c_OH is None else float(c_OH)
+        self.pH_0: float | None = None if pH is None else float(pH)
         self._tables: Tables = tables if tables is not None else TABLES
         self._feeds: dict[str, float] = {}
         self.history: list[Reaction] = []
@@ -349,10 +369,9 @@ class System:
 
     def _react(self) -> Reaction:
         # v0.3.6：System 直落共用求解管线（不经 react/System 包装链）
-        cond = {"V_L": self.V_L, "T_K": self.T_K, "p_kpa": self.p_kpa,
-                "isothermal": self.isothermal,
-                "kinetics": self.kinetics,
-                "gas_escape": self.gas_escape}
+        cond = _cond(self.V_L, self.T_K, None, self.p_kpa,
+                     self.isothermal, self.kinetics, self.gas_escape,
+                     self.c_H, self.c_OH, self.pH_0)
         subs = [{"name": n, "mol": m} for n, m in self._feeds.items()]
         r = _solve(subs, cond, self._tables, self.isothermal)
         self.result = Reaction(r, self._tables)
@@ -380,13 +399,16 @@ def react(substances: dict[str, float],
           tables: Tables | None = None,
           isothermal: bool = True,
           kinetics: bool = True,
-          gas_escape: bool = True) -> Reaction:
+          gas_escape: bool = True,
+          c_H: float | None = None,
+          c_OH: float | None = None,
+          pH: float | None = None) -> Reaction:
     """一步式反应：直接调求解管线，返回 Reaction（v0.3.6 起不再
     经由 System 包装链——一次判定零中间对象）。
 
     参数与 System 一致（substances 必填）；isothermal/kinetics/gas_escape
-    三个模式开关的含义见 System 文档。需要换表/长期持有缓存时用
-    chemkit.Engine 对象。
+    三个模式开关与 c_H/c_OH/pH 三个质子条件量的含义见 System 文档。
+    需要换表/长期持有缓存时用 chemkit.Engine 对象。
 
     示例：
         r = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0)
@@ -398,7 +420,8 @@ def react(substances: dict[str, float],
     """
     tb = tables if tables is not None else TABLES
     r = _solve(_subs(substances),
-               _cond(V, T, T_C, p, isothermal, kinetics, gas_escape),
+               _cond(V, T, T_C, p, isothermal, kinetics, gas_escape,
+                     c_H, c_OH, pH),
                tb, isothermal)
     return Reaction(r, tb)
 

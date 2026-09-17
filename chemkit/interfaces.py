@@ -8,12 +8,11 @@
     from chemkit.interfaces import Engine, react, System, Reaction
 
 统一入口（v0.3.6 起）：**Engine 对象**——持表一次、长期复用，
-三个层级是它的平级方法（无 react()→System()→judge() 层层包装）：
+两个层级是它的平级方法（无 react()→System() 层层包装）：
 
   Engine()                                 进程内建一次、长期运行
       eng.react(substances, ...) -> Reaction     一步式判定
       eng.system(substances, ...) -> System      连续加料体系
-      eng.judge(subs, cond) -> dict              引擎 raw dict 直通
 
 函数式便捷入口（与 Engine 方法同语义，隐式使用全局默认表）：
 
@@ -28,12 +27,15 @@
       net_equation / equations（Equation 结构，读取时渲染） / annotations
       raw（引擎记账层：steps / H_excess / consumption_raw 等）
 
-底层（判定引擎直通）：
+数据表（数据与引擎分离；import chemkit 即预加载）：
 
-  judge(substances, conditions, T) -> dict
-      纯函数式：投料+条件 → 引擎 raw dict（无包装）
   load_tables() / Tables / default_tables() / TABLES
-      数据表加载（数据与引擎分离；import chemkit 即预加载）
+      换表/自定义表用 load_tables()，再 Engine(tables=...) 绑定
+
+**用户侧没有 judge()**（v0.5.2 起）：`judge` 与 `react` 功能重叠——两者走
+同一条求解管线，`react` 只是多了 Reaction 包装与友好的参数表。保留两个
+入口等于让用户选"要不要包装"，而 raw 账本本来就能从 `Reaction.raw` 取，
+于是删掉重复面（`chemkit.engine.judge` 仍是引擎内部实现，不承诺稳定）。
 
 辅助（化学式与方程式）：
 
@@ -51,10 +53,9 @@
                 含逐轮记录与 converged 标志）
 """
 from .data import Tables, load_tables
-from .engine import judge
 from .system import (Engine, Reaction, System, react, default_tables, TABLES)
 from .core import FormulaError, balance
 
-__all__ = ["Tables", "load_tables", "judge", "Engine",
+__all__ = ["Tables", "load_tables", "Engine",
            "Reaction", "System", "react", "default_tables",
            "TABLES", "FormulaError", "balance"]
