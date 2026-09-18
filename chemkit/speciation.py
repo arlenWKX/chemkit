@@ -412,6 +412,23 @@ def _tag(why: str) -> None:
         PH_TAGS.append(why)
 
 
+def _role_union(T) -> frozenset:
+    """分支 4 可能给出酸/碱来源的物种**超集**（按 T 缓存一次）。
+
+    超集是安全方向：命中时只是多跑一次分支 4 扫描；漏判才会让直读早退
+    在"账本里还有弱组分"时错误地独占 pH（§7 X-43）。来源与分支 4 的
+    四张表同源：pKa 酸侧 / pKa 碱侧 / Ksp-OH 阳离子 / `nu=1` OH⁻ β 的中心。
+    """
+    u = getattr(T, "_role_union", None)
+    if u is None:
+        cats = {e["pair"][0] for e in T.ksp if e["pair"][1] == "OH^-"}
+        first_k = {b["center"] for b in T.beta
+                   if b["ligand"] == "OH^-" and b.get("nu") == 1}
+        u = T._role_union = frozenset(
+            set(T.pka_acid) | set(T.pka_base) | cats | first_k)
+    return u
+
+
 def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                    cache: dict | None = None,
                    touch: frozenset | None = None,
@@ -431,15 +448,36 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         _tag("滴定/Henderson")
         return tit, ledger, He_res
     He = He_res / V
-    if He >= 1e-3:
-        _tag("H⁺直读")
-        return max(-1.0, -log10(He)), ledger, He_res
-    if He <= -1e-3:
-        _tag("OH⁻直读")
-        return min(pKw + 1.0, pKw + log10(-He)), ledger, He_res
+    # **直读必须与分支 4 的来源竞争**（第 146 轮，§7 X-43）：残余强酸/碱是
+    # 分支 4 的一侧来源，只有当账本里**没有任何**分支 4 角色物种时，直读
+    # 才是精确的（那种账本下分支 4 只会给 10^(−pKw/2)，必输给 |He| ≥ 1e-3）。
+    # 否则早退会**独占** pH：M01 实测 He = −1e-3 直读 11.000，而同一账本的
+    # Al³⁺ 水解给 1.85e-3（pH 2.73）；x 再走 1e-7 就翻到 2.73 ⟹ 7.5 单位的
+    # 悬崖、S 由 +23.5 翻 −1.3 ⟹ solve_extent 无过零点、通道被判"零推进"。
+    _role_free = not any(sp in _role_union(T) for sp in ledger)
+    if _role_free:
+        if He >= 1e-3:
+            _tag("H⁺直读")
+            return max(-1.0, -log10(He)), ledger, He_res
+        if He <= -1e-3:
+            _tag("OH⁻直读")
+            return min(pKw + 1.0, pKw + log10(-He)), ledger, He_res
     # 4) 缓冲/弱酸弱碱区：取各来源贡献最大者（在滴定后的虚拟账本上评估）
+    # **阈值连续化**（第 146 轮，§7 X-43）：残余强酸/碱并入同侧下界。
+    # 原先 |He| < 1e-3 时残余被**整块丢弃**，阈值两侧是两套模型：N20 实测
+    # He = −1e-3 给 pH 11.000，x 再走 1e-7（He = −0.0009997）立刻掉到分支 4
+    # 的 3.501 —— 7.5 个 pH 单位的悬崖，使 pick（在 11.0 上评 S = +22.01）与
+    # solve_extent 的 f(x)（x > 0 全在 3.5 上评，S ≈ −0.49）**符号相反** ⟹
+    # f 无过零点 ⟹ 通道被判"零推进"禁用、走步带 |S| = 23.5 退出。
+    # 残余强酸/碱本就是"同侧最强的一个来源"（与分支 4 的 max 语义一致），
+    # 取 max 后两支在阈值极限上给出同一个数；|He| ≥ 1e-3 的直读快路径保留
+    # （数值等价），真实强碱体系（He 大）完全不走这一支。
     h_c = 10.0 ** (-pKw / 2)
     o_c = h_c
+    if He > 0.0:
+        h_c = max(h_c, He)
+    elif He < 0.0:
+        o_c = max(o_c, -He)
 
     # （原 _pka1/_pkapp/_pksp 嵌套定义处——已外提至模块级，T_K 作参数）
     # 分支 4 的静态量（两性资格、各酸第一级 Ka、各碱最强共轭酸 pKa、

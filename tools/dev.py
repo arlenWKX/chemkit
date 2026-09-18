@@ -98,10 +98,17 @@ def cmd_suite(prefixes: list[str], keep: int = 40) -> int:
                 or ln.startswith("总耗时") or "环闭合" in ln:
             print(ln[:400])
     bad = [r for r in testsuit.RESULTS if not r.get("ok")]   # 失败明细（套件本体不打）
+    # **结构化留档**（第 146 轮）：一次运行把逐例结果全量落盘，后续用工具/程序
+    # 反复读取（errors/note/pH/degree/annotations/净方程/耗时）——不要靠重跑套件
+    # 换信息，也不要在生成端截断。
+    dump = _TMP + "results.json"
+    with io.open(dump, "w", encoding="utf-8") as f:
+        json.dump(testsuit.RESULTS, f, ensure_ascii=False)
     for r in bad[:12]:
         print(f"  [FAIL] {r['name']} -- {'; '.join(r.get('errors') or [])[:300]}")
     if len(bad) > 12:
-        print(f"  ... 另有 {len(bad) - 12} 例失败（全部见 `失败:` 清单）")
+        print(f"  ... 另有 {len(bad) - 12} 例失败（明细见 {dump}）")
+    print(f"[留档] {len(testsuit.RESULTS)} 例逐例结果 -> {dump}")
     if tmp and os.path.exists(tmp):
         os.remove(tmp)
     return rc
