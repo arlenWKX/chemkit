@@ -125,6 +125,11 @@ def _expand_kinetics(e: dict) -> dict:
                        与特定配对封闭（原 slow_with_red/ox、slow_except_red）
       red_pH_min       还原通道 pH 下限
       rev_gate         逆向闸门（产物选择性）
+      slow_as_red_with **方向敏感**：本电对作还原剂侧（red 被氧化）只在指定
+                       氧化剂（列对方电对的 ox）驱动下才快；同一电对的反方向
+                       （本电对作氧化剂）不受影响——这是它与 closed_with_ox
+                       的唯一区别（后者按 ox 字段匹配、不分方向，会把反方向
+                       一起封掉，第 141 轮实测 KIN06 因此翻红）
     均为"无限时间也不发生"的化学硬事实，与热力学无关。
     **未在上面列出的键不会生效**（只进 `kinetics_all` 留档）——
     新增动力学注解必须同时在此处接线并加审计，否则是死数据。
@@ -153,6 +158,12 @@ def _expand_kinetics(e: dict) -> dict:
         e["slow_with_red"] = k["closed_with_red"]
     if k.get("closed_with_ox"):
         e["slow_with_ox"] = k["closed_with_ox"]
+    if k.get("slow_as_red_with"):
+        # **方向敏感**的"作还原剂侧"慢（第 141 轮）：只封"本电对的 red 被
+        # 氧化"那一个方向（见 templates 的 sd_static 方向规则）。首例
+        # O₂/H₂O₂：H₂O₂ → O₂ 被 Fe³⁺ 驱动是 Fenton 链限速支路，而被 MnO₄⁻
+        # 驱动是快滴定；反方向 O₂ + Fe²⁺ → H₂O₂ 是中性水自氧化第一步。
+        e["slow_as_red_with"] = k["slow_as_red_with"]
     if k.get("closed_except_red"):
         e["slow_except_red"] = k["closed_except_red"]
     if "red_pH_min" in k:

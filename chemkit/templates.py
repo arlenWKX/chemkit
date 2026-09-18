@@ -327,8 +327,16 @@ def _redox_pair_static(T):
                 # 进一步：sd_ph_hi 为空时（约 99% 模板）slow_dirs 恒空，
                 # meta 全常量——预构建 Cand，枚举时直接 out.append。
                 _g = a.get("gate") or {}
+                # 方向敏感慢（slow_as_red_with）：只封一个方向 ⟹ 不能进
+                # "全常量"预组装（那里的 slow_dirs 恒为 frozenset()），
+                # 必须交给 _redox_templates 的动态路径。判据与那里同源。
+                _dir_slow = bool(
+                    (b.get("slow_as_red_with")
+                     and a["ox"] in b["slow_as_red_with"])
+                    or (a.get("slow_as_red_with")
+                        and b["ox"] in a["slow_as_red_with"]))
                 is_dyn = bool(gates_only or slow_T or halate_rule
-                              or h2o_oh_min is not None
+                              or h2o_oh_min is not None or _dir_slow
                               or ("T_min" in _g and "only_vs_red" not in _g))
                 _dE = a["E0"] - b["E0"]
                 _acid = b["red"] in solid_metals
@@ -429,6 +437,18 @@ def _redox_templates(T_K: float, T, kinetics: bool = True) -> list:
             deferred = deferred_raw
             sd_static = frozenset()
             sd_ph: list = []
+            # 方向敏感的"作还原剂侧"慢（数据键 slow_as_red_with，第 141 轮）。
+            # 方向约定与 fwd 一致：正向 = a.ox 被还原 + b.red 被氧化。
+            # 与 slow_with_ox 的区别是**只封一个方向**——同一电对的反方向
+            # （它作氧化剂）必须保持快：O₂/H₂O₂ ⊗ Fe³⁺/Fe²⁺ 的正方向
+            # O₂ + 2Fe²⁺ + 2H⁺ → H₂O₂ + 2Fe³⁺ 是中性水 Fe²⁺ 自氧化第一步
+            # （KIN06），反方向 H₂O₂ + 2Fe³⁺ → O₂ + 2Fe²⁺ + 2H⁺ 是 Fe³⁺ 催化
+            # 歧化（Fenton 链限速支路，k ≈ 10⁻³ vs Fe²⁺ 的 ~60 M⁻¹s⁻¹）。
+            # 配对级 closed_with_ox 无法表达这个不对称（实测会连 KIN06 一起封）。
+            if b.get("slow_as_red_with") and a["ox"] in b["slow_as_red_with"]:
+                sd_static = sd_static | {1}
+            if a.get("slow_as_red_with") and b["ox"] in a["slow_as_red_with"]:
+                sd_static = sd_static | {-1}
             # 卤酸歧化慢方向（温度阈值 + 碱催化解锁阈值）
             for _d, _hx in halate_rule:
                 if T_K < HALATE_DISP_T[_hx]:

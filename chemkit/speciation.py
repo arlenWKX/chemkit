@@ -247,6 +247,7 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
         ledger2 = dict(ledger)
         heappush = heapq.heappush
         plateau = None
+        last_full = None      # 最后一个被定量喂满的弱酸对（平衡修正用）
         pushed = {e[2] for e in heap} if multilevel else None
         while heap and he > 0.0:
             pka, _cnt, acid, base = heapq.heappop(heap)
@@ -259,13 +260,18 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             ledger2[base] = ledger2.get(base, 0.0) + take
             if take < avail:
                 plateau = (pka, acid, base)
-            elif multilevel and take > 0.0 and base not in pushed:
-                # 产物仍是酸（可再去质子化）→ 重新入堆（仅多级模式）
-                nxt = _acids_map.get(base)
-                if nxt is not None and base not in _na:
-                    pushed.add(base)
-                    heappush(heap, (_aeff[base], cnt, base, nxt[2]))
-                    cnt += 1
+            else:
+                if take > 0.0:
+                    # **最后一个被定量喂满的对**：碱过量时它是回水解的主体，
+                    # 平衡修正（见下）要用它
+                    last_full = (pka, acid, base)
+                if multilevel and take > 0.0 and base not in pushed:
+                    # 产物仍是酸（可再去质子化）→ 重新入堆（仅多级模式）
+                    nxt = _acids_map.get(base)
+                    if nxt is not None and base not in _na:
+                        pushed.add(base)
+                        heappush(heap, (_aeff[base], cnt, base, nxt[2]))
+                        cnt += 1
         if plateau is not None:
             pka, acid, base = plateau
             a_rest = ledger2.get(acid, 0.0)
@@ -275,6 +281,37 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
                 # X-40：同弱碱吸收分支（对称）
                 if _buffer_holds(pH, a_rest, b, pKw):
                     return min(max(pH, -1.0), pKw + 1.0), -he, ledger2
+        if he > 0.0 and last_full is not None:
+            # **平衡分布修正**（第 143 轮，§7 X-8 第一块）——见文件头。
+            # 强碱把最后一个弱酸**定量喂满**后仍有残余游离碱时，定量模型把
+            # 该对整块记成共轭碱（HA ≡ 0）并把残余碱记成 B − T；而共轭碱会
+            # 回水解（A⁻ + H₂O ⇌ HA + OH⁻，Kb = Kw/Ka），Ka 小者可达百分之
+            # 几十。这会把**反应物形态整个抹掉**（D47：H₂O₂ 0.0888 → 0），
+            # 按分子态配平的 redox 通道于是在虚拟账本上"反应物不存在"、
+            # x* = 0 停摆——而走步 pick 用真实账本判它强驱动（S = +10.24）。
+            # 荷衡 [A⁻] + [OH⁻] = B（B = 该对共轭碱 + 残余游离碱）、
+            # 物料 [HA] + [A⁻] = T、[HA] = [A⁻]·h/Ka
+            # ⟹ f = B − T·Ka·f/(Ka·f + Kw)，右端在 [0, B] 上单调，二分即得。
+            _pka_f, _acid_f, _base_f = last_full
+            _T = ledger2.get(_acid_f, 0.0) + ledger2.get(_base_f, 0.0)
+            if _T > _floor:
+                _Ka = 10.0 ** (-_pka_f)
+                _Kw = 10.0 ** (-pKw)
+                _Tc = _T / V
+                _B = (he + _T) / V
+                _lo, _hi = 0.0, _B
+                for _ in range(60):
+                    _mid = 0.5 * (_lo + _hi)
+                    _a = _Tc * _Ka * _mid / (_Ka * _mid + _Kw)
+                    if _B - _a - _mid > 0.0:
+                        _lo = _mid
+                    else:
+                        _hi = _mid
+                _f = 0.5 * (_lo + _hi)
+                _a = _Tc * _Ka * _f / (_Ka * _f + _Kw)
+                ledger2[_base_f] = _a * V
+                ledger2[_acid_f] = (_Tc - _a) * V
+                he = _f * V
         return None, -he, ledger2
 
 
@@ -426,12 +463,22 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             if _pka1(e_a, T_K) <= pKw + 2 and pka_b <= pKw + 2:
                 amph_eligible.add(sp)   # 如 HCO3-；NH3(pKa105)/HS-(pKa19) 不算
                 amph_pH[sp] = (_pka1(e_a, T_K) + pka_b) / 2
+        # **显式一级水解**：beta 表里该阳离子存在 nu = 1 的 OH⁻ 配离子
+        # （M^{n+} + H₂O ⇌ M(OH)^{(n−1)+} + H⁺）⟹ Ka = β₁·Kw 是实测值。
+        # 这些阳离子在分支 4 里按**一元弱酸**处理（见 acids_map 追加与
+        # hyd_map 的跳过），不再叠加 Ksp 派生的"水解到底"复合式：后者把
+        # 一级水解产物当固相，与显式数据是两套模型（§7 X-32 capstone）。
+        _first_k = {b["center"]: 10.0 ** (b["logb"] - pKw) for b in T.beta
+                    if b["ligand"] == "OH^-" and b.get("nu") == 1}
         acids_map: dict = {}   # acid -> Ka 或 _STRONG_ACID 哨兵
         for acid, entries in T.pka_acid.items():
             if acid in amph_eligible:
                 continue
             e1 = min(entries, key=lambda e: e["pka"])   # 第一级
             acids_map[acid] = _STRONG_ACID if e1["pka"] <= 0 else 10.0 ** (-_pka1(e1, T_K))
+        for _cat, _ka in _first_k.items():
+            if _cat not in amph_eligible:
+                acids_map.setdefault(_cat, _ka)
         bases_map: dict = {}   # base -> Kb
         for base, entries in T.pka_base.items():
             if base in T.solids or base == WATER or base in amph_eligible:
@@ -442,7 +489,9 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         hyd_map: dict = {}    # cat -> (Kh 每阳离子, qc)
         for e in T.ksp:
             cat, an = e["pair"]
-            if an != "OH^-":
+            if an != "OH^-" or cat in _first_k:
+                # 一级水解已有实测 β ⟹ 酸侧的一元弱酸路线接管（上面）；
+                # 这里若再放 Ksp 复合式就是同一物种两套模型并存。
                 continue
             _x, _y = _ksp_xy(e)
             # Kh = c/Kw 通道常数；第二元 = **每阳离子释放的质子数** n = y/x
@@ -526,15 +575,13 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 if _src is not None:
                     _src.append((sp, "Kh(1)", _v))
             else:
-                # 多价金属分步水解经可溶羟基中间体，实测行为近弱酸二次式
-                # （h² = Kh·c），保持不变。**注意这不是 n 质子的质量作用式**
-                # ——n≥3 的真式为 h^n = Kh·(c − h/n)（Al³⁺ 1 mol/L：真式
-                # pH 3.00，本式 4.50）。§7 X-32 实测：单独换成 n 次根会
-                # 把 Al³⁺/Fe³⁺ 拉回文献值（1 M 3.00、0.1 M Fe³⁺ 1.68），
-                # 但同时翻红 R06（3.33 越界 0.03）与 D32 —— 因为本式原本
-                # **补偿**了缺失的可溶羟基络合物（beta 表只有四羟基阴离子，
-                # 全表无 MOH²⁺/M(OH)₂⁺）。两者必须成对落地，见 X-32 交接。
-                _v = (-Kh + sqrt(Kh * Kh + 4 * Kh * c)) / 2
+                # **n 质子真式**（§7 X-32 capstone，第 140 轮落地）：
+                # `h^n = Kh·(c − h/n)`。旧实现是"一元弱酸"形态的二次式
+                # `h² = Kh·c`——它在 n≥3 时把 pH 抬得过高（Al³⁺ 1 M 给
+                # 4.50、真值 3.00；Fe³⁺ 0.1 M 给 2.51、真值 ~1.7）。
+                # 之所以能换：Fe/Al 两轴的显式羟基络合物已入库（第 137/139
+                # 轮），旧式原本**补偿**缺失中间体的那部分职责已由数据承担。
+                _v = _nth_root_h(Kh, c, npp)
                 h_c = max(h_c, _v)
                 if _src is not None:
                     _src.append((sp, f"Kh({npp:g})", _v))
@@ -589,6 +636,25 @@ def _pka_eff(pka: float, dH_pp, T_K: float) -> float:
     """有效 pKa（_buffer_titration 用；原内嵌套定义，同上外提）。"""
     # pKa = −logKa：van't Hoff 修正对 pKa 变号（吸热电离 T 升 pKa 降）
     return pka - (_vant(dH_pp, T_K) if dH_pp is not None else 0.0)
+
+
+def _nth_root_h(Kh: float, c: float, n: float) -> float:
+    """解 **n 质子水解真式** `h^n = Kh·(c − h/n)`（h ≥ 0）。
+
+    `f(h) = h^n − Kh·(c − h/n)` 在 [0, n·c] 上单调递增（h^n 与 +Kh·h/n 同向），
+    二分 60 次即达浮点精度。n = 1 时退化为 `h = Kh·c/(1+Kh)`（与旧的一元式
+    `h = Kh·c` 在 Kh≪1 时同值，故 n≤1 仍走原路，行为不变）。
+    """
+    if c <= 0.0 or Kh <= 0.0:
+        return 0.0
+    lo, hi = 0.0, n * c
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        if mid ** n - Kh * (c - mid / n) > 0.0:
+            hi = mid
+        else:
+            lo = mid
+    return 0.5 * (lo + hi)
 
 
 def _respeciate_strong_acids(ledger: dict, H_excess: float, V: float, T) -> float:
