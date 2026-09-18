@@ -1484,5 +1484,13 @@
   "nu": 1,
   "logb": 10.6,
   "calibrated": "Rh^{3+} + H2O -> [Rh(OH)]^{2+} + H+ 的 log*K1 = -3.4（Baes & Mesmer 1976 pp.262-265（I→0；NIST46 给 -3.4、Brown & Ekberg 2016 给 -3.09+-0.1））⟹ logb1 = 14.0 + log*K1 = 10.60。**注意**：该值是 I→0/无其它配体/无多聚的单核值；实测与含 Cl- 体系的标准偏差（Ga 最大、In 次之、Rh 最小）源于模型**尚未涵盖 Cl- 络合与多聚羟合**，不是取值错误（第 156 轮归因）。"
+ },
+ {
+  "complex": "[Lu(OH)]^{2+}",
+  "center": "Lu^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 7.6,
+  "calibrated": "Lu3+ + H2O -> [Lu(OH)]2+ + H+ 的 log*K1 = -6.4（使用者指示取原书引用值，M'Halla 等引用 Baes & Mesmer）。与 COST-NECTAR 同源摘录的 La/Eu/Gd = -8.5/-7.8/-8.0 不一致，疑为特定离子强度值而非 I→0，且 -6.4 与镧系收缩趋势（Ho -8.0, Tm -7.7）不符 ⟹ **标注待复核**。logb1 = 14.0 + log*K1 = 7.60"
  }
 ]
