@@ -405,7 +405,51 @@ def cmd_hygiene(fix: bool = False) -> int:
             print(f"    {f}")
     else:
         print("[临时文件] 无（`_*.py`/`_*.txt`/`_*.json` 建议进 .gitignore）")
+    _encoding_check(mod + [f for f in unt if not f.startswith("_")], fix)
     return 0
+
+
+def _encoding_check(files: list, fix: bool) -> None:
+    """编码卫生（第 148 轮）：BOM / UTF-16 / NUL——Windows 上最容易静默混入。
+
+    典型来源：PowerShell 的 `>`/`Out-File`（默认 UTF-16）、
+    `Get-Content | Set-Content -Encoding UTF8` 的二次编码。
+    只读检查；`--fix` 就地重写为"无 BOM UTF-8 + 原换行风格"。
+    """
+    bad = []
+    for f in sorted(set(files)):
+        if not os.path.exists(f) or not f.endswith((".py", ".json", ".md", ".txt")):
+            continue
+        with io.open(f, "rb") as fh:
+            head = fh.read(4096)
+        why = None
+        if head[:2] in (b"\xff\xfe", b"\xfe\xff"):
+            why = "UTF-16（PowerShell 重定向的默认编码）"
+        elif head[:3] == b"\xef\xbb\xbf":
+            why = "UTF-8 BOM"
+        elif b"\x00" in head:
+            why = "含 NUL 字节（疑似 UTF-16/二进制）"
+        if why:
+            bad.append((f, why))
+    if not bad:
+        print("[编码] 无 BOM/UTF-16 异常")
+        return
+    print(f"[编码] {len(bad)} 个文件编码异常：")
+    for f, why in bad:
+        print(f"    {f}  — {why}")
+    if fix:
+        for f, _why in bad:
+            with io.open(f, "rb") as fh:
+                raw = fh.read()
+            nl = "\r\n" if b"\r\n" in raw[:4000] else "\n"
+            if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+                text = raw.decode("utf-16")
+            else:
+                text = raw.decode("utf-8-sig")
+            text = text.replace("\r\n", "\n").replace("\n", nl)
+            with io.open(f, "w", encoding="utf-8", newline="") as fh:
+                fh.write(text)
+        print("[编码] 已重写为无 BOM UTF-8（保留原换行风格）")
 
 
 # --------------------------------------------------------------- patch

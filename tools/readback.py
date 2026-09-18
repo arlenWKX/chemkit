@@ -57,14 +57,47 @@ def _fmt_case(r: dict, full: bool = False) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(add_help=True)
-    ap.add_argument("cmd", choices=["fails", "case", "stats", "converg"])
+    ap.add_argument("cmd", choices=["fails", "case", "stats", "converg", "diff"])
     ap.add_argument("arg", nargs="?", default=None)
+    ap.add_argument("arg2", nargs="?", default=None)
     ap.add_argument("--grep", default=None, help="只列名字含该子串的失败")
     ap.add_argument("--full", action="store_true", help="不截断 errors/note")
     ap.add_argument("--top", type=int, default=12)
     ap.add_argument("--results", default=os.path.join(ROOT, ".tmp_dev_results.json"))
     ap.add_argument("--converg", default=os.path.join(ROOT, ".tmp_dev_converg.json"))
     a = ap.parse_args()
+
+    if a.cmd == "diff":
+        # 两份 converg 留档逐例对比——"哪一例变慢了/残差涨了"必须能在**不重跑**
+        # 的前提下回答（历史基线就留在 git 里，`git show <rev>:converg-baseline.json`）。
+        da, db = _load(a.arg), _load(a.arg2)
+        if da is None or db is None:
+            return 1
+        ma = {c["name"]: c for c in da["cases"]}
+        mb = {c["name"]: c for c in db["cases"]}
+        rows = []
+        for nm in sorted(set(ma) & set(mb)):
+            x, y = ma[nm], mb[nm]
+            rows.append((y.get("iters", 0) - x.get("iters", 0),
+                         (y.get("resid_live") or 0.0) - (x.get("resid_live") or 0.0),
+                         nm, x, y))
+        print(f"逐例对比：{len(rows)} 例（Δiters 降序）")
+        print(f"{'Δiters':>8} {'Δresid':>8}  {'iters 前->后':>17}"
+              f"  {'resid 前->后':>19}  用例")
+        for di, dr, nm, x, y in sorted(rows, reverse=True)[:a.top]:
+            print(f"{di:8d} {dr:8.3f}  {x.get('iters', 0):7d} -> {y.get('iters', 0):<7d}"
+                  f"  {x.get('resid_live') or 0.0:8.3f} -> {y.get('resid_live') or 0.0:<8.3f}"
+                  f"  {nm}")
+        print(f"\n合计 Δiters = {sum(r[0] for r in rows):+d}；"
+              f"变慢 {sum(1 for r in rows if r[0] > 0)} 例，"
+              f"变快 {sum(1 for r in rows if r[0] < 0)} 例")
+        wors = sorted((r for r in rows if r[1] > 0.05), key=lambda r: -r[1])[:8]
+        if wors:
+            print("残差变差最多（Δresid_live）：")
+            for _di, dd, nm, x, y in wors:
+                print(f"   {dd:7.3f}  {nm}  ({(x.get('resid_live') or 0):.3f} -> "
+                      f"{(y.get('resid_live') or 0):.3f})")
+        return 0
 
     if a.cmd == "converg":
         d = _load(a.converg)

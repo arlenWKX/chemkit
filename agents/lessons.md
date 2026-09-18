@@ -35,6 +35,8 @@
 | 生成端截断输出 | **一次运行全量结构化留档**（`dev.py` 自动写 `logs/<cmd>-<时间戳>.log` 与 `logs/<cmd>-latest.json`），后续用 `tools/readback.py` 读 |
 | 改数据用文本锚串 | 改用 `tools/jsondb.py` **按键路径**改（锚串撞车/尾部换行/引号三类坑一次性消除） |
 | PowerShell 管道重写源文件 | 中文会变乱码 ⟹ 只用 `write`/`edit` 工具 |
+| **PowerShell `>` / `Out-File` 写 UTF-16** | `git show … > x.json` 出来首字节 `FF FE`，`json.load` 直接崩 ⟹ **不要用重定向**：`dev.py` 已自动写 `logs/`；要提取 git 内容就用 Python 写字节 |
+| 编码异常静默混入（BOM/UTF-16/NUL） | `dev.py hygiene` 现在会**报出来**，`--fix` 就地重写为无 BOM UTF-8 |
 | `git commit -m "…中文引号…"` | 写消息文件，`git commit -F` |
 | 工具名与 stdlib 同名 | `tools/` 会成为 `sys.path[0]` ⟹ 禁止 `inspect.py`/`json.py` 这类名字 |
 | 探针里用 `__file__` | `dev.py patch` 的 exec 环境没有它；spec 只放 `PATCHES` |
