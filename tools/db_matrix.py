@@ -96,6 +96,13 @@ def main() -> int:
     beta_center = {e["center"] for e in beta}
     beta_all = {e["complex"] for e in beta} | beta_center | {e["ligand"] for e in beta}
     ksp_cat = {e["pair"][0] for e in ksp}
+    # **Ksp-OH 阳离子**：只有 `pair = [M, OH^-]` 才谈得上"一级水解"。
+    # 第 154 轮修正：原实现把**任意** Ksp 条目的阳离子都算进来，于是
+    # `H_2SiO_3 ⇌ H⁺ + SiO₃²⁻` 让 H⁺ 以 309 例高居榜首，Na⁺/K⁺ 也因
+    # 碳酸盐/高氯酸盐上榜——而它们的氢氧化物是**易溶强碱**，根本没有
+    # 可补的一级水解。判据必须与 `speciation.hyd_map` 同源（那里只遍历
+    # `an == "OH^-"` 的条目）。
+    ksp_oh_cat = {e["pair"][0] for e in ksp if e["pair"][1] == "OH^-"}
     ksp_all = {s for e in ksp for s in (e["pair"][0], e["pair"][1], e["solid"])}
     cpl_all = {s for e in couples for s in (e["ox"], e["red"])}
     solids = set(T.solids)
@@ -121,7 +128,7 @@ def main() -> int:
     explicit1 = {e["center"] for e in beta
                  if e.get("ligand") == "OH^-" and e.get("nu") == 1}
     rules["ksp_cat_no_beta1"] = rank(
-        c for c in ksp_cat if c not in explicit1)
+        c for c in ksp_oh_cat if c not in explicit1)
 
     # 4) 电对/β 里的**化合物**固相缺溶解度数据（Co(OH)_3 型：有氧化通道却无
     #    沉淀平衡）。单质不算（金属/非金属单质本来就没有 Ksp）。
