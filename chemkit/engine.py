@@ -203,6 +203,11 @@ RESID_FROZEN_TOL = 0.1
 # 保持冻结）。比 RESID_FROZEN_TOL 松——冻结一条 |S| ≈ 0.3 的通道止震是合理的，
 # 冻结一条 |S| = 3.5 的通道就是撒谎。
 FREEZE_MAX_S = 0.5
+# 单侧在场的键（驱动方向反应物在场、但另一侧不在场）要用更高阈值才认作
+# "还能动"：质量口径本就认"单侧在场＝正常终态"，|S| 小时那是真的走完了；
+# 只有强驱动的单侧通道才是"被冻住的活通道"（E26 的 `[Fe(OH)]²⁺+H⁺ → Fe³⁺`
+# 实测 S = +13.312，而 Fe³⁺ 在场量为 0）。
+FREEZE_MAX_S_1SIDE = 2.0
 
 
 def resid_live_ok(a: dict) -> bool:
@@ -1207,24 +1212,67 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         的键：`|S|` 大而 `ext_max ≈ 0` 是**痕量伪驱动**（引擎注释即此，D38 型），
         把它算进来只会让退出闸空转。度量与质量口径 `resid_live_ok` 同一把尺子。"""
         out = set()
-        # skip_frozen=False 是关键：本函数要问的正是"**冻结集里**还有谁强驱动"
-        # ——默认口径会先把它们跳过（自指缺陷，第 126 轮实测：三处修正全盲）。
-        for c, _d, S in _joint_collect(None, skip_frozen=False):
-            if abs(S) <= thr:
+        # **逐方向**判在场（X-38 病根三）：`_joint_collect` 要求两侧都在场
+        # （那是**质量口径**的语义：单侧在场=正常终态，不算残差），而冻结守卫
+        # 要问的是"走步还能不能动它"——E26 实测：`[Fe(OH)]²⁺ + H⁺ → Fe³⁺`
+        # 在枚举集里 S = +13.312，只因 Fe³⁺ 在场量为 0 就被整条跳过，于是
+        # 守卫/复核/退出闸三处全盲，该通道被永久冻结，走步停在 FeOH²⁺ 占满
+        # Fe(III)（偏离水解平衡 75 倍）而自报 max|S| = 0.001 的态上。
+        for c in cands:
+            if kinetics and (c.meta.get("slow") or c.meta.get("deferred")):
                 continue
-            dr = c.r if S > 0 else c.pr
-            lim = [ledger.get(s, 0.0) / nu for s, nu in dr.items()
-                   if s not in (WATER, H_ION) and nu > 0]
-            if not lim or min(lim) < ANN_MIN_EXTENT:
+            if (c.kind == "redox" and c.meta.get("ox_couple") == H_ION
+                    and blocked_solids
+                    and any(s in blocked_solids
+                            for s in list(c.r) + list(c.pr)
+                            if s not in (WATER, H_ION))):
                 continue
+            ps = c.pres_specs
+            nk_c = (c.netkey_fwd if c.netkey_fwd <= c.netkey_rev
+                    else c.netkey_rev)
             # 引擎自己的"零推进（S 强而 x*≈0）"分类：解冻也走不动（S 强但
             # 二分根 ≈ 0）。把它算进来只会让"冻↔解"空转（Ni41 无此过滤时
-            # 139 次冻结 / 1614 步）。判据取自 dis_why 的 reason 首元素。
+            # 139 次冻结 / 1614 步）。
             if any("零推进" in str((dis_why.get((c.key, dd)) or ("",))[0])
                    for dd in (1, -1)):
                 continue
-            out.add(c.netkey_fwd if c.netkey_fwd <= c.netkey_rev
-                    else c.netkey_rev)
+            S_f = None
+            for dd in (1, -1):
+                # 驱动方向的反应物必须在场（与 pick 循环同口径）
+                if not all(ledger.get(s, 0.0) > X_MIN
+                           for s in (ps[0] if dd > 0 else ps[1])):
+                    continue
+                if S_f is None:
+                    S_f = S_of(c, ledger, V, pH, T_K, T, gsup, p_ext_kpa,
+                               gas_escape, logc)
+                Sd = S_f if dd > 0 else -S_f
+                # 速率维度豁免（X-37）：限速通道的"强驱动"是**故意的慢**
+                # ——走步的步预算就是时间的代理，解冻它等于给它更多时间
+                # （EU01 的 `2H⁺+2Eu²⁺ → H₂+2Eu³⁺` |S|=16.2 被解冻后
+                # Eu²⁺ 0.1 → 0.0751）。冻结在这里是"时间到了"的正确表达。
+                if _rate_eta(c, dd, T, pH) is not None:
+                    continue
+                # 单侧在场（另一侧缺席）时抬高门槛：见 FREEZE_MAX_S_1SIDE
+                _oth = ps[1] if dd > 0 else ps[0]
+                _two = all(ledger.get(s, 0.0) > X_MIN for s in _oth)
+                if not _two and c.kind == "redox":
+                    # redox 单侧通道不保护：它们的"没跑"在化学上几乎总是
+                    # **动力学**事实（E14 的氯水亚稳：ClO₃⁻/O₂ 生成受阻），
+                    # 而动力学的正规表达是 `closed_*`/`rate`（X-24/X-37），
+                    # 不该由冻结守卫代为背书；形态类（complex/decomplex/
+                    # derived/precip/dissolve/proton）才保护——它们不执行
+                    # 意味着**报告组成**是错的（E26 的 `[Fe(OH)]²⁺+H⁺ → Fe³⁺`
+                    # S=+13.3 而 free Fe³⁺ 为 0）。
+                    continue
+                if Sd <= (thr if _two else max(thr, FREEZE_MAX_S_1SIDE)):
+                    continue
+                dr = c.r if dd > 0 else c.pr
+                lim = [ledger.get(s, 0.0) / nu for s, nu in dr.items()
+                       if s not in (WATER, H_ION) and nu > 0]
+                if not lim or min(lim) < ANN_MIN_EXTENT:
+                    continue
+                out.add(nk_c)
+                break
         return out
 
     def _freeze(keys, why: str) -> int:
