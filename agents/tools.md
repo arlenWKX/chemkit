@@ -98,7 +98,13 @@ python tools/dev.py patch spec.py            # 原子落盘（任一条不满足
 `eqcheck.py`（守恒）、`hess_audit.py`（**Hess 自洽，必须带温度**：派生候选 +
 静态模板，`--T 273.15` / `--T 363.15` 是发版前固定动作，各 ~4 s）、
 `hydrate_audit.py`
-（相歧义/边界敏感性）、`data_audit.py`、`charge_audit.py`、`escape_audit.py`、
+（相歧义/边界敏感性）、`data_audit.py`（**表内**自洽：守恒/电子数/重复/冲突）、
+`db_matrix.py`（**跨表完备性审计**：pKa 物种缺 thermo ⟹ 无 van't Hoff；
+电对成员缺 thermo ⟹ 无 dH；Ksp 阳离子无 `nu=1` OH⁻ β ⟹ 仍走 Kh 复合近似
+（X-32 族的扩充清单）；电对/β 里的化合物固相缺 ksp ⟹ 有氧化通道却无沉淀平衡
+（Co(OH)₃ 型死数据）；化合物固相缺 thermo ⟹ 进不了 Hess 审计。输出按
+**测试用例触达数**排序，是数据库扩充的优先级依据；`--json` 出机读版；
+`--rule` 单查一条）、`charge_audit.py`、`escape_audit.py`、
 `titr.py`、`phlog.py`、`osc.py`、`phdiag.py`、`cliff.py`、`topres.py`、
 `perf.py`、`snap.py`、`xver.py`、`fragility.py`（±1e-11/1e-9 投料扰动脆弱性）、
 `tension.py`（`--census` 张力普查 / `--class` 分类）、`roots.py`（求根审计）、
