@@ -1356,5 +1356,37 @@
   "ligand": "Cl^-",
   "nu": 2,
   "logb": 0.96
+ },
+ {
+  "complex": "AgOH",
+  "center": "Ag^+",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 1.98,
+  "calibrated": "Ag+ + H2O -> AgOH + H+ 的 log*K1 = -12.02（Baes & Mesmer 1976）⟹ logb1 = 14.0 - 12.02 = 1.98"
+ },
+ {
+  "complex": "[Cr(OH)]^{2+}",
+  "center": "Cr^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 10.0,
+  "calibrated": "Cr3+ + H2O -> [Cr(OH)]2+ + H+ 的 log*K1 = -4.0（Baes & Mesmer 1976）⟹ logb1 = 14.0 - 4.0 = 10.0（Smith & Martell 部分版本给 -3.57/-3.8，本库统一 Baes & Mesmer）"
+ },
+ {
+  "complex": "[Hg(OH)]^+",
+  "center": "Hg^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 10.6,
+  "calibrated": "Hg2+ + H2O -> [Hg(OH)]+ + H+ 的 log*K1 = -3.40+-0.08（Baes & Mesmer 1976，经 COST Action 1802 汇编）⟹ logb1 = 10.6"
+ },
+ {
+  "complex": "[Sn(OH)]^+",
+  "center": "Sn^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 10.6,
+  "calibrated": "Sn2+ + H2O -> [Sn(OH)]+ + H+ 的 log*K1 = -3.40（Baes & Mesmer 1976）⟹ logb1 = 10.6；库内另有 nu=3 的 [Sn(OH)3]-（26.4），两者并存"
  }
 ]

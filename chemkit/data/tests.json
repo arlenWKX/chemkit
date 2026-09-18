@@ -13249,9 +13249,9 @@
   "cond": {
    "V_L": 1.0
   },
-  "eq": "3OH^- + Cr^{3+} -> Cr(OH)_3",
-  "note": "",
-  "changed": false
+  "eq": "Cr^{3+} + H_2O -> [Cr(OH)]^{2+} + H^+",
+  "note": "Cr3+ 一级水解（log*K1=-4.0，Baes & Mesmer 1976）：1 M Cr3+ 水解约 1%（pH 2.0）⟹ changed=True、净方程即一级水解；旧标准 changed=False + 期望 Cr(OH)3 是**引擎未含显式一级水解时的快照**（X-32 capstone 族，第 153 轮重裁）",
+  "changed": true
  },
  {
   "name": "NR116 KCl+NaNO3 稀",
@@ -18604,8 +18604,8 @@
     0.1
    ]
   ],
-  "note": "Cr3+ 水解使溶液显酸性",
-  "changed": false
+  "note": "Cr3+ 水解使溶液显酸性（既有注记）；显式一级水解入库后实测 pH 2.51、水解 3.1% ⟹ changed=True（旧值 False 为引擎未含该平衡时的快照，第 153 轮重裁）",
+  "changed": true
  },
  {
   "name": "Hyd4 BiCl3+水 水解",

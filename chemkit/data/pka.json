@@ -169,14 +169,18 @@
   "base": "HC_2O_4^-",
   "pka": 1.25,
   "n": 1,
-  "note": "草酸 pKa1"
+  "note": "草酸 pKa1（25C 无限稀释，同源电位法）",
+  "dH": -0.7,
+  "calibrated": "logKa1=-1.401；dH1a=-0.7+-0.7 kJ/mol（近热中性）"
  },
  {
   "acid": "HC_2O_4^-",
   "base": "C_2O_4^{2-}",
   "pka": 4.27,
   "n": 1,
-  "note": "草酸 pKa2"
+  "note": "草酸 pKa2（25C 无限稀释，浓度电池电位法，J. Chem. Eng. Data 1998）",
+  "dH": -7.3,
+  "calibrated": "logKa2=-4.264+-0.014；dH2a=-7.3+-0.5 kJ/mol（放热，Ka2 随温**降**）；dS2a=-106+-2 J/K/mol；dCp2a=-229+-27"
  },
  {
   "acid": "H_3AsO_4",
