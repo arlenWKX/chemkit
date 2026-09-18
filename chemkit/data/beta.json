@@ -50,6 +50,22 @@
   "calibrated": "与 pKsp(Al(OH)3)=33 配合，使 Al(OH)3 + OH- -> [Al(OH)4]- 整体 logK ≈ +1.5"
  },
  {
+  "complex": "[Al(OH)]^{2+}",
+  "center": "Al^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 9.0,
+  "calibrated": "Al3+ + H2O -> [Al(OH)]2+ + H+ 的 log*K1 = -5.0（Baes & Mesmer 1976），logb1 = pKw(298) - 5.0 = 9.0；与 pKsp(Al(OH)3)=33 配合给出 Al(OH)3 + 3H+ -> [Al(OH)]2+ + 2H2O 整体 logK = 10.0"
+ },
+ {
+  "complex": "[Al(OH)_2]^+",
+  "center": "Al^{3+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 17.9,
+  "calibrated": "Al3+ + 2H2O -> [Al(OH)2]+ + 2H+ 的 log*b2 = -10.1（逐级 K2 ≈ -5.1，Baes & Mesmer 1976），logb2 = 2*pKw(298) - 10.1 = 17.9"
+ },
+ {
   "complex": "[Fe(OH)]^{2+}",
   "center": "Fe^{3+}",
   "ligand": "OH^-",
