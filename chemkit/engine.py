@@ -943,7 +943,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     _frz_reval = 0            # 上次"冻结有效期复核"的步序号（见 _exec 之后）
     _revive = 0               # 退出闸里"解冻强驱动键继续走"的次数
     _expired_n = 0            # 周期复核作废冻结的次数（上限见下）
-    _REVIVE_MAX = 6           # 成本闸已换成判据（零推进键不入强键集），
+    _REVIVE_MAX = 12          # 成本闸已换成判据（零推进键不入强键集），
     #                           上限只作最后防线
     # 慢标注采样节奏记忆：(key, d) -> 上次阈值下评的 hist 位点。
     # 原实现 slow_seen 恒 False 的体系（慢通道永不可达显著量）每迭代对
@@ -1118,10 +1118,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 return False
             # 联立不动点在物理域外（数据张力型爬行）：提前冻结循环键
             # （Ag32 型的正确仲裁从 ~1786 步提前到 ~80 步）
-            for k in cycle_keys:
-                frozen_perm.add(k)
-                frozen_perm.add((k[1], k[0]))
-            _diag["freeze_events"] += 1
+            # X-38 收口（第 138 轮）：走统一守卫，不再绕过 `_freeze`
+            # ——I19 实测：本分支曾把 |S| = 12.25 的 Pt 通道冻成"已平衡"。
+            _freeze(cycle_keys, f"joint-boundary resid={_res:.3f}")
             if _TRACE:
                 print(f'  [joint-boundary-freeze] {len(cycle_keys)} keys '
                       f'resid={_res:.3f}')
@@ -1328,10 +1327,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                   f'families={sorted(_joint_families(actives))}')
         if status == "boundary":
             _ck = _joint_cycle_keys()
-            for k in _ck:
-                frozen_perm.add(k)
-                frozen_perm.add((k[1], k[0]))
-            _diag["freeze_events"] += 1
+            # X-38 收口（第 138 轮）：走统一守卫（本分支是第 126 轮漏接的第三处，
+            # I19 实测：它把 |S| = 12.25 的 Pt 通道冻成"已平衡"）
+            _freeze(_ck, f"joint-ph-boundary resid={_res:.3f}")
             if _TRACE:
                 print(f'  [joint-ph-boundary] {len(_ck)} keys '
                       f'resid={_res:.3f}')
@@ -1474,10 +1472,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             # 循环已达/越过自身平衡：冻结（与既有 freeze 同"宣告平衡"语义）
             win = {k for k in legs if k not in frozen_perm}
             if win:
-                for k in win:
-                    frozen_perm.add(k)
-                    frozen_perm.add((k[1], k[0]))
-                _diag["freeze_events"] += 1
+                # X-38 收口（第 138 轮）：同上，走统一守卫
+                _freeze(win, f"cycle S_net={s0:+.3f}")
                 _diag["cycle_freeze"] += 1
                 if _TRACE:
                     print(f'  [cycle-freeze] {len(win)} keys S_net={s0:+.3f}')
@@ -1893,7 +1889,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         # 退出时该通道 |S| = 3.53（偏离平衡 3.5 个 log 单位）却无人复核。
         # 每 16 步用同一把尺子（_strong_keys）复核：涨过阈值者立即作废。
         if (frozen_perm and len(hist) - _frz_reval >= 16
-                and _expired_n < 4):
+                and _expired_n < 12):
             _frz_reval = len(hist)
             _expired_n += 1
             for k in _strong_keys():
