@@ -47,6 +47,18 @@ def _is_element(sp: str) -> bool:
         return False
 
 
+# 强酸阴离子：其共轭酸 pKa ≤ 0，引擎按"强酸直读"建模（`_acids_map` 明确
+# 跳过 pKa ≤ 0 的物种），**本来就不该在 pKa 表里**。与 `_is_element` 同一
+# 原则：缺的是"引擎不建模的东西"就不是缺口（D10：先读设计意图再记缺口）。
+# 之前把 Cl⁻/Br⁻/I⁻/NO₃⁻/ClO₄⁻ 报成"配体缺 pKa"，把 161 例的假缺口顶到榜首，
+# 掩盖了真缺口（第 152 轮）。
+_STRONG_ANION = frozenset({
+    "Cl^-", "Br^-", "I^-", "NO_3^-", "ClO_4^-", "ClO_3^-", "BrO_3^-",
+    "IO_3^-", "MnO_4^-", "HSO_4^-", "SO_4^{2-}", "ClO^-", "ClO_2^-",
+    "N_3^-", "SCN^-", "CN^-",
+})
+
+
 def _read(name: str):
     p = os.path.join(REPO, "chemkit", "data", name)
     with open(p, encoding="utf-8") as fh:
@@ -121,9 +133,11 @@ def main() -> int:
     rules["solid_no_thermo"] = rank(
         s for s in solids if s not in th_keys and not _is_element(s))
 
-    # 6) β 配体缺 pKa/thermo（配体自身的酸碱行为与温度依赖都没有）
+    # 6) β 配体缺 pKa/thermo（配体自身的酸碱行为与温度依赖都没有）。
+    #    强酸阴离子（Cl⁻/Br⁻/I⁻/NO₃⁻…）排除——它们的共轭酸 pKa ≤ 0，
+    #    引擎走"强酸直读"，不该进 pKa 表（见 `_STRONG_ANION` 的说明）。
     rules["ligand_no_pka"] = rank(
-        {e["ligand"] for e in beta} - pka_species - {"OH^-"})
+        {e["ligand"] for e in beta} - pka_species - {"OH^-"} - _STRONG_ANION)
 
     # 7) 表内物种总数与交集（信息项）
     allsp = th_keys | pka_species | beta_all | ksp_all | cpl_all
