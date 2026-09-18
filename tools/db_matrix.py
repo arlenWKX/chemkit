@@ -146,7 +146,16 @@ def main() -> int:
     rules["ligand_no_pka"] = rank(
         {e["ligand"] for e in beta} - pka_species - {"OH^-"} - _STRONG_ANION)
 
-    # 7) 表内物种总数与交集（信息项）
+    # 7) **M–Cl 络合缺口**（第 156 轮）：水解常数是 I→0/无其它配体/无多聚的
+    #    单核值，真实体系（1 M GaCl₃ ⟹ 3 M Cl⁻）里氯络合与多聚会显著降低自由
+    #    M^{n+}、压低 H⁺ 释放 ⟹ 引擎比真实体系更酸。实测偏差随 Cl⁻ 负载排序
+    #    （Ga 3 M 最大、In 次之、Rh 硝酸盐体系最小），证实缺的是**这个过程**
+    #    而非常数取值。凡有 OH⁻ β₁（会走一级水解）却没有任何 Cl⁻ β 的中心离子。
+    cl_centers = {e["center"] for e in beta if e.get("ligand") == "Cl^-"}
+    rules["mcl_no_beta"] = rank(
+        c for c in explicit1 if c not in cl_centers)
+
+    # 8) 表内物种总数与交集（信息项）
     allsp = th_keys | pka_species | beta_all | ksp_all | cpl_all
     rules["_summary"] = [f"物种并集 {len(allsp)}"]
     for nm, st in (("thermo", th_keys), ("pka", pka_species), ("beta", beta_all),

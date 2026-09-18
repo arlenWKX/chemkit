@@ -1460,5 +1460,29 @@
   "nu": 1,
   "logb": 5.5,
   "calibrated": "La^{3+} + H2O -> [La(OH)]^{2+} + H+ 的 log*K1 = -8.5（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 5.50"
+ },
+ {
+  "complex": "[Ga(OH)]^{2+}",
+  "center": "Ga^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 11.4,
+  "calibrated": "Ga^{3+} + H2O -> [Ga(OH)]^{2+} + H+ 的 log*K1 = -2.6（Baes & Mesmer 1976 p.319（I→0，单核一级水解；COST-NECTAR 转录核对，NIST46 给 -2.897、Brown & Ekberg 2016 给 -2.74））⟹ logb1 = 14.0 + log*K1 = 11.40。**注意**：该值是 I→0/无其它配体/无多聚的单核值；实测与含 Cl- 体系的标准偏差（Ga 最大、In 次之、Rh 最小）源于模型**尚未涵盖 Cl- 络合与多聚羟合**，不是取值错误（第 156 轮归因）。"
+ },
+ {
+  "complex": "[In(OH)]^{2+}",
+  "center": "In^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 10.0,
+  "calibrated": "In^{3+} + H2O -> [In(OH)]^{2+} + H+ 的 log*K1 = -4.0（Baes & Mesmer 1976（I→0；NIST46 给 -3.927））⟹ logb1 = 14.0 + log*K1 = 10.00。**注意**：该值是 I→0/无其它配体/无多聚的单核值；实测与含 Cl- 体系的标准偏差（Ga 最大、In 次之、Rh 最小）源于模型**尚未涵盖 Cl- 络合与多聚羟合**，不是取值错误（第 156 轮归因）。"
+ },
+ {
+  "complex": "[Rh(OH)]^{2+}",
+  "center": "Rh^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 10.6,
+  "calibrated": "Rh^{3+} + H2O -> [Rh(OH)]^{2+} + H+ 的 log*K1 = -3.4（Baes & Mesmer 1976 pp.262-265（I→0；NIST46 给 -3.4、Brown & Ekberg 2016 给 -3.09+-0.1））⟹ logb1 = 14.0 + log*K1 = 10.60。**注意**：该值是 I→0/无其它配体/无多聚的单核值；实测与含 Cl- 体系的标准偏差（Ga 最大、In 次之、Rh 最小）源于模型**尚未涵盖 Cl- 络合与多聚羟合**，不是取值错误（第 156 轮归因）。"
  }
 ]
