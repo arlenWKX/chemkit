@@ -1388,5 +1388,77 @@
   "nu": 1,
   "logb": 10.6,
   "calibrated": "Sn2+ + H2O -> [Sn(OH)]+ + H+ 的 log*K1 = -3.40（Baes & Mesmer 1976）⟹ logb1 = 10.6；库内另有 nu=3 的 [Sn(OH)3]-（26.4），两者并存"
+ },
+ {
+  "complex": "[Eu(OH)]^{2+}",
+  "center": "Eu^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.2,
+  "calibrated": "Eu^{3+} + H2O -> [Eu(OH)]^{2+} + H+ 的 log*K1 = -7.8（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 6.20"
+ },
+ {
+  "complex": "[Y(OH)]^{2+}",
+  "center": "Y^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.3,
+  "calibrated": "Y^{3+} + H2O -> [Y(OH)]^{2+} + H+ 的 log*K1 = -7.7（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 6.30"
+ },
+ {
+  "complex": "[Be(OH)]^+",
+  "center": "Be^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 8.6,
+  "calibrated": "Be^{2+} + H2O -> [Be(OH)]^+ + H+ 的 log*K1 = -5.4（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 8.60"
+ },
+ {
+  "complex": "[Nd(OH)]^{2+}",
+  "center": "Nd^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.0,
+  "calibrated": "Nd^{3+} + H2O -> [Nd(OH)]^{2+} + H+ 的 log*K1 = -8.0（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 6.00"
+ },
+ {
+  "complex": "[Ce(OH)]^{2+}",
+  "center": "Ce^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 5.7,
+  "calibrated": "Ce^{3+} + H2O -> [Ce(OH)]^{2+} + H+ 的 log*K1 = -8.3（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 5.70"
+ },
+ {
+  "complex": "[Gd(OH)]^{2+}",
+  "center": "Gd^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.0,
+  "calibrated": "Gd^{3+} + H2O -> [Gd(OH)]^{2+} + H+ 的 log*K1 = -8.0（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 6.00"
+ },
+ {
+  "complex": "[Tm(OH)]^{2+}",
+  "center": "Tm^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.3,
+  "calibrated": "Tm^{3+} + H2O -> [Tm(OH)]^{2+} + H+ 的 log*K1 = -7.7（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 6.30"
+ },
+ {
+  "complex": "[Ho(OH)]^{2+}",
+  "center": "Ho^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.0,
+  "calibrated": "Ho^{3+} + H2O -> [Ho(OH)]^{2+} + H+ 的 log*K1 = -8.0（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 6.00"
+ },
+ {
+  "complex": "[La(OH)]^{2+}",
+  "center": "La^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 5.5,
+  "calibrated": "La^{3+} + H2O -> [La(OH)]^{2+} + H+ 的 log*K1 = -8.5（Baes & Mesmer 1976，经使用者按 COST-NECTAR 同源汇编核验）⟹ logb1 = 14.0 + log*K1 = 5.50"
  }
 ]
