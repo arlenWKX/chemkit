@@ -12,7 +12,7 @@
 | `couples.json` | 氧化还原电对（半反应 `ox/red`、电子数 `n`、`E0`） | 163 → 加载后 **180**（含派生电对） |
 | `pka.json` | 酸碱解离常数（`acid/base/pka/n`） | 89 |
 | `ksp.json` | 溶度积（`solid/pair/pKsp`） | 230 |
-| `beta.json` | 配合物累积稳定常数（`complex/center/ligand/nu/logb`） | 160 |
+| `beta.json` | 配合物累积稳定常数（`complex/center/ligand/nu/logb`） | 162 |
 | `substance_ex.json` | 物质附加属性（`form`/`ions`/`conc_forms`/`conc_M`/`spec`） | 201 |
 | `thermo.json` | 标准生成焓 ΔHf°（kJ/mol，扁平 `名称 → 值`） | 320 |
 | `overrides.json` | OVERRIDE 逃生舱（`id/match/result`） | 27 |
