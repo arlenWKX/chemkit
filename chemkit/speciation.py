@@ -522,9 +522,15 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # （数值等价），真实强碱体系（He 大）完全不走这一支。
     h_c = 10.0 ** (-pKw / 2)
     o_c = h_c
+    # 残余强酸/碱这一侧的**来源标签**（§7 X-45）：只有它是"游离质子池"的
+    # 记账，而账本物种给出的 h_c/o_c 是"同一池子"的另一套记账。两者数值
+    # 重合时是**同一个量的两种记法**，不能互相竞争（下一段判别）。
+    _free_side = 0
     if He > 0.0:
+        _free_side = 1
         h_c = max(h_c, He)
     elif He < 0.0:
+        _free_side = -1
         o_c = max(o_c, -He)
 
     # （原 _pka1/_pkapp/_pksp 嵌套定义处——已外提至模块级，T_K 作参数）
@@ -674,6 +680,19 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             continue
         if amph_v is not None and c > 1e-6:
             amph.append((c, amph_v))
+    # **X-45 的两种判据均被实测否掉**（第 151/152 轮），当前**不修**，只留标签
+    # `_free_side`（标记 h_c/o_c 的哪一侧来自游离质子池 `He_res/V`）：
+    #   · 判据 A（按数值相当去重，1e-2 相对容差）：D47 悬崖消除、iters −0.33%，
+    #     但打红**未锚定约定**的 H88（醋酸铵：o_c 来自 NH₃ 的 Kb 式，账本真来源）；
+    #   · 判据 B（按来源标签去重：游离质子池侧与账本对侧相差 10 倍以内即视为
+    #     同一池子、弃用游离侧）：D47 悬崖**完全消除**（pH 全程 1.2318），
+    #     但**锚定约定 12 例翻红**（16/E55/N20/N34/T51/T52/H42/M01/B26/X04/
+    #     U01/Amp14，全是 Al³⁺/Fe³⁺ 碱量不足体系）——那些体系的游离质子池与
+    #     账本侧数值同样接近，**但两者是独立来源**（外加 OH⁻ vs 水解产物），
+    #     弃用游离侧 ⟹ Al(OH)₃ 产量 0.545 < 0.9。
+    # ⟹ "数值接近"与"来源标签"都不足以判别"同一量的两种记法"。真判据必须是
+    # **代数同一性**（把账本代回电荷平衡，看该项是否恒等于 He_res/V），
+    # 而不是任何形式的数值比较。全部否证数字见 log §7 X-45。
     # 两性物种（HCO3-、HS-、H2PO4- 等）：pH ≈ (pKa_酸 + pKa_共轭酸)/2，
     # 其浓度远大于其他酸碱贡献时以两性平衡为准（NaHCO3 溶液 pH≈8.3）
     if amph:
@@ -705,8 +724,12 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     pH = -log10(h_c) if h_c >= o_c else pKw + log10(o_c)
     _tag("酸侧max" if h_c >= o_c else "碱侧max")
     if _src is not None:
+        # 审计（第 152 轮）：标出**哪一侧来自游离质子池**——"同一量的两种记法"
+        # 的判别要靠它，光看数值分不出（§7 X-45）。
         _src.append(("__branch4__", "h_c" if h_c >= o_c else "o_c",
                      h_c if h_c >= o_c else o_c))
+        _src.append((f"__free_side={_free_side}__", "He_res/V",
+                     abs(He_res) / V))
     return min(max(pH, -1.0), pKw + 1.0), ledger, He_res
 
 
