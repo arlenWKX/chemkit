@@ -26,14 +26,33 @@ python tools/readback.py fails # 读上一次套件的结构化留档（不重�
 
 ## 2. 结果留档与读取（**一次跑，多次读**）
 
+**每条子命令都自动留档**（`_logged` 装饰器，无需人工管道重定向）：
+`logs/<cmd>-<时间戳>.log`（完整输出，含全部失败明细）+ `logs/<cmd>-latest.log`。
+
 | 产物 | 内容 | 读法 |
 |---|---|---|
-| `.tmp_dev_results.json` | 套件逐例结果（ok/errors/note/pH/degree/changed/annotations/净方程/耗时） | `tools/readback.py fails [--grep X] [--full]`、`case <前缀>`、`stats` |
-| `.tmp_dev_converg.json` | `perf` 确定性指标（逐例） | `tools/readback.py converg --top N` |
+| `logs/suite-latest.json` | 套件逐例结果 + `summary`（cases/checks 分开计数）+ `checks.batteries` | `tools/readback.py fails [--grep X] [--full]`、`case <前缀>`、`stats` |
+| `logs/perf-latest.log` / `.tmp_dev_converg.json` | `perf` 确定性指标（逐例） | `tools/readback.py converg --top N` |
 | `.tmp_dev_before/after.json` | `snapshot` / `cmp` 的前后对比 | `dev.py cmp A B`（差异为 0 时退出码 0） |
 | `converg-baseline.json` | 受控基线（只在落盘后 `perf --write` 刷新） | `dev.py perf` |
 
-**纪律**：不要在生成端截断（打印只留前 12 条失败）；要看更多就**读留档**，不要重跑。
+**纪律**：不要在生成端截断（打印只留摘要/前 12 条失败）；要看更多就**读留档**，
+不要重跑。摘要口径形如 `用例 1176/1176 · 辅助检查 123/123 · 合计 1299/1299 PASS`
+——用例与辅助检查**分开计数**（历史坑：电池失败进 `FAILS` 却不进 `RESULTS`，
+摘要与留档必然打架）。
+
+## 3. 数据读写：`tools/jsondb.py`（**不要再用文本锚串**）
+
+```powershell
+python tools/jsondb.py check   chemkit/data/beta.json
+python tools/jsondb.py get     chemkit/data/tests.json 12 ph
+python tools/jsondb.py set     chemkit/data/tests.json 12 ph "[3.8, 5.5]"
+python tools/jsondb.py normalize chemkit/data/*.json     # 统一口径（幂等）
+```
+批量改动走**一个脚本 + `JsonDoc` API**（一次解析、多处改、一次落盘；
+`case_index("用例名")` 定位 tests.json 条目），别连续调 CLI。
+数据文件统一口径：`ensure_ascii=False, indent=1` + 末尾换行。
+
 
 ## 3. `dev.py` 子命令
 

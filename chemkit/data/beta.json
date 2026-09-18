@@ -74,6 +74,94 @@
   "calibrated": "Fe3+ + H2O -> [Fe(OH)]2+ + H+ 的 log*K1 = -2.19（Baes & Mesmer 1976），logb1 = pKw(298) - 2.19 = 11.81；与 pKsp(Fe(OH)3)=38 配合给出 Fe(OH)3 + 2H+ -> [Fe(OH)]2+ + 2H2O 整体 logK = +1.8"
  },
  {
+  "complex": "[Mg(OH)]^+",
+  "center": "Mg^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 2.6,
+  "calibrated": "Mg^{2+} + H2O -> [Mg(OH)]^+ + H+ 的 log*K1 = -11.4（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-11.4) = 2.6；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Mn(OH)]^+",
+  "center": "Mn^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 3.4,
+  "calibrated": "Mn^{2+} + H2O -> [Mn(OH)]^+ + H+ 的 log*K1 = -10.6（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-10.6) = 3.4；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Fe(OH)]^+",
+  "center": "Fe^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 4.5,
+  "calibrated": "Fe^{2+} + H2O -> [Fe(OH)]^+ + H+ 的 log*K1 = -9.5（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-9.5) = 4.5；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Co(OH)]^+",
+  "center": "Co^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 4.3,
+  "calibrated": "Co^{2+} + H2O -> [Co(OH)]^+ + H+ 的 log*K1 = -9.7（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-9.7) = 4.3；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Ni(OH)]^+",
+  "center": "Ni^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 4.1,
+  "calibrated": "Ni^{2+} + H2O -> [Ni(OH)]^+ + H+ 的 log*K1 = -9.9（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-9.9) = 4.1；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Cu(OH)]^+",
+  "center": "Cu^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.0,
+  "calibrated": "Cu^{2+} + H2O -> [Cu(OH)]^+ + H+ 的 log*K1 = -8.0（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-8.0) = 6.0；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Zn(OH)]^+",
+  "center": "Zn^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 5.0,
+  "calibrated": "Zn^{2+} + H2O -> [Zn(OH)]^+ + H+ 的 log*K1 = -9.0（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-9.0) = 5.0；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Cd(OH)]^+",
+  "center": "Cd^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 3.9,
+  "calibrated": "Cd^{2+} + H2O -> [Cd(OH)]^+ + H+ 的 log*K1 = -10.1（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-10.1) = 3.9；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Pb(OH)]^+",
+  "center": "Pb^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 6.3,
+  "calibrated": "Pb^{2+} + H2O -> [Pb(OH)]^+ + H+ 的 log*K1 = -7.7（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-7.7) = 6.3；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Ca(OH)]^+",
+  "center": "Ca^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 1.4,
+  "calibrated": "Ca^{2+} + H2O -> [Ca(OH)]^+ + H+ 的 log*K1 = -12.6（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-12.6) = 1.4；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
+  "complex": "[Ba(OH)]^+",
+  "center": "Ba^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": 0.6,
+  "calibrated": "Ba^{2+} + H2O -> [Ba(OH)]^+ + H+ 的 log*K1 = -13.4（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-13.4) = 0.6；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+ },
+ {
   "complex": "[FeF_6]^{3-}",
   "center": "Fe^{3+}",
   "ligand": "F^-",

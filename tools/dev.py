@@ -15,7 +15,10 @@
   · 手写补丁脚本易错 ⟹ `patch` 走声明式 `PATCHES`，先全量校验再原子落盘，
     且保留原换行风格；
   · 行尾噪声（`git status` 显示 M 但 `git diff` 为空）⟹ `hygiene` 检出并
-    `--fix` 一键还原。
+    `--fix` 一键还原；
+  · **输出截断导致重跑** ⟹ 每条子命令都自动写 `logs/<cmd>-<时间戳>.log`
+    （完整输出，含全部失败明细）与 `logs/<cmd>-latest.json`（结构化产物），
+    控制台只留摘要 + 路径；读产物用 `tools/readback.py`，**不要重跑换信息**。
 
 用法（仓库根目录）：
   python tools/dev.py guide                      # 打印本轮协议（10 行）
@@ -49,6 +52,7 @@ for _s in (sys.stdout, sys.stderr):
         pass
 
 _TMP = ".tmp_dev_"
+_LOGDIR = "logs"        # 运行日志与结构化产物（.gitignore）
 # 墙钟字段：只报不比对（同一份代码在不同时刻能差 30%+，见 §7 性能纪律）
 _MS_KEYS = ("ms_mean", "ms_p50", "ms_p90", "ms_max",
             "n_gt50", "n_gt100", "n_gt500")
@@ -58,6 +62,54 @@ def _run(cmd: list[str], cwd: str = ROOT) -> str:
     r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
                        encoding="utf-8", errors="replace")
     return (r.stdout or "") + (r.stderr or "")
+
+
+def _runlog(cmd: str, text: str) -> str:
+    """完整输出 -> logs/<cmd>-<时间戳>.log；同时刷新 logs/<cmd>-latest.log。"""
+    import datetime as _dt
+    os.makedirs(_LOGDIR, exist_ok=True)
+    ts = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    path = os.path.join(_LOGDIR, f"{cmd}-{ts}.log")
+    with io.open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    with io.open(os.path.join(_LOGDIR, f"{cmd}-latest.log"), "w",
+                 encoding="utf-8") as f:
+        f.write(text)
+    return path
+
+
+def _artifact(cmd: str, src: str) -> str | None:
+    """结构化 JSON 产物 -> logs/<cmd>-latest.json（机读入口，供 readback 用）。"""
+    if not src or not os.path.exists(src):
+        return None
+    os.makedirs(_LOGDIR, exist_ok=True)
+    dst = os.path.join(_LOGDIR, f"{cmd}-latest.json")
+    with io.open(src, encoding="utf-8") as f:
+        data = f.read()
+    with io.open(dst, "w", encoding="utf-8") as f:
+        f.write(data)
+    return dst
+
+
+def _logged(cmd: str):
+    """捕获子命令输出：原样回放 + 全量写日志 + 打印路径（不做截断）。"""
+    def deco(fn):
+        def wrapper(*a, **kw):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                rc = fn(*a, **kw)
+            out = buf.getvalue()
+            sys.stdout.write(out)
+            sys.stdout.flush()
+            try:
+                lp = _runlog(cmd, out)
+                print(f"[日志] {lp}")
+            except Exception as exc:                     # noqa: BLE001
+                print(f"[日志] 写入失败：{exc}")
+            return rc
+        wrapper.__name__ = fn.__name__
+        return wrapper
+    return deco
 
 
 def convention() -> str:
@@ -109,12 +161,17 @@ def cmd_suite(prefixes: list[str], keep: int = 40) -> int:
     if len(bad) > 12:
         print(f"  ... 另有 {len(bad) - 12} 例失败（明细见 {dump}）")
     print(f"[留档] {len(testsuit.RESULTS)} 例逐例结果 -> {dump}")
+    art = _artifact("suite", dump)
+    if art:
+        print(f"[产物] {art}（机读；tools/readback.py 默认读它）")
+    print(f"[日志] {_runlog('suite', out + chr(10))}（完整输出，含全部失败明细）")
     if tmp and os.path.exists(tmp):
         os.remove(tmp)
     return rc
 
 
 # --------------------------------------------------------------- perf
+@_logged("perf")
 def cmd_perf(baseline: str = "converg-baseline.json", write: bool = False) -> int:
     _banner("perf")
     from chemkit import converg
@@ -155,6 +212,7 @@ def cmd_perf(baseline: str = "converg-baseline.json", write: bool = False) -> in
 
 
 # --------------------------------------------------------------- case
+@_logged("case")
 def cmd_case(prefixes: list[str], show_all: bool = False, limit: int = 14) -> int:
     _banner("case " + " ".join(prefixes))
     from chemkit.data import load_tables
@@ -216,6 +274,7 @@ def _snap_one(r: dict) -> dict:
     }
 
 
+@_logged("snapshot")
 def cmd_snapshot(path: str, prefixes: list[str]) -> int:
     _banner("snapshot")
     from chemkit.data import load_tables
@@ -235,6 +294,7 @@ def cmd_snapshot(path: str, prefixes: list[str]) -> int:
     return 0
 
 
+@_logged("cmp")
 def cmd_cmp(a: str, b: str, limit: int = 60) -> int:
     _banner("cmp")
     da = json.load(io.open(a, encoding="utf-8"))
@@ -295,6 +355,7 @@ def cmd_anchor(mode: str) -> int:
 
 
 # --------------------------------------------------------------- eqcheck
+@_logged("eqcheck")
 def cmd_eqcheck() -> int:
     _banner("eqcheck")
     sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -309,6 +370,7 @@ def cmd_eqcheck() -> int:
 
 
 # --------------------------------------------------------------- hygiene
+@_logged("hygiene")
 def cmd_hygiene(fix: bool = False) -> int:
     _banner("hygiene")
     st = _run(["git", "status", "--porcelain"]).split("\n")
@@ -347,6 +409,7 @@ def cmd_hygiene(fix: bool = False) -> int:
 
 
 # --------------------------------------------------------------- patch
+@_logged("patch")
 def cmd_patch(spec: str, check: bool = False) -> int:
     _banner("patch")
     if not os.path.exists(spec):
@@ -409,6 +472,7 @@ def cmd_patch(spec: str, check: bool = False) -> int:
 
 
 # --------------------------------------------------------------- run
+@_logged("run")
 def cmd_run(script: str, args: list[str]) -> int:
     """在 UTF-8 控制台环境下跑任意脚本（探针 / 审计工具 / 补丁 spec）。
 

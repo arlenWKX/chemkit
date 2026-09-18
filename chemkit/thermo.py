@@ -168,11 +168,17 @@ def analyze(res: dict, T) -> dict | None:
         out["missing"] = missing
         out["reason"] = f"缺 ΔHf° 数据：{', '.join(missing[:6])}"
         return out
+    # 计入焓的物种**一次定死**（ΔHf 已知者）：痕迹量且 ΔHf 未知的物种
+    # （如 nb 入库的一级水解产物 `[Zn(OH)]⁺` 1e-4 mol）既不该按"缺数据"
+    # 整体否决热值，也不能在求和里 `None * float` 崩掉——量级在 TRACE_MOL
+    # 以下，略去对热值无可见影响。判别与求和**必须同一个集合**（第 147 轮
+    # 实测：原先判别只看 ≥TRACE_MOL、求和却遍历全体 ⟹ TypeError 整条降级）。
+    accounted = {s: v for s, v in net.items() if dhf_of(T, s) is not None}
     # 逸出气相拆分校正：escaped ⊆ production；gas 键存在时逸出部分按
     # ΔHf(g) 计价（账本态基线 + (g−aq)·esc）
     esc = {e["name"]: e["mol"] for e in res.get("escaped", [])}
     dH = 0.0
-    for s, v in net.items():
+    for s, v in accounted.items():
         dH += v * dhf_of(T, s)
         e = esc.get(s)
         if e:
@@ -292,9 +298,15 @@ def _pack(th: dict, trace: list, converged: bool, flags: list,
 
 
 def _safe_analyze(res: dict, T) -> dict:
-    """analyze 的防御包装：异常不拖垮主结果（热层纪律）。"""
+    """analyze 的防御包装：异常不拖垮主结果（热层纪律）。
+
+    **原因必须带出来**（第 147 轮）：原先只报"温度模块异常"，而实测最常见的
+    原因是**数据缺口**——某物种缺 ΔHf（如新入库的 `[M(OH)]⁺` 一级水解产物）
+    ⟹ 焓衡算抛 KeyError。吞掉原因等于把数据缺口藏起来（D9），故把异常类型
+    与消息写进 `reason`，并在 `missing` 里单列"哪个物种缺焓"（可行动）。"""
     try:
         th = analyze(res, T)
-    except Exception:                     # noqa: BLE001
-        th = {"heat_kJ": None, "reason": "温度模块异常"}
-    return th or {"heat_kJ": None, "reason": "温度模块异常"}
+    except Exception as exc:              # noqa: BLE001
+        th = {"heat_kJ": None,
+              "reason": f"温度模块异常：{type(exc).__name__}: {exc}"}
+    return th or {"heat_kJ": None, "reason": "温度模块异常（无结果）"}

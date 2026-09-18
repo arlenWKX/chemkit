@@ -53,6 +53,10 @@ TIMES: list[tuple[float, str]] = []   # 逐例计时（秒，用例名）
 # 逐例结构化结果（name/ok/ms/errors/...）——供 `--out` 落盘，
 # 便于完整保留一轮测试结果并随时读取比对（不必重跑）。
 RESULTS: list[dict] = []
+# 辅助检查电池（T 区间 / 酸碱锚点 / API 边界）的**逐块**结果：每项
+# {name, ok, passed, fails:[文本]}。用例走 RESULTS，电池走这里——
+# 两者都进摘要与结构化产物（否则"摘要含电池、产物只有用例"必然打架）。
+CHECKS: list[dict] = []
 
 
 def load_cases(path: str | None = None) -> list[dict]:
@@ -656,6 +660,11 @@ def case_api() -> None:
             and r5.dT_K is None)
     # 绝热耦合收敛（大热效应多轮）+ 化学结果仍在自洽终温下正确
     rz = chemkit.react({"Zn": 1.0, "H_2SO_4": 1.0}, V=1.0, isothermal=False)
+    # 【第 147 轮】此检查一度翻红：`thermo.analyze` 的"缺 ΔHf"判别只看
+    # ≥TRACE_MOL 的物种，而求和遍历全体 ⟹ 痕迹量且 ΔHf 未知的新物种
+    # （[Zn(OH)]⁺）触发 `float * None`，整条绝热耦合降级成 heat_kJ=None。
+    # 真因是引擎缺陷（判别与求和集合不一致），已在 thermo.py 根治 ⟹ 本检查
+    # 恢复严格形式（热值必须落在教材区间）。
     ok13 = (rz.heat_kJ is not None and 140.0 <= rz.heat_kJ <= 165.0
             and rz.T_final_K is not None and 325.0 <= rz.T_final_K <= 345.0
             and rz.thermal.get("converged") is True
@@ -783,6 +792,11 @@ def write_report(path: str, extra: dict | None = None) -> str:
         "summary": {
             "pass": PASS_N, "fail": len(FAILS),
             "total": PASS_N + len(FAILS),
+            # 分开报（同一份留档里两种口径必须一致，见本文件顶部说明）
+            "cases_pass": sum(1 for r in RESULTS if r["ok"]),
+            "cases_fail": sum(1 for r in RESULTS if not r["ok"]),
+            "checks_pass": sum(c["passed"] for c in CHECKS),
+            "checks_fail": sum(len(c["fails"]) for c in CHECKS),
             "failed_names": list(FAILS),
             "perf": perf,
             "over_100ms": over100,
@@ -841,11 +855,22 @@ def main(cases_path: str | None = None, out_path: str | None = None) -> int:
     FAILS.clear()
     for c in load_cases(cases_path):
         run_case(c, T)
-    ok_T = case_T_range(T)
-    ok_ab = acidbase_check(T)
-    ok_api = case_api()
+    CHECKS.clear()
+    for _nm, _fn in (("T_range", lambda: case_T_range(T)),
+                     ("acidbase", lambda: acidbase_check(T)),
+                     ("api", lambda: case_api())):
+        _f0, _p0 = len(FAILS), PASS_N
+        _fn()
+        _new = list(FAILS[_f0:])
+        CHECKS.append({"name": _nm, "ok": not _new,
+                       "passed": PASS_N - _p0 - len(_new), "fails": _new})
+    n_case = len(RESULTS)
+    n_case_ok = sum(1 for r in RESULTS if r["ok"])
+    n_chk = sum(c["passed"] + len(c["fails"]) for c in CHECKS)
+    n_chk_ok = sum(c["passed"] for c in CHECKS)
     total = PASS_N + len(FAILS)
-    print(f"\n===== {PASS_N}/{total} PASS =====")
+    print(f"\n===== 用例 {n_case_ok}/{n_case} · 辅助检查 {n_chk_ok}/{n_chk}"
+          f" · 合计 {PASS_N}/{total} PASS =====")
     if FAILS:
         print("失败:", FAILS)
 
@@ -866,8 +891,7 @@ def main(cases_path: str | None = None, out_path: str | None = None) -> int:
         print("全部环闭合检查通过。")
     if out_path:
         p = write_report(out_path, extra={
-            "T_range_ok": ok_T, "acidbase_ok": ok_ab, "api_ok": ok_api,
-            "consistency_fail": cfail,
+            "batteries": CHECKS, "consistency_fail": cfail,
         })
         print(f"\n结构化结果已写入 {p}"
               f"（cases/summary/checks；summary.perf 为 5 档性能分布）")
