@@ -692,8 +692,21 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             pH_buf = sum(p * w for p, w in buf) / w_sum
             _tag("缓冲对")
             return min(max(pH_buf, -1.0), pKw + 1.0), ledger, He_res
+    # **X-45 已诊断、未落地**（第 151 轮）：h_c 与 o_c 可能是**同一个质子失衡的
+    # 两种记法**——D47 实测酸侧 `Fe³⁺ 弱酸式` 与碱侧 `−He_res/V` 在
+    # He ≈ −0.0586459 处给出**同一个 0.0586**，两者相对差随 He 平滑穿过 0，
+    # 谁大谁小由浮点末位决定 ⟹ pH 在 1.2318 / 12.7682 之间跳 11.5 个单位，
+    # 走步恰好骑在刃上：该沉淀的不沉淀、该溶解的不溶解（退出残差 S = +34.086）。
+    # 想过的"两侧相当就去掉碱侧那一项"**实测不可行**：1e-2 相对容差会打红
+    # 未锚定约定的 H88（醋酸铵真缓冲：h_c = 1.8e-5 与 o_c = 1.3e-5 差 32%，
+    # 但账本里没有"游离强碱"这一项，o_c 来自 NH₃ 的 Kb 式，是真来源不能删）。
+    # ⟹ 判据必须能区分"同一量的两种记法"与"两个独立来源的巧合接近"，
+    # 下一轮从**来源标签**（哪一项是 He_res/V、哪一项是账本物种）入手。
     pH = -log10(h_c) if h_c >= o_c else pKw + log10(o_c)
     _tag("酸侧max" if h_c >= o_c else "碱侧max")
+    if _src is not None:
+        _src.append(("__branch4__", "h_c" if h_c >= o_c else "o_c",
+                     h_c if h_c >= o_c else o_c))
     return min(max(pH, -1.0), pKw + 1.0), ledger, He_res
 
 
