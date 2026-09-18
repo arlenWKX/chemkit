@@ -46,6 +46,40 @@ def _buffer_holds(pH: float, a: float, b: float, pKw: float) -> bool:
     return max(h, oh) <= max(a, b)
 
 
+def _inert_acid(T) -> frozenset:
+    """**惰性强酸储备**：第一级 pKa ≤ 0 的酸物种（按 T 缓存一次）。
+
+    这些物种被 `_buffer_titration` 的酸堆**按设计排除**（见 `_acids_map`
+    构建处的注释"强酸已由 He 直读处理"），也因此**不参与 Henderson 帧**。
+    它们出现在账本里时，滴定给出的 pH 就不是该账本的解——见 `_buffer_titration`
+    顶部的惰性储备闸（第 150 轮 §7 X-44）。
+    """
+    s = getattr(T, "_inert_acid", None)
+    if s is None:
+        s = T._inert_acid = frozenset(
+            entries[0]["acid"] for entries in T.pka_acid.values()
+            if entries[0]["pka"] <= 0)
+    return s
+
+
+def _frame_ok(ledger: dict, pH: float, V: float, T) -> bool:
+    """Henderson 帧（§7 X-44）对该账本是否**自洽**：分子态强酸（pKa ≤ 0，
+    被酸堆按设计排除）要能存在，pH 必须低到 h ≳ c；否则它早该电离掉。
+
+    Se33 的 0.5 M H₂SeO₄ 配 pH 4.71（h = 0.0031 ≪ c）⟹ 帧自相矛盾，
+    真解是直读 0.301；Z03 的 HClO₃ 0.0116 M 配 pH 0.18（h = 0.657 ≫ c）
+    ⟹ 分子态本就合理，不得干预（实测按"存在/成量"判会打乱 Z03 全程轨迹）。
+    """
+    inert = _inert_acid(T)
+    if not inert:
+        return True
+    m = 0.0
+    for sp, mm in ledger.items():
+        if sp in inert:
+            m += mm
+    return m <= 0.0 or 10.0 * m <= 10.0 ** (-pH) * V
+
+
 def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
                       multilevel: bool = False, T_K: float = 298.15,
                       cache: dict | None = None,
@@ -73,6 +107,17 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
     否则强酸恰好中和全部弱碱时，原账本里的弱碱会虚报碱性（pH 11 假象）。
     pH 非 None：缓冲对 Henderson 定 pH；pH=None 且残余≈0：落分支4（用虚拟账本）。
 
+    **惰性储备闸（第 150 轮，§7 X-44）**：账本里存着**没参与滴定的强酸**
+    （pKa ≤ 0，被酸堆按设计排除）时，Henderson 帧不成立——它只描述被吸收的
+    那一对，对这块强酸储备一无所知。Se33 实测：账本含 0.5 M H₂SeO₄ 而
+    He = −1e−12 时，堆跳过 H₂SeO₄，Henderson 拿 SeO₂/HSeO₃⁻ 的比值给出
+    pH 4.710；而同一账本的直读解是 0.301（0.5 M 强酸）。跨阈值 4.4 个 pH
+    单位的不连续 ⟹ solve_extent 的 f(x) 在 x ≈ 1e−12 处翻号 ⟹ 二分根落到
+    微步线以下 ⟹ 通道被判"零推进"禁用（D2 口径不一致的一个新面貌）。
+    处置：放弃 Henderson 帧、返回 None 交回直读/分支 4——那两条路本来就
+    正确地处理分子态强酸（分支 4 的强酸哨兵给出 h_c = c）。全库实测
+    1176/1176 逐位不变（闸只落在 HSCN 类缓冲体系上，那两侧答案本就相同）。
+
     **自抵消禁令（§7 X-33）**：`no_base`/`no_acid` 是本步**产物**里"能吞下
     本步全部释出质子"的配离子集，由 `solve_extent` 按容量匹配判定后传入。
     判定式：Σ(产物系数 × νH⁺) ≥ 本步净释出 H⁺。命中时这些产物不得充当
@@ -81,6 +126,7 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
     转化才归零）。化学图像：释出的 H⁺ 留在溶液里（电荷平衡 ⟹ h = 水解量）。"""
     if abs(H_excess) < 1e-12:
         return None, H_excess, ledger
+    # **惰性储备闸**见 `_frame_ok`（§7 X-44）：两个 Henderson 出口都过一遍。
     _nb = no_base or frozenset()
     _na = no_acid or frozenset()
     # 静态预计算（每数据表一次）：碱储备列表、酸储备列表、beta_pka 配离子储备。
@@ -232,7 +278,8 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             if b_rest > _floor and hb > _floor:
                 pH = pka + log10(b_rest / hb)
                 # X-40：Henderson 只在"缓冲剂 ≫ 隐含 [H⁺]/[OH⁻]"时成立
-                if _buffer_holds(pH, b_rest, hb, pKw):
+                if _buffer_holds(pH, b_rest, hb, pKw) and _frame_ok(
+                        ledger, pH, V, T):
                     return min(max(pH, -1.0), pKw + 1.0), he, ledger2
         return None, he, ledger2   # 全吸收（he≈0）→ 分支4；有残余 → 直读
     else:        # 弱酸吸收强碱：pKa 越小 Ka 越大，先中和
@@ -279,7 +326,8 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             if a_rest > _floor and b > _floor:
                 pH = pka + log10(b / a_rest)
                 # X-40：同弱碱吸收分支（对称）
-                if _buffer_holds(pH, a_rest, b, pKw):
+                if _buffer_holds(pH, a_rest, b, pKw) and _frame_ok(
+                        ledger, pH, V, T):
                     return min(max(pH, -1.0), pKw + 1.0), -he, ledger2
         if he > 0.0 and last_full is not None:
             # **平衡分布修正**（第 143 轮，§7 X-8 第一块）——见文件头。

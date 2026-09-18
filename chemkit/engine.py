@@ -1820,9 +1820,15 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             dis_why[(pick.key, d)] = (_r, round(abs(S), 3), round(ext, 9),
                                       round(x_max, 9))
             if _TRACE:
+                # 账本一并打出（第 149 轮）：诊断"x*=0"必须能逐字复现禁用点的
+                # (ledger, He)——只凭 He 复现不了（分子态强酸是否已再平衡会改
+                # pH 估计的分支走向）。只在 CHEM_TRACE=1 时执行，生产零成本。
+                _snap = " ".join(f"{k}={v:.6g}" for k, v in sorted(ledger.items())
+                                 if v > 1e-6 and k != "H_2O")
                 print(f'    [micro] {_r[:6]} d={d:+d} He={H_excess:+.3g} '
                       f'x_max={x_max:.4g} ext={ext:.3g} S={S:+.3f} '
                       f'x_st={_xmax_st:.4g}')
+                print(f'    [micro-led] {_snap}')
             # 仅溶解/沉淀类微步执行（微溶盐终态）；质子/氧化还原微步仍跳过——
             # 后者执行会经签名变化逐对渗漏（NH4Ac 双水解曾被渗到 pH 9.4）
             if ext <= X_MIN or pick.kind not in ("dissolve", "precip"):
