@@ -845,6 +845,32 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # 但账本里没有"游离强碱"这一项，o_c 来自 NH₃ 的 Kb 式，是真来源不能删）。
     # ⟹ 判据必须能区分"同一量的两种记法"与"两个独立来源的巧合接近"，
     # 下一轮从**来源标签**（哪一项是 He_res/V、哪一项是账本物种）入手。
+    # **精确质子条件接管**（第 197 轮，X-45 的根本修法）：
+    # 分支 4 的 h_c/o_c 都是**启发式估计**；当两侧**量级相当**（比值 ≤ 10）时，
+    # 谁大谁小由浮点末位/分支条件决定 ⟹ 会**稳定选错侧**（第 196 轮 E55 实测：
+    # 引擎停在碱侧 pH 10.396，而同账本的电荷平衡自洽解是 3.604，差 6.8 单位，
+    # 沉淀通道因此永远零推进）。
+    # 此时改用 `charge_pH`（账本电荷平衡的**精确**解，已验证 12/12 教科书锚点
+    # + 80/80 条目自洽）：它把"选哪一侧"变成"解一个方程"，即第 161 轮判定的
+    # **代数同一性**。只在"量级相当"这个**退化区**触发 ⟹ 热路径成本可控
+    # （`fast=True` 为阻尼 Newton，4–6 次求值；非退化区仍走原启发式）。
+    if (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c):
+        _els = frozenset(T.solids) | frozenset(
+            e["pair"][0] for e in T.ksp if e["pair"][1] == "OH^-")
+        _fam = frozenset(build_families(T))
+        _res = any(m > X_MIN and sp in _els
+                   for sp, m in ledger.items() if sp != WATER)
+        _nf = sum(1 for sp, m in ledger.items()
+                  if m > 0.0 and sp in _fam)
+        _net = 0.0
+        for sp, m in ledger.items():
+            if m > 0.0 and sp != WATER and not sp.startswith("__"):
+                _net += charge_of(sp) * m
+        if not _res and _nf >= 2 and abs(_net + He_res) <= 1e-6:
+            _ex = charge_pH(ledger, V, T, T_K, fast=True)
+            if _ex is not None:
+                _tag("电荷平衡精确解")
+                return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
     pH = -log10(h_c) if h_c >= o_c else pKw + log10(o_c)
     _tag("酸侧max" if h_c >= o_c else "碱侧max")
     if _src is not None:
