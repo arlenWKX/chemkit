@@ -234,7 +234,11 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
     if eff is None:
         _beff = {b: _pka_eff(p, d, T_K) for p, d, b, a in _bases}
         _aeff = {a: _pka_eff(p, d, T_K) for p, d, a, b in _acids}
-        _ceff = {c: logK_T(dc, T_K) / nh for c, dc, nh in _beta_pka}
+        # Cl⁻ 系派生条目带 meta['eps'] ⟹ 需 I；本表按 T_K 静态缓存，
+        # 无法逐态取 I，故取参考 I（见 _SIT_REF_I）。
+        _ceff = {c: logK_T(dc, T_K, _SIT_REF_I
+                           if dc.meta.get("eps") is not None else 0.0) / nh
+                 for c, dc, nh in _beta_pka}
         _cmap = {c: (dc, nh) for c, dc, nh in _beta_pka}
         # 碱分支：pKa(共轭酸) 越大 Kb 越大 → 堆键取负；配离子按 νH+ 折算容量
         b_entries = {}

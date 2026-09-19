@@ -13,6 +13,7 @@
 """
 from __future__ import annotations
 import heapq
+import os
 from dataclasses import dataclass, field
 from functools import reduce
 from math import gcd, log10, sqrt
@@ -395,6 +396,11 @@ def logK_T(c: Cand, T_K: float, I: float = 0.0) -> float:
         c._logK_c[key] = k
     return k
 
+
+# 氯络合开关（第 187 轮）：默认**开启** —— 使用者指示把权威 I→0 数据
+# （logβ° + SIT ε）入库并启用。设 CHEMKIT_CL_BETA=0 可关闭。
+ENABLE_CL_BETA = os.environ.get("CHEMKIT_CL_BETA", "1") not in (
+    "0", "false", "False")
 
 # ========================================================== 配平缓存
 
@@ -822,6 +828,31 @@ def build_derived(T) -> list[Cand]:
                                 pe["pka"] * k_acid - b["logb"] * kc,
                                 0.0, dH=dh,
                                 meta={"src": f"beta_pka:{b['complex']}", **_sit}))
+
+    # **无 pKa 配体的直接络合路径**（第 187 轮）：Cl⁻/Br⁻/I⁻/SCN⁻ 等**没有 pKa
+    # 条目**（它们的共轭酸是强酸，引擎按强酸直读建模），于是上面的 β⊗pKa 路径
+    # `continue` 掉，络合候选一个也生成不出来 —— 实测：库里 29 条 Cl⁻ β 条目
+    # 最终**零候选**，SIT 离子强度修正无处施加。
+    # 这里补一条不依赖配体 pKa 的路径：
+    #     complex ⇌ center + nu·ligand          logK = −logβ°
+    # 方向与 β 相反 ⟹ 反应级 ε 取 −eps_rxn；Δz² 由 logK_T 按反应式自动算。
+    for b in T.beta:
+        lig = b["ligand"]
+        if lig == "OH^-" or lig in T.pka_base or lig in T.pka_acid:
+            continue
+        if not ENABLE_CL_BETA and lig == "Cl^-":
+            continue          # 氯络合默认关闭（见文件头 ENABLE_CL_BETA）
+        bal = _bal([b["complex"]], [b["center"], lig], [WATER, H_ION])
+        if bal is None:
+            continue
+        if bal["products"].get(b["center"], 0) <= 0:
+            continue
+        meta = {"src": f"beta_direct:{b['complex']}"}
+        if "eps_rxn" in b:
+            meta["eps"] = -b["eps_rxn"]
+        out.append(Cand("derived", dict(bal["reactants"]), dict(bal["products"]),
+                        -b["logb"], 0.0,
+                        dH=-b["dH"] if "dH" in b else None, meta=meta))
 
     # Ksp⊗弱酸（酸为反应物）：solid + HA -> cat + 共轭碱（弱酸溶蚀沉淀，
     # 如 CaCO3 + CO2 + H2O -> Ca2+ + 2HCO3-，钟乳石/暂时硬水；强酸溶解由
