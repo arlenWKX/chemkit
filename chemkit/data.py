@@ -200,11 +200,25 @@ def load_tables(data_dir: str | None = None) -> Tables:
     # 此处派生（原独立 conc.json 已废除——4 个阈值单建文件不值，且与
     # conc_forms 分居两处易改漏）
     conc = {name: e["conc_M"] for name, e in ex.items() if "conc_M" in e}
+    # β 条目的**金属核数 `m`**（第 164 轮，多核支持的前置）：
+    #   · `m` = 该配合物里的金属原子数（`center` 的化学计量数），**默认 1**；
+    #   · `nu` 保持"每 `m` 个金属的配体数"语义 ⟹ 现有 190 条（全部 m=1）
+    #     的含义**逐位不变**，向后兼容；
+    #   · `logb` 是**整条配合物**的累积常数（不是每金属），派生反应按
+    #     `_bal` 的真实系数缩放（`β⊗pKa` 已经是系数感知的，见
+    #     `candidates.build_derived`）；
+    #   · 需要按"每中心"折算的地方（一级水解 Ka、滴定容量）必须除以 `m·?`
+    #     ——审计清单见 agents/log.md 第 163 轮小节。
+    # 这里只做**归一化**（缺省补 1），不做任何数值改动 ⟹ 零行为变更。
+    _beta = _load("beta.json")
+    for _b in _beta:
+        if "m" not in _b:
+            _b["m"] = 1
     t = Tables(
         couples=[_expand_kinetics(e) for e in _load("couples.json")],
         pka=_load("pka.json"),
         ksp=_load("ksp.json"),
-        beta=_load("beta.json"),
+        beta=_beta,
         conc=conc,
         ex=ex,
         overrides=_load("overrides.json"),
