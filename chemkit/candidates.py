@@ -357,6 +357,74 @@ class Cand:
         return k
 
 
+
+
+# ================================================== 温度多项式（第 190 轮）
+
+def _poly_norm(name: str) -> str:
+    """归一化物种名（不依赖 re，避免导入顺序问题）。"""
+    s = name.replace("^{", "").replace("}", "")
+    out = []
+    i = 0
+    while i < len(s):
+        c = s[i]
+        if c == "_" and i + 1 < len(s) and s[i + 1].isdigit():
+            i += 1                      # 去下划线，保留下标数字
+            continue
+        if c in "[]+-":
+            i += 1                      # 去方括号与电荷符号
+            continue
+        out.append(c)
+        i += 1
+    return "".join(out).lower()
+
+
+def _poly_key(r: dict, pr: dict):
+    out = set()
+    for d in (r, pr):
+        for sp in d:
+            if sp in (WATER, H_ION):
+                continue
+            k = _poly_norm(sp)
+            if k and k not in ("e",):
+                out.add(k)
+    return tuple(sorted(out))
+
+
+def _load_poly() -> dict:
+    """{反应键: 系数数组}（进程内缓存）。"""
+    global _POLY_TABLE
+    if _POLY_TABLE is None:
+        _POLY_TABLE = {}
+        try:
+            import json as _json
+            import os as _os2
+            p = _os2.path.join(_os2.path.dirname(_os2.path.abspath(__file__)),
+                               "data", "logk_poly.json")
+            d = _json.load(open(p, encoding="utf-8"))
+            for e in d.get("entries", []):
+                _POLY_TABLE[tuple(e["key"])] = e["coef"]
+        except Exception:                                   # noqa: BLE001
+            pass
+    return _POLY_TABLE
+
+
+_POLY_TABLE = None
+
+
+def _poly_logk(c, T_K: float):
+    """命中多项式则返回 logK(T)；否则 None。"""
+    tab = _load_poly()
+    if not tab:
+        return None
+    coef = tab.get(_poly_key(c.r, c.pr))
+    if coef is None:
+        return None
+    a = list(coef) + [0.0] * (6 - len(coef))
+    import math as _m
+    return (a[0] + a[1] * T_K + a[2] / T_K + a[3] * _m.log10(T_K)
+            + a[4] / (T_K * T_K) + a[5] * T_K * _m.log10(T_K))
+
 def _sit_all() -> bool:
     """惰性读口径开关（避免与 speciation 循环导入）。"""
     try:
@@ -386,8 +454,14 @@ def logK_T(c: Cand, T_K: float, I: float = 0.0) -> float:
             else:
                 k = n * dE0 / k_nernst(T_K)
         else:
-            vant = _vant(c.dH, T_K) if c.dH is not None else 0.0
-            k = c.logK + c.pkw_coeff * (pKw_of(T_K) - PKW_298) + vant
+            # **温度多项式优先**（第 190 轮）：命中则用它（含热容项，
+            # 比单一 dH 的 van't Hoff 更完整）；未命中回退 van't Hoff。
+            _pl = _poly_logk(c, T_K) if c.redox is None else None
+            if _pl is not None:
+                k = _pl
+            else:
+                vant = _vant(c.dH, T_K) if c.dH is not None else 0.0
+                k = c.logK + c.pkw_coeff * (pKw_of(T_K) - PKW_298) + vant
         # **SIT 离子强度修正**（只对有 eps 元数据的候选；I=0 时不触发）
         _eps = c.meta.get("eps") if c.meta else None
         # **口径统一**（第 188 轮）：默认 I=0 ⟹ 不施加任何 SIT 修正，
