@@ -38,6 +38,10 @@ _SIT_REF_I = 3.0
 # 设 CHEMKIT_SIT=0 可回到全 I→0 的旧口径（仅供对拍，不是推荐默认）。
 SIT_ALL = os.environ.get("CHEMKIT_SIT", "1") not in ("0", "false", "")
 
+# 第 198 轮 pinned 接管的**对拍开关**（诊断用，待该轮结案后拆除）：
+# CHEMKIT_PINNED=0 时分支 4 退化区不做"固相钉住"精确解接管。
+PINNED_TAKEOVER = os.environ.get("CHEMKIT_PINNED", "1") not in ("0", "false", "")
+
 
 _Z_CACHE: dict = {}
 
@@ -597,6 +601,27 @@ def _role_union(T) -> frozenset:
     return u
 
 
+def _pin_ladders(T) -> dict:
+    """各阳离子的**羟合梯**（按 T 缓存一次）：cat -> ((z, logβ, nu, 物种名), …)。
+
+    钉住固相储库时，该金属的全部 OH⁻ 配合物浓度从属于钉住的游离浓度
+    （`[M(OH)_nu] = β·[M]·[OH⁻]^nu`），不能冻结在账本量——第 198 轮实测：
+    只删游离 Al³⁺、冻结 0.75 mol 铝酸根，电荷平衡靠"凭空造 0.25 M 游离
+    Al³⁺"配平出化学上不可能的 pH 3.2（账本固相仅 1e-4 mol 量级）。
+    logβ 取 298 K 值（与分支 4 的 `_first_k` 同一口径）。
+    """
+    cache = getattr(T, "_pin_ladders", None)
+    if cache is None:
+        cache = {}
+        for b in T.beta:
+            if b["ligand"] != "OH^-" or b.get("m", 1) != 1:
+                continue
+            cache.setdefault(b["center"], []).append(
+                (charge_of(b["complex"]), b["logb"], b["nu"], b["complex"]))
+        T._pin_ladders = cache
+    return cache
+
+
 def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                    cache: dict | None = None,
                    touch: frozenset | None = None,
@@ -855,38 +880,62 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # **代数同一性**。只在"量级相当"这个**退化区**触发 ⟹ 热路径成本可控
     # （`fast=True` 为阻尼 Newton，4–6 次求值；非退化区仍走原启发式）。
     if (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c):
-        # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198 轮）：
+        # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198/199 轮）：
         # 第 197 轮查明，E55 这类病灶的 `h_c ≈ o_c`（触发条件本就满足），
         # 被挡是因为"排除固相储库"那条闸——而 `charge_pH` 的 `pinned` 参数
         # 正是为储库而生：`[M] = 10^((y(pKw−pH) − pKsp)/x)` 作为电荷项的
         # **一项**随 pH 连续变化，于是"固相是否在场"不再是分支选择。
-        # 文档要求：钉住后须**删掉该阳离子的账本条目**，否则双重记账。
+        # 钉住后须删掉该阳离子**及其全部 OH⁻ 配合物**的账本条目（电荷由
+        # 钉住项+羟合梯表达），否则双重记账/配平幻觉（第 198 轮教训：
+        # 只删游离离子 ⟹ 0.75 mol 铝酸根被冻结，方程凭空造 0.25 M 游离
+        # Al³⁺ 配平，pH 冻结在 3.2 且走步失去梯度）。
         _pin = []
+        _inv = []
         _led2 = None
-        for _e in T.ksp:
-            _cat, _an = _e["pair"]
-            if _an != "OH^-" or _cat not in ledger:
-                continue
-            if ledger.get(_cat, 0.0) <= 0.0:
-                continue
-            # 固相必须真的在场（账本里有该固相且量显著）
-            _solid = _e["solid"]
-            if _solid not in ledger or ledger.get(_solid, 0.0) <= X_MIN:
-                continue
-            _x, _y = _ksp_xy(_e)
-            _pin.append((charge_of(_cat), _pksp(_e, T_K), _x, _y))
-            if _led2 is None:
-                _led2 = dict(ledger)
-            _led2.pop(_cat, None)
+        if PINNED_TAKEOVER:
+            _lad_all = _pin_ladders(T)
+            _seen = set()
+            for _e in T.ksp:
+                _cat, _an = _e["pair"]
+                if _an != "OH^-" or _cat in _seen or _cat not in ledger:
+                    continue
+                if ledger.get(_cat, 0.0) <= 0.0:
+                    continue
+                # 固相必须真的在场（账本里有该固相且量显著）
+                _solid = _e["solid"]
+                _ns = ledger.get(_solid, 0.0)
+                if _ns <= X_MIN:
+                    continue
+                _seen.add(_cat)
+                _x, _y = _ksp_xy(_e)
+                _lad = _lad_all.get(_cat, ())
+                if _led2 is None:
+                    _led2 = dict(ledger)
+                _led2.pop(_cat, None)
+                _n_inv = ledger[_cat] + _x * _ns     # 金属库存（回检用）
+                for _zc, _lb, _nu, _cx in _lad:
+                    if _led2.pop(_cx, 0.0) > 0.0:
+                        _n_inv += ledger[_cx]
+                _pin.append((charge_of(_cat), _pksp(_e, T_K), _x, _y, _lad))
+                _inv.append(_n_inv)
         if _pin:
-            _net = 0.0
-            for sp, m in (_led2 or ledger).items():
-                if m > 0.0 and sp != WATER and not sp.startswith("__"):
-                    _net += charge_of(sp) * m
             _ex = charge_pH(_led2, V, T, T_K, fast=True, pinned=tuple(_pin))
             if _ex is not None:
-                _tag("电荷平衡精确解(pinned)")
-                return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
+                # **储库耗尽回检**：钉住隐含的溶解总量超过库存 ⟹ "固相在场"
+                # 的前提不成立（固相本该溶完），退回原闸——自洽性判据。
+                _oh = 10.0 ** (_ex - pKw)
+                _ok = True
+                for (_z, _pk, _x2, _y2, _lad), _n_inv in zip(_pin, _inv):
+                    _cm = 10.0 ** ((_y2 * (pKw - _ex) - _pk) / _x2)
+                    _d = V * _cm * (1.0 + sum(10.0 ** _lb * _oh ** _nu
+                                              for _zc, _lb, _nu, _cx in _lad))
+                    if _d > _n_inv:
+                        _ok = False
+                        break
+                if _ok:
+                    _tag("电荷平衡精确解(pinned)")
+                    return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
+                _tag("pinned耗尽回绝")
         _els = frozenset(T.solids)
         _fam = frozenset(build_families(T))
         _res = any(m > X_MIN and sp in _els

@@ -330,8 +330,9 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
     **`pinned` 正是为补这一条而生**（v0.5.0，见下）：把储库自由度写进
     同一个方程，就不必在"账本自洽"与"Ksp 估计"之间二选一了。
 
-    `pinned`：**储库钉住项**。元素 `(z, pKsp, x, y)` 表示"账本里有
-    `M_x(OH)_y` 固相在场，自由阳离子 M 的浓度被溶度积钉住"：
+    `pinned`：**储库钉住项**。元素 `(z, pKsp, x, y)` 或
+    `(z, pKsp, x, y, ladder)` 表示"账本里有 `M_x(OH)_y` 固相在场，自由
+    阳离子 M 的浓度被溶度积钉住"：
 
         [M] = 10^((y·(pKw − pH) − pKsp)/x)      （Ksp = [M]^x·[OH⁻]^y）
 
@@ -340,6 +341,21 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
     单位，§7 X）变成**同一个方程的一项**——固相出现/消失的瞬间，账本里
     的自由离子本就等于饱和浓度，两侧解连续。调用方须先把该阳离子的账本
     条目删掉（钉住值取代它），否则双重记账。
+
+    `ladder`（第 199 轮）：**羟合梯** `((z_i, logβ_i, nu_i, 物种名), …)`——
+    钉住不只定游离 [M]，该金属的 OH⁻ 配合物都从属于它：
+    `[M(OH)_nu] = β·[M]·[OH⁻]^nu`，是 pH 的函数而非固定量。调用方须把
+    这些配合物的账本条目**一并删掉**（电荷由梯子项表达；OH⁻ 配体来自
+    水储库，无需返还账本）。只删游离离子而冻结配合物是错的：第 198 轮
+    实测 E55 账本（0.75 mol 铝酸根 + 痕量固相）被配平成"凭空造
+    0.25 M 游离 Al³⁺"的 pH 3.2。
+    **已知残余（待做）**：非 OH⁻ 配体的配合物（如 [AlCl]²⁺）同样从属于
+    钉住的 [M]，目前仍冻结在账本里——第 199 轮实测这会把 pH 幻影抬到
+    12.3（case 16）/13.26（N22）。修法已定：一并删除+配体量返还账本
+    （配体守恒；金属由储库吸收），见 agents/handoff.md §3.1。
+    调用方还应做**储库耗尽回检**：钉住隐含的溶解总量
+    `V·[M]·(1 + Σβ·[OH⁻]^nu)` 超过该金属库存（游离+配合物+x·固相）时，
+    "固相在场"的前提不成立，不得采用钉住解。
 
     F(pH) = Σ_{全部物种} z·c(pH) 在 pH 上严格单调减，二分必收敛。
 
@@ -390,15 +406,21 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
         tot = V * h - V * oh + fixed
         for ek, q, M, sg in fam.values():
             tot += dist_charge(ek, q, M, V, pH, sg)
-        for z, pKsp, xx, y in pinned:
-            tot += z * V * 10.0 ** ((y * (pKw - pH) - pKsp) / xx)
+        for pin in pinned:
+            z, pKsp, xx, y = pin[:4]
+            lad = pin[4] if len(pin) > 4 else ()
+            cm = 10.0 ** ((y * (pKw - pH) - pKsp) / xx)
+            tot += z * V * cm
+            for zi, lb, nu, _cx in lad:
+                tot += zi * V * cm * (10.0 ** lb) * oh ** nu
         return tot
 
     def _FD(pH: float) -> tuple[float, float]:
         """(F, dF/dpH)。族分布的 pH 导数有闭式：权重是 pH 的指数族，
         `dlogw_i/dpH = −Σ_{k<i} sgn_k ≡ −c_i`（常数）⟹
         `d⟨q⟩/dpH = −ln10·Cov_w(q, c)`（一次扫描），水项导数 `−ln10·V·(h+oh)`，
-        钉住项 `d[M]/dpH = −ln10·(y/x)·[M]`。F 单调递减 ⟹ 导数恒负，
+        钉住项 `d[M]/dpH = −ln10·(y/x)·[M]`，羟合梯项
+        `d([M]·[OH]^nu)/dpH = ln10·(nu − y/x)·[M]·[OH]^nu`。F 单调递减 ⟹ 导数恒负，
         Newton 步长方向天然正确。
         """
         ln10 = 2.302585092994046
@@ -406,10 +428,16 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
         oh = 10.0 ** (pH - pKw)
         tot = V * h - V * oh + fixed
         der = -ln10 * V * (h + oh)
-        for z, pKsp, xx, y in pinned:
+        for pin in pinned:
+            z, pKsp, xx, y = pin[:4]
+            lad = pin[4] if len(pin) > 4 else ()
             cm = 10.0 ** ((y * (pKw - pH) - pKsp) / xx)
             tot += z * V * cm
             der -= ln10 * (y / xx) * z * V * cm
+            for zi, lb, nu, _cx in lad:
+                cc = cm * (10.0 ** lb) * oh ** nu
+                tot += zi * V * cc
+                der += ln10 * (nu - y / xx) * zi * V * cc
         for ek, q, M, sg in fam.values():
             n = len(ek) + 1
             logw = [0.0]
