@@ -14,6 +14,7 @@ normalize/core/data。数值路径与 v0.3.3 bit 级一致（缓存只做查表�
 """
 from __future__ import annotations
 import heapq
+import os
 from math import log10, sqrt
 from .core import pKw_of, _vant, charge_of
 from .data import Tables
@@ -27,6 +28,15 @@ from .acidbase import build_families, charge_pH
 # ========================================================== 离子强度修正（第 180 轮）
 
 _SIT_A = 0.51          # Debye-Hückel 常数（25 °C, 水）
+# 静态表（滴定储备）用的参考 I：储备强度对 I 的敏感度远低于 S_of 的驱动力，
+# 且该表按 T_K 缓存、无法逐态取 I，故取 1 M MCl₃ 体系的量级作近似。
+_SIT_REF_I = 3.0
+# **离子强度层口径**（第 188 轮，使用者裁定"不为迎合标准而舍弃更本质的做法"）：
+# 默认 **1 = 启用**：对**所有**平衡施加 SIT —— Debye-Hückel 主项（Δz² 由反应式
+# 自动算）＋有 ε 数据时的特定离子作用项。这是**真实介质**的做法；
+# 全部平衡口径一致，不存在"氯络合按 I 修正、酸碱按 I→0"的混合口径。
+# 设 CHEMKIT_SIT=0 可回到全 I→0 的旧口径（仅供对拍，不是推荐默认）。
+SIT_ALL = os.environ.get("CHEMKIT_SIT", "1") not in ("0", "false", "")
 
 
 def ionic_strength(ledger: dict, V: float) -> float:

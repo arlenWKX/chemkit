@@ -185,11 +185,11 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
             # H+ 项之外的兜底（gas_escape=False 的气体 / 持续供给气体）：
             # 活度一律按溶解态浓度计
             logQ += nu * _logc_of(s, ledger, V, logc)
-    # **离子强度修正（第 180 轮）**：只有带 `meta["eps"]` 的候选（Cl⁻ 系 β 派生
-    # 反应）会真正用到它；其他候选 `logK_T` 内直接忽略 ⟹ 无额外开销。
-    _I = 0.0
-    if c.meta and c.meta.get("eps") is not None:
-        _I = _speciation.ionic_strength(ledger, V)
+    # **离子强度层（第 188 轮起为默认口径）**：I 由当前账本算，交给 logK_T
+    # 施加 SIT 的 Debye-Hückel 主项（Δz² 由反应式自动算）＋（有 ε 数据时）
+    # 特定离子作用项。**对所有平衡统一施加**，避免"混合口径"。
+    # 若需回到全 I→0 的旧口径（仅供对比）：CHEMKIT_SIT=0。
+    _I = _speciation.ionic_strength(ledger, V)
     return logK_T(c, T_K, _I) - logQ
 
 

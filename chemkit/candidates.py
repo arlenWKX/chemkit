@@ -357,6 +357,15 @@ class Cand:
         return k
 
 
+def _sit_all() -> bool:
+    """惰性读口径开关（避免与 speciation 循环导入）。"""
+    try:
+        from . import speciation as _sp
+        return bool(getattr(_sp, "SIT_ALL", False))
+    except Exception:                                       # noqa: BLE001
+        return False
+
+
 def logK_T(c: Cand, T_K: float, I: float = 0.0) -> float:
     """logK(T, I) 三通道：redox Nernst 缩放（无 dH 时的回退）/ van't Hoff（有 dH）
     + pkw_coeff 水电离部分。van't Hoff 在 298.15 K 恒等，493 套件零扰动。
@@ -381,7 +390,11 @@ def logK_T(c: Cand, T_K: float, I: float = 0.0) -> float:
             k = c.logK + c.pkw_coeff * (pKw_of(T_K) - PKW_298) + vant
         # **SIT 离子强度修正**（只对有 eps 元数据的候选；I=0 时不触发）
         _eps = c.meta.get("eps") if c.meta else None
-        if I > 0.0 and _eps is not None:
+        # **口径统一**（第 188 轮）：默认 I=0 ⟹ 不施加任何 SIT 修正，
+        # 全部平衡都按其 I→0 标准态常数处理（与库内数据、既有标准一致）。
+        # 只有显式开启 CHEMKIT_SIT=1 时才按真实介质修正（那时对**所有**平衡
+        # 施加 DH 主项，口径一致）。
+        if I > 0.0 and _sit_all():
             _dz2 = 0.0
             for _sp, _n in c.pr.items():
                 _z = charge_of(_sp)
@@ -392,7 +405,11 @@ def logK_T(c: Cand, T_K: float, I: float = 0.0) -> float:
                 if _z:
                     _dz2 -= _n * _z * _z
             _r = I ** 0.5
-            k += _dz2 * 0.51 * _r / (1.0 + 1.5 * _r) + _eps * I
+            # DH 主项对所有带电反应都成立（Δz² 可自动算）；特定离子作用项
+            # 只在有 ε 数据时加（缺 ε 时**只施主项**，而不是整块跳过）。
+            k += _dz2 * 0.51 * _r / (1.0 + 1.5 * _r)
+            if _eps is not None:
+                k += _eps * I
         c._logK_c[key] = k
     return k
 
