@@ -1496,24 +1496,6 @@
   "calibrated": "Lu3+ + H2O -> [Lu(OH)]2+ + H+ 的 log*K1 = -6.4（使用者指示取原书引用值，M'Halla 等引用 Baes & Mesmer）。与 COST-NECTAR 同源摘录的 La/Eu/Gd = -8.5/-7.8/-8.0 不一致，疑为特定离子强度值而非 I→0，且 -6.4 与镧系收缩趋势（Ho -8.0, Tm -7.7）不符 ⟹ **标注待复核**。logb1 = 14.0 + log*K1 = 7.60"
  },
  {
-  "complex": "[FeCl]^{2+}",
-  "center": "Fe^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 1.48,
-  "m": 1,
-  "calibrated": "Lemire et al. 2013 / **NEA-TDB 评估选值**：Fe3+ + Cl- ⇌ [FeCl]2+ 的 logβ° = 1.48（I→0, 25 °C）。**必须是 I→0 值**——第 166 轮实测把 I=0.1 的 条件值(3.62)塞进本库 I→0 槽位会导致 34 例 Fe(III)-Cl 翻红"
- },
- {
-  "complex": "[FeCl_2]^+",
-  "center": "Fe^{3+}",
-  "ligand": "Cl^-",
-  "nu": 2,
-  "logb": 2.13,
-  "m": 1,
-  "calibrated": "Lemire et al. 2013 / NEA-TDB 选值：Fe3+ + 2Cl- ⇌ [FeCl2]+ 的 logβ° = 2.13（I→0；累积值，β₂ > β₁ 满足单调性）"
- },
- {
   "complex": "[InCl]^{2+}",
   "center": "In^{3+}",
   "ligand": "Cl^-",
