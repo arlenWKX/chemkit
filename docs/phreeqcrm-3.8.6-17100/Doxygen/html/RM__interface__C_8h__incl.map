@@ -1,0 +1,7 @@
+<map id="RM_interface_C.h" name="RM_interface_C.h">
+<area shape="rect" id="Node000001" title="C header file for module BMIPhreeqcRM. RM_BmiCreate creates a module with access to all BMI methods...." alt="" coords="54,5,190,31"/>
+<area shape="rect" id="Node000002" href="$IrmResult_8h.html" title="Enumeration used to return error codes." alt="" coords="5,79,103,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,33,77,70,73,67,109,29"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="127,79,255,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="135,29,173,67,169,71,132,33"/>
+</map>

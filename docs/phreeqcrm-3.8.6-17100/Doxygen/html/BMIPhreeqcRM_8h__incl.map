@@ -1,0 +1,32 @@
+<map id="BMIPhreeqcRM.h" name="BMIPhreeqcRM.h">
+<area shape="rect" id="Node000001" title="C++ header file for BMIPhreeqcRM." alt="" coords="463,5,595,31"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,152,56,177"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="490,33,70,154,69,149,488,28"/>
+<area shape="rect" id="Node000003" href="$PhreeqcRM_8h.html" title="C++ header file for PhreeqcRM. PhreeqcRM is deprecated and included for backward compatibility...." alt="" coords="345,79,452,104"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="510,33,433,74,431,70,507,28"/>
+<area shape="rect" id="Node000013" title=" " alt="" coords="477,79,582,104"/>
+<area shape="poly" id="edge13_Node000001_Node000013" title=" " alt="" coords="532,31,532,65,527,65,527,31"/>
+<area shape="rect" id="Node000014" title=" " alt="" coords="605,79,680,104"/>
+<area shape="poly" id="edge14_Node000001_Node000014" title=" " alt="" coords="549,28,614,69,611,74,546,33"/>
+<area shape="rect" id="Node000015" title=" " alt="" coords="705,79,815,104"/>
+<area shape="poly" id="edge15_Node000001_Node000015" title=" " alt="" coords="567,28,711,72,709,77,566,33"/>
+<area shape="poly" id="edge7_Node000003_Node000002" title=" " alt="" coords="345,103,223,123,70,155,69,149,222,118,345,98"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="81,152,199,177"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="358,107,196,151,194,146,356,101"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="223,152,286,177"/>
+<area shape="poly" id="edge4_Node000003_Node000005" title=" " alt="" coords="377,106,292,148,289,143,374,102"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="311,152,353,177"/>
+<area shape="poly" id="edge5_Node000003_Node000006" title=" " alt="" coords="390,106,354,144,350,140,386,103"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="377,152,420,177"/>
+<area shape="poly" id="edge6_Node000003_Node000007" title=" " alt="" coords="401,104,401,138,396,138,396,104"/>
+<area shape="rect" id="Node000008" title=" " alt="" coords="444,152,508,177"/>
+<area shape="poly" id="edge8_Node000003_Node000008" title=" " alt="" coords="413,102,455,141,451,144,409,106"/>
+<area shape="rect" id="Node000009" title=" " alt="" coords="532,152,591,177"/>
+<area shape="poly" id="edge9_Node000003_Node000009" title=" " alt="" coords="426,102,523,144,521,149,424,106"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="615,152,705,177"/>
+<area shape="poly" id="edge10_Node000003_Node000010" title=" " alt="" coords="441,101,605,146,604,151,440,107"/>
+<area shape="rect" id="Node000011" title=" " alt="" coords="729,152,857,177"/>
+<area shape="poly" id="edge11_Node000003_Node000011" title=" " alt="" coords="453,100,717,147,716,152,452,105"/>
+<area shape="rect" id="Node000012" href="$IrmResult_8h.html" title="Enumeration used to return error codes." alt="" coords="882,152,979,177"/>
+<area shape="poly" id="edge12_Node000003_Node000012" title=" " alt="" coords="453,99,466,101,665,125,869,149,868,155,665,130,465,107,452,105"/>
+</map>
