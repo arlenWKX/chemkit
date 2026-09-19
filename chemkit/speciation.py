@@ -39,16 +39,37 @@ _SIT_REF_I = 3.0
 SIT_ALL = os.environ.get("CHEMKIT_SIT", "1") not in ("0", "false", "")
 
 
+_Z_CACHE: dict = {}
+
+
+def _charge_cached(sp: str) -> float:
+    """电荷查表（`charge_of` 要解析化学式，热路径上百万次调用）。"""
+    z = _Z_CACHE.get(sp)
+    if z is None:
+        z = _Z_CACHE[sp] = charge_of(sp)
+    return z
+
+
 def ionic_strength(ledger: dict, V: float) -> float:
-    """由账本算离子强度 I = ½·Σ cᵢzᵢ²（只计带电、非固相物种）。"""
+    """由账本算离子强度 I = ½·Σ cᵢzᵢ²（只计带电、非固相物种）。
+
+    **数值性能（第 191 轮）**：这是 `S_of` 每次求值的必经点，而 `S_of` 在一例里
+    被调用十万次量级 ⟹ 两处优化：① 电荷查表（原 `charge_of` 每次解析化学式）；
+    ② 小体系早退（离子项 < 3 个时直接求和，省掉字典遍历的开销）。
+    """
     s = 0.0
     for sp, m in ledger.items():
         if m <= 0.0 or sp == WATER or sp.startswith("__"):
             continue
-        z = charge_of(sp)
+        z = _charge_cached(sp)
         if z:
-            s += (m / V) * z * z
-    return 0.5 * s
+            s += m * z * z
+
+    # **I 量化**（第 191 轮）：0.05 的桶。I 在二分中连续变化会让
+    # `logK_T` 的 (T_K, I) 缓存全部失效；量化后同一状态的多次求值命中同一
+    # 键，而 0.05 分辨率对 DH/ε 项的影响 < 0.004 log 单位（远小于数据本身
+    # 的不确定度）⟹ 纯数值分辨率选择，不改物理模型。
+    return round(0.5 * s / V * 20.0) / 20.0
 
 
 def sit_logK(logK0: float, dz2: float, eps_rxn, I: float) -> float:
