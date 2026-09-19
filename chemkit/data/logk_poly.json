@@ -1,37 +1,169 @@
 {
- "_source": "PHREEQC 发行包各库的 -analytical_expression（温度多项式）",
- "_form": "logK(T) = A1 + A2*T + A3/T + A4*log10(T) + A5/T^2 + A6*log10(T)*T",
- "_note": "键为 PHREEQC 物种/相名；值为系数数组（长度 4~6）。chemkit 现在只有 dH（van't Hoff），本表可提供含热容项的更准温度函数。",
- "poly": {
-  "2": {
+ "_source": "PHREEQC 各库 -analytical_expression（温度多项式）",
+ "_form": "logK(T)=A1+A2*T+A3/T+A4*log10(T)+A5/T^2+A6*log10(T)*T",
+ "_key": "reaction 的归一化物种集合（忽略系数与 H2O/H+/e-）",
+ "entries": [
+  {
+   "coef": [
+    0.334,
+    -0.002684,
+    1.015
+   ],
+   "src": "Amm.dat",
+   "name": "H+",
+   "logk298": 3.76,
+   "reaction": "H+ + 2 F- = HF2-",
+   "key": [
+    "f",
+    "hf2"
+   ]
+  },
+  {
+   "coef": [
+    255.903,
+    0.10057,
+    0.0,
+    -111.138,
+    -859830.0
+   ],
+   "src": "Amm.dat",
+   "name": "Na+",
+   "logk298": -0.24,
+   "reaction": "Na+ + F- = NaF",
+   "key": [
+    "f",
+    "na",
+    "naf"
+   ]
+  },
+  {
+   "coef": [
+    -3.0246,
+    0.009986,
+    0.0,
+    0.0,
+    109300.0
+   ],
+   "src": "Amm.dat",
+   "name": "K+",
+   "logk298": 0.29,
+   "reaction": "K+ + HPO4-2 = KHPO4-",
+   "key": [
+    "hpo42",
+    "k",
+    "khpo4"
+   ]
+  },
+  {
+   "coef": [
+    0.0,
+    0.00964,
+    -136.0
+   ],
+   "src": "Amm.dat",
+   "name": "Mg+2",
+   "logk298": 1.82,
+   "reaction": "Mg+2 + F- = MgF+",
+   "key": [
+    "f",
+    "mg",
+    "mgf"
+   ]
+  },
+  {
+   "coef": [
+    0.0,
+    -0.00151,
+    0.0,
+    0.0,
+    86040.0
+   ],
+   "src": "Amm.dat",
+   "name": "SO4-2",
+   "logk298": 0.52,
+   "reaction": "SO4-2 + MgSO4 = Mg(SO4)2-2",
+   "key": [
+    "mg(so4)22",
+    "mgso4",
+    "so42"
+   ]
+  },
+  {
+   "coef": [
+    11.17,
+    -0.02386,
+    -3279.0
+   ],
+   "src": "Amm.dat",
+   "name": "H2Sg",
+   "logk298": -6.994,
+   "reaction": "H2Sg = HSg- + H+",
+   "key": [
+    "h2sg",
+    "hsg"
+   ]
+  },
+  {
    "coef": [
     2.497,
     0.0,
     -3833.0
    ],
-   "src": "Amm.dat"
+   "src": "Amm.dat",
+   "name": "2",
+   "logk298": -6.36,
+   "reaction": "2 REM PARM(1) = log10(specific area), log10(m^2 per mole pyrite)",
+   "key": [
+    "log10(specific area), log10(m^2 per mole pyrite)",
+    "rem parm(1)"
+   ]
   },
-  "Anhydrite": {
+  {
    "coef": [
-    197.52,
-    0.0,
-    -8669.8,
-    -69.835,
-    0.0
+    -11.17,
+    0.02386,
+    3279.0
    ],
-   "src": "Tipping_Hurley.dat"
+   "src": "Amm.dat",
+   "name": "HS-",
+   "logk298": 6.994,
+   "reaction": "HS- + H+ = H2S",
+   "key": [
+    "h2s",
+    "hs"
+   ]
   },
-  "Aragonite": {
+  {
    "coef": [
-    -171.9773,
-    -0.077993,
-    2903.293,
-    71.595,
-    0.0
+    93.7,
+    0.00599,
+    -4000.0,
+    -35.019
    ],
-   "src": "Tipping_Hurley.dat"
+   "src": "Amm.dat",
+   "name": "Gypsum",
+   "logk298": -4.58,
+   "reaction": "",
+   "key": [
+    "gypsum"
+   ]
   },
-  "Arcanite": {
+  {
+   "coef": [
+    -282.43,
+    -0.08972,
+    5822.0,
+    113.08
+   ],
+   "src": "Amm.dat",
+   "name": "Barite",
+   "logk298": -9.97,
+   "reaction": "",
+   "key": [
+    "barite"
+   ]
+  },
+  {
    "coef": [
     674.142,
     0.30423,
@@ -40,362 +172,30 @@
     0.0,
     -0.000144055
    ],
-   "src": "Amm.dat"
+   "src": "Amm.dat",
+   "name": "Arcanite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "arcanite"
+   ]
   },
-  "Barite": {
-   "coef": [
-    -282.43,
-    -0.08972,
-    5822.0,
-    113.08
-   ],
-   "src": "Amm.dat"
-  },
-  "Bischofite": {
-   "coef": [
-    7.526,
-    -0.01114,
-    115.7
-   ],
-   "src": "pitzer.dat"
-  },
-  "CO2(g)": {
-   "coef": [
-    108.3865,
-    0.01985076,
-    -6919.53,
-    -40.45154,
-    669365.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "CO3-2": {
-   "coef": [
-    -6.498,
-    0.02379,
-    2902.39
-   ],
-   "src": "minteq.dat"
-  },
-  "Ca+2": {
-   "coef": [
-    -27.393,
-    0.05617,
-    4114.0
-   ],
-   "src": "minteq.dat"
-  },
-  "Calcite": {
-   "coef": [
-    -171.9065,
-    -0.077993,
-    2839.319,
-    71.595,
-    0.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Carnallite": {
-   "coef": [
-    24.06,
-    -0.0311,
-    -3090.0
-   ],
-   "src": "pitzer.dat"
-  },
-  "Celestite": {
-   "coef": [
-    -14805.9622,
-    -2.4660924,
-    756968.533,
-    5436.3588,
-    -40553604.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Chalcedony": {
-   "coef": [
-    -0.09,
-    0.0,
-    -1032.0,
-    0.0,
-    0.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Chrysotile": {
-   "coef": [
-    13.248,
-    0.0,
-    10217.1,
-    -6.1894,
-    0.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Epsomite": {
-   "coef": [
-    -3.59,
-    0.00621
-   ],
-   "src": "Amm.dat"
-  },
-  "Fluorite": {
-   "coef": [
-    66.348,
-    0.0,
-    -4298.2,
-    -25.271,
-    0.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Glauberite": {
-   "coef": [
-    218.142,
-    0.0,
-    -9285.0,
-    -77.735
-   ],
-   "src": "pitzer.dat"
-  },
-  "Goergeyite": {
-   "coef": [
-    1056.787,
-    0.0,
-    -52300.0,
-    -368.06
-   ],
-   "src": "pitzer.dat"
-  },
-  "Gypsum": {
-   "coef": [
-    93.7,
-    0.00599,
-    -4000.0,
-    -35.019
-   ],
-   "src": "Amm.dat"
-  },
-  "H+": {
-   "coef": [
-    0.334,
-    -0.002684,
-    1.015
-   ],
-   "src": "Amm.dat"
-  },
-  "H2Sg": {
-   "coef": [
-    11.17,
-    -0.02386,
-    -3279.0
-   ],
-   "src": "Amm.dat"
-  },
-  "H3BO3": {
-   "coef": [
-    24.3919,
-    0.012078,
-    -1343.9,
-    -13.2258
-   ],
-   "src": "minteq.dat"
-  },
-  "H4SiO4": {
-   "coef": [
-    39.478,
-    -0.065927,
-    -12355.1
-   ],
-   "src": "minteq.dat"
-  },
-  "HS-": {
-   "coef": [
-    -11.17,
-    0.02386,
-    3279.0
-   ],
-   "src": "Amm.dat"
-  },
-  "Halite": {
-   "coef": [
-    159.605,
-    0.084294,
-    -3975.6,
-    -66.857,
-    0.0,
-    -4.9364e-05
-   ],
-   "src": "pitzer.dat"
-  },
-  "Hexahydrite": {
-   "coef": [
-    -1.978,
-    0.00138
-   ],
-   "src": "Amm.dat"
-  },
-  "Huntite": {
-   "coef": [
-    -1145.0,
-    -0.3249,
-    39410.0,
-    452.6
-   ],
-   "src": "pitzer.dat"
-  },
-  "K+": {
-   "coef": [
-    -3.0246,
-    0.009986,
-    0.0,
-    0.0,
-    109300.0
-   ],
-   "src": "Amm.dat"
-  },
-  "Kieserite": {
-   "coef": [
-    29.485,
-    -0.0507,
-    0.0,
-    -2.662,
-    -795000.0
-   ],
-   "src": "Amm.dat"
-  },
-  "Melanterite": {
-   "coef": [
-    1.447,
-    -0.004153,
-    0.0,
-    0.0,
-    -214949.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Mg+2": {
-   "coef": [
-    0.0,
-    0.00964,
-    -136.0
-   ],
-   "src": "Amm.dat"
-  },
-  "MgCl2_2H2O": {
-   "coef": [
-    -10.273,
-    0.0,
-    7403.0
-   ],
-   "src": "pitzer.dat"
-  },
-  "MgCl2_4H2O": {
-   "coef": [
-    12.98,
-    -0.02013
-   ],
-   "src": "pitzer.dat"
-  },
-  "Mirabilite": {
+  {
    "coef": [
     -301.9326,
     -0.16232,
     0.0,
     141.078
    ],
-   "src": "Amm.dat"
+   "src": "Amm.dat",
+   "name": "Mirabilite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "mirabilite"
+   ]
   },
-  "NH4+": {
-   "coef": [
-    0.6322,
-    -0.001225,
-    -2835.76
-   ],
-   "src": "minteq.dat"
-  },
-  "NH4-muscovite": {
-   "coef": [
-    -66.38,
-    0.317,
-    0.0,
-    0.0,
-    0.0,
-    -0.0002386
-   ],
-   "src": "Kinec.v2.dat"
-  },
-  "Na+": {
-   "coef": [
-    255.903,
-    0.10057,
-    0.0,
-    -111.138,
-    -859830.0
-   ],
-   "src": "Amm.dat"
-  },
-  "Quartz": {
-   "coef": [
-    0.41,
-    0.0,
-    -1309.0,
-    0.0,
-    0.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Rutherfordine": {
-   "coef": [
-    4.54,
-    -0.03318,
-    -2716.0
-   ],
-   "src": "minteq.dat"
-  },
-  "SO4-2": {
-   "coef": [
-    0.0,
-    -0.00151,
-    0.0,
-    0.0,
-    86040.0
-   ],
-   "src": "Amm.dat"
-  },
-  "SiO2(a)": {
-   "coef": [
-    -0.26,
-    0.0,
-    -731.0,
-    0.0,
-    0.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Strontianite": {
-   "coef": [
-    155.0305,
-    0.0,
-    -7239.594,
-    -56.58638,
-    0.0
-   ],
-   "src": "Tipping_Hurley.dat"
-  },
-  "Sylvite": {
-   "coef": [
-    -50.571,
-    0.098815,
-    13135.0,
-    0.0,
-    -1375400.0,
-    -7.393e-05
-   ],
-   "src": "pitzer.dat"
-  },
-  "Thenardite": {
+  {
    "coef": [
     57.185,
     0.086024,
@@ -404,9 +204,74 @@
     0.0,
     -7.6905e-05
    ],
-   "src": "Amm.dat"
+   "src": "Amm.dat",
+   "name": "Thenardite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "thenardite"
+   ]
   },
-  "U(6)": {
+  {
+   "coef": [
+    -3.59,
+    0.00621
+   ],
+   "src": "Amm.dat",
+   "name": "Epsomite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "epsomite"
+   ]
+  },
+  {
+   "coef": [
+    -1.978,
+    0.00138
+   ],
+   "src": "Amm.dat",
+   "name": "Hexahydrite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "hexahydrite"
+   ]
+  },
+  {
+   "coef": [
+    29.485,
+    -0.0507,
+    0.0,
+    -2.662,
+    -795000.0
+   ],
+   "src": "Amm.dat",
+   "name": "Kieserite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "kieserite"
+   ]
+  },
+  {
+   "coef": [
+    -66.38,
+    0.317,
+    0.0,
+    0.0,
+    0.0,
+    -0.0002386
+   ],
+   "src": "Kinec.v2.dat",
+   "name": "NH4-muscovite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "nh4muscovite"
+   ]
+  },
+  {
    "coef": [
     0.113,
     0.008721,
@@ -414,23 +279,159 @@
     0.0,
     0.0
    ],
-   "src": "Tipping_Hurley.dat"
+   "src": "Tipping_Hurley.dat",
+   "name": "U(6)",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "u(6)"
+   ]
   },
-  "U+4": {
+  {
    "coef": [
-    -9.16,
-    0.0285
+    -171.9065,
+    -0.077993,
+    2839.319,
+    71.595,
+    0.0
    ],
-   "src": "minteq.dat"
+   "src": "Tipping_Hurley.dat",
+   "name": "Calcite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "calcite"
+   ]
   },
-  "UO2+2": {
+  {
    "coef": [
-    14.14,
-    0.0096
+    197.52,
+    0.0,
+    -8669.8,
+    -69.835,
+    0.0
    ],
-   "src": "minteq.dat"
+   "src": "Tipping_Hurley.dat",
+   "name": "Anhydrite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "anhydrite"
+   ]
   },
-  "Witherite": {
+  {
+   "coef": [
+    13.248,
+    0.0,
+    10217.1,
+    -6.1894,
+    0.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Chrysotile",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "chrysotile"
+   ]
+  },
+  {
+   "coef": [
+    -171.9773,
+    -0.077993,
+    2903.293,
+    71.595,
+    0.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Aragonite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "aragonite"
+   ]
+  },
+  {
+   "coef": [
+    66.348,
+    0.0,
+    -4298.2,
+    -25.271,
+    0.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Fluorite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "fluorite"
+   ]
+  },
+  {
+   "coef": [
+    -0.09,
+    0.0,
+    -1032.0,
+    0.0,
+    0.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Chalcedony",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "chalcedony"
+   ]
+  },
+  {
+   "coef": [
+    0.41,
+    0.0,
+    -1309.0,
+    0.0,
+    0.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Quartz",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "quartz"
+   ]
+  },
+  {
+   "coef": [
+    155.0305,
+    0.0,
+    -7239.594,
+    -56.58638,
+    0.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Strontianite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "strontianite"
+   ]
+  },
+  {
+   "coef": [
+    -14805.9622,
+    -2.4660924,
+    756968.533,
+    5436.3588,
+    -40553604.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Celestite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "celestite"
+   ]
+  },
+  {
    "coef": [
     607.642,
     0.121098,
@@ -438,7 +439,411 @@
     -236.4948,
     0.0
    ],
-   "src": "Tipping_Hurley.dat"
+   "src": "Tipping_Hurley.dat",
+   "name": "Witherite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "witherite"
+   ]
+  },
+  {
+   "coef": [
+    1.447,
+    -0.004153,
+    0.0,
+    0.0,
+    -214949.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "Melanterite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "melanterite"
+   ]
+  },
+  {
+   "coef": [
+    -0.26,
+    0.0,
+    -731.0,
+    0.0,
+    0.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "SiO2(a)",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "sio2(a)"
+   ]
+  },
+  {
+   "coef": [
+    108.3865,
+    0.01985076,
+    -6919.53,
+    -40.45154,
+    669365.0
+   ],
+   "src": "Tipping_Hurley.dat",
+   "name": "CO2(g)",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "co2(g)"
+   ]
+  },
+  {
+   "coef": [
+    2.497,
+    0.0,
+    -3833.0
+   ],
+   "src": "minteq.dat",
+   "name": "2",
+   "logk298": null,
+   "reaction": "2 H+ + Edta-4 = EdtaH2-2",
+   "key": [
+    "edta4",
+    "edtah22"
+   ]
+  },
+  {
+   "coef": [
+    -6.498,
+    0.02379,
+    2902.39
+   ],
+   "src": "minteq.dat",
+   "name": "CO3-2",
+   "logk298": null,
+   "reaction": "CO3-2 + 2 H+ = H2CO3",
+   "key": [
+    "co32",
+    "h2co3"
+   ]
+  },
+  {
+   "coef": [
+    24.3919,
+    0.012078,
+    -1343.9,
+    -13.2258
+   ],
+   "src": "minteq.dat",
+   "name": "H3BO3",
+   "logk298": null,
+   "reaction": "H3BO3 + 4 F- + 3 H+ = BF4- + 3 H2O",
+   "key": [
+    "bf4",
+    "f",
+    "h3bo3"
+   ]
+  },
+  {
+   "coef": [
+    -27.393,
+    0.05617,
+    4114.0
+   ],
+   "src": "minteq.dat",
+   "name": "Ca+2",
+   "logk298": null,
+   "reaction": "Ca+2 + Edta-4 + H+ = CaHEdta-",
+   "key": [
+    "ca",
+    "cahedta",
+    "edta4"
+   ]
+  },
+  {
+   "coef": [
+    3.106,
+    0.0,
+    -673.6
+   ],
+   "src": "minteq.dat",
+   "name": "K+",
+   "logk298": null,
+   "reaction": "K+ + Edta-4 = KEdta-3",
+   "key": [
+    "edta4",
+    "k",
+    "kedta3"
+   ]
+  },
+  {
+   "coef": [
+    0.991,
+    0.00667
+   ],
+   "src": "minteq.dat",
+   "name": "Mg+2",
+   "logk298": null,
+   "reaction": "Mg+2 + Edta-4 + H+ = MgHEdta-",
+   "key": [
+    "edta4",
+    "mg",
+    "mghedta"
+   ]
+  },
+  {
+   "coef": [
+    -5.3505,
+    0.0183412,
+    557.2461
+   ],
+   "src": "minteq.dat",
+   "name": "SO4-2",
+   "logk298": null,
+   "reaction": "SO4-2 + H+ = HSO4-",
+   "key": [
+    "hso4",
+    "so42"
+   ]
+  },
+  {
+   "coef": [
+    39.478,
+    -0.065927,
+    -12355.1
+   ],
+   "src": "minteq.dat",
+   "name": "H4SiO4",
+   "logk298": null,
+   "reaction": "H4SiO4 + 6 F- + 4 H+ = SiF6-2 + 4 H2O",
+   "key": [
+    "f",
+    "h4sio4",
+    "sif62"
+   ]
+  },
+  {
+   "coef": [
+    14.14,
+    0.0096
+   ],
+   "src": "minteq.dat",
+   "name": "UO2+2",
+   "logk298": null,
+   "reaction": "UO2+2 + H4SiO4 = UO2H3SiO4+ + H+",
+   "key": [
+    "h4sio4",
+    "uo2",
+    "uo2h3sio4"
+   ]
+  },
+  {
+   "coef": [
+    0.6322,
+    -0.001225,
+    -2835.76
+   ],
+   "src": "minteq.dat",
+   "name": "NH4+",
+   "logk298": null,
+   "reaction": "NH4+ + H+ + Fe+2 + 6 Cyanide- = NH5Fe(Cyanide)6-2",
+   "key": [
+    "cyanide",
+    "fe",
+    "nh4",
+    "nh5fe(cyanide)62"
+   ]
+  },
+  {
+   "coef": [
+    -11.17,
+    0.02386,
+    3279.0
+   ],
+   "src": "minteq.dat",
+   "name": "HS-",
+   "logk298": null,
+   "reaction": "HS- = S6-2 + H+",
+   "key": [
+    "hs",
+    "s62"
+   ]
+  },
+  {
+   "coef": [
+    -9.16,
+    0.0285
+   ],
+   "src": "minteq.dat",
+   "name": "U+4",
+   "logk298": null,
+   "reaction": "U+4 + 4 PO4-3 + 4 H+ = U(HPO4)4-4",
+   "key": [
+    "po43",
+    "u",
+    "u(hpo4)44"
+   ]
+  },
+  {
+   "coef": [
+    4.54,
+    -0.03318,
+    -2716.0
+   ],
+   "src": "minteq.dat",
+   "name": "Rutherfordine",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "rutherfordine"
+   ]
+  },
+  {
+   "coef": [
+    10.227,
+    -0.01384,
+    -2200.0
+   ],
+   "src": "pitzer.dat",
+   "name": "2",
+   "logk298": null,
+   "reaction": "2 H2Sg = (H2Sg)2",
+   "key": [
+    "(h2sg)2",
+    "h2sg"
+   ]
+  },
+  {
+   "coef": [
+    7.526,
+    -0.01114,
+    115.7
+   ],
+   "src": "pitzer.dat",
+   "name": "Bischofite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "bischofite"
+   ]
+  },
+  {
+   "coef": [
+    24.06,
+    -0.0311,
+    -3090.0
+   ],
+   "src": "pitzer.dat",
+   "name": "Carnallite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "carnallite"
+   ]
+  },
+  {
+   "coef": [
+    218.142,
+    0.0,
+    -9285.0,
+    -77.735
+   ],
+   "src": "pitzer.dat",
+   "name": "Glauberite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "glauberite"
+   ]
+  },
+  {
+   "coef": [
+    1056.787,
+    0.0,
+    -52300.0,
+    -368.06
+   ],
+   "src": "pitzer.dat",
+   "name": "Goergeyite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "goergeyite"
+   ]
+  },
+  {
+   "coef": [
+    159.605,
+    0.084294,
+    -3975.6,
+    -66.857,
+    0.0,
+    -4.9364e-05
+   ],
+   "src": "pitzer.dat",
+   "name": "Halite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "halite"
+   ]
+  },
+  {
+   "coef": [
+    -1145.0,
+    -0.3249,
+    39410.0,
+    452.6
+   ],
+   "src": "pitzer.dat",
+   "name": "Huntite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "huntite"
+   ]
+  },
+  {
+   "coef": [
+    -10.273,
+    0.0,
+    7403.0
+   ],
+   "src": "pitzer.dat",
+   "name": "MgCl2_2H2O",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "mgcl22h2o"
+   ]
+  },
+  {
+   "coef": [
+    12.98,
+    -0.02013
+   ],
+   "src": "pitzer.dat",
+   "name": "MgCl2_4H2O",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "mgcl24h2o"
+   ]
+  },
+  {
+   "coef": [
+    -50.571,
+    0.098815,
+    13135.0,
+    0.0,
+    -1375400.0,
+    -7.393e-05
+   ],
+   "src": "pitzer.dat",
+   "name": "Sylvite",
+   "logk298": null,
+   "reaction": "",
+   "key": [
+    "sylvite"
+   ]
   }
- }
+ ]
 }
