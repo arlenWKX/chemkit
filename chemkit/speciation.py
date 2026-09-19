@@ -855,13 +855,43 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # **代数同一性**。只在"量级相当"这个**退化区**触发 ⟹ 热路径成本可控
     # （`fast=True` 为阻尼 Newton，4–6 次求值；非退化区仍走原启发式）。
     if (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c):
-        _els = frozenset(T.solids) | frozenset(
-            e["pair"][0] for e in T.ksp if e["pair"][1] == "OH^-")
+        # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198 轮）：
+        # 第 197 轮查明，E55 这类病灶的 `h_c ≈ o_c`（触发条件本就满足），
+        # 被挡是因为"排除固相储库"那条闸——而 `charge_pH` 的 `pinned` 参数
+        # 正是为储库而生：`[M] = 10^((y(pKw−pH) − pKsp)/x)` 作为电荷项的
+        # **一项**随 pH 连续变化，于是"固相是否在场"不再是分支选择。
+        # 文档要求：钉住后须**删掉该阳离子的账本条目**，否则双重记账。
+        _pin = []
+        _led2 = None
+        for _e in T.ksp:
+            _cat, _an = _e["pair"]
+            if _an != "OH^-" or _cat not in ledger:
+                continue
+            if ledger.get(_cat, 0.0) <= 0.0:
+                continue
+            # 固相必须真的在场（账本里有该固相且量显著）
+            _solid = _e["solid"]
+            if _solid not in ledger or ledger.get(_solid, 0.0) <= X_MIN:
+                continue
+            _x, _y = _ksp_xy(_e)
+            _pin.append((charge_of(_cat), _pksp(_e, T_K), _x, _y))
+            if _led2 is None:
+                _led2 = dict(ledger)
+            _led2.pop(_cat, None)
+        if _pin:
+            _net = 0.0
+            for sp, m in (_led2 or ledger).items():
+                if m > 0.0 and sp != WATER and not sp.startswith("__"):
+                    _net += charge_of(sp) * m
+            _ex = charge_pH(_led2, V, T, T_K, fast=True, pinned=tuple(_pin))
+            if _ex is not None:
+                _tag("电荷平衡精确解(pinned)")
+                return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
+        _els = frozenset(T.solids)
         _fam = frozenset(build_families(T))
         _res = any(m > X_MIN and sp in _els
                    for sp, m in ledger.items() if sp != WATER)
-        _nf = sum(1 for sp, m in ledger.items()
-                  if m > 0.0 and sp in _fam)
+        _nf = sum(1 for sp, m in ledger.items() if m > 0.0 and sp in _fam)
         _net = 0.0
         for sp, m in ledger.items():
             if m > 0.0 and sp != WATER and not sp.startswith("__"):
