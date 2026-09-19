@@ -189,7 +189,22 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
     # 只用**参与本反应的物种**贡献 I ⟹ 切断"旁观强电解质 ⟹ 总 I ⟹ 本反应 logK
     # ⟹ 本反应推进"的正反馈环（第 191 轮实测：总 I 口径下 iters ×2.2、
     # resid_p90 ×15、单例 62 s）；同时保留"介质越浓、活度修正越强"的真实效应。
-    # 参与物种的浓度本身依赖 I（隐式），用阻尼不动点解到自洽（≤3 次、松弛 0.5）。
+    # 参与物种的浓度本身依赖 I（隐式），用阻尼不动点解到自洽。
+    # **成本闸**（第 193 轮）：SIT 只对该反应自身的 Δz² 起作用；Δz² = 0
+    # （两侧离子电荷平方和相同，如纯中性/同电荷交换）时修正恒为 0 ⟹ 整个
+    # I 计算与不动点都可跳过（这是 S_of 最热路径上的显著省量）。
+    _zc = _speciation._charge_cached
+    _dz2 = 0.0
+    for _sp, _n in c.pr.items():
+        _z = _zc(_sp)
+        if _z:
+            _dz2 += _n * _z * _z
+    for _sp, _n in c.r.items():
+        _z = _zc(_sp)
+        if _z:
+            _dz2 -= _n * _z * _z
+    if _dz2 == 0.0 or not _speciation.SIT_ALL:
+        return logK_T(c, T_K, 0.0) - logQ
     _sps = list(c.r) + list(c.pr)
     _I0 = _speciation.ionic_strength(ledger, V)
     _Ie = _speciation.sit_fixpoint(ledger, V, _sps, _I0)

@@ -95,7 +95,14 @@ def ionic_strength_reaction(ledger: dict, V: float, species) -> float:
 
 def sit_fixpoint(ledger: dict, V: float, species, I0: float,
                  iters: int = 3, relax: float = 0.5) -> float:
-    """阻尼不动点：I 与"参与物种浓度"互相依赖时解到自洽（≤ iters 次）。"""
+    """阻尼不动点：I 与"参与物种浓度"互相依赖时解到自洽（≤ iters 次）。
+
+    **不做缓存**（第 193 轮教训）：曾按 `id(ledger)` + 物种做缓存，但**账本对象
+    在走步中被原地修改**（同一 id、内容已变）⟹ 缓存返回陈旧值，iters 30276 →
+    69686、单例 117 s、残差全面变差。**按对象标识缓存"可变对象"是错的**——
+    要么按内容快照做键（成本高），要么把缓存放到"账本确实冻结"的那一层
+    （如单次二分的调用方），不能在通用函数里做。
+    """
     I = I0
     for _ in range(iters):
         In = ionic_strength_reaction(ledger, V, species)
