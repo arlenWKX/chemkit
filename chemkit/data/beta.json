@@ -171,6 +171,20 @@
   "logb": 15.8
  },
  {
+  "complex": "[AuCl_4]^-",
+  "center": "Au^{3+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 26.0
+ },
+ {
+  "complex": "[HgCl_4]^{2-}",
+  "center": "Hg^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 15.0
+ },
+ {
   "complex": "[HgI_4]^{2-}",
   "center": "Hg^{2+}",
   "ligand": "I^-",
@@ -237,6 +251,14 @@
   "nu": 4,
   "logb": 37.6,
   "note": "logβ4([Ga(OH)4]-)=37.6（文献累积稳定常数）；Ga(OH)3+OH-→[Ga(OH)4]- logK≈+2.5，镓两性显著强于铝"
+ },
+ {
+  "complex": "[PtCl_6]^{2-}",
+  "center": "Pt^{4+}",
+  "ligand": "Cl^-",
+  "nu": 6,
+  "logb": 16.0,
+  "note": "六氯合铂(IV)酸根；nu 修正为 6（Pt4+ + 6Cl- -> [PtCl6]2- 电荷/原子守恒）；王水溶铂的产物形态；logb 为形式值（Pt4+ 水合离子本身动力学惰性）"
  },
  {
   "complex": "[Fe(C_2O_4)_3]^{3-}",
@@ -386,12 +408,28 @@
   "note": "四硫氰合汞(II)酸根；NIST logβ4≈21.0；Fe3+ 检 SCN- 须先除 Hg2+；四硫氰合汞酸根；NIST logβ4≈21.0；利比锡测 Cl- 经典指示剂"
  },
  {
+  "complex": "[BiCl_4]^-",
+  "center": "Bi^{3+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 5.5,
+  "note": "四氯合铋(III)酸根；NIST logβ4≈5.5；四氯合铋酸根；NIST logβ4≈5.5"
+ },
+ {
   "complex": "[BiI_4]^-",
   "center": "Bi^{3+}",
   "ligand": "I^-",
   "nu": 4,
   "logb": 14.5,
   "note": "四碘合铋(III)酸根（铋(III) 与 I- 的特征黄色/橙色配合物）；NIST logβ4≈14.5"
+ },
+ {
+  "complex": "[SbCl_6]^-",
+  "center": "Sb^{5+}",
+  "ligand": "Cl^-",
+  "nu": 6,
+  "logb": 6.0,
+  "note": "六氯合锑(V)酸根（Sb(V) 形态，浓盐酸中存在）；NIST logβ6≈6.0"
  },
  {
   "complex": "[CdI_3]^-",
@@ -538,6 +576,38 @@
   "note": "二氰合金(I)酸根；NIST logβ2≈38.0（极稳定，氰化提金法的核心配合物）"
  },
  {
+  "complex": "[AuCl_2]^-",
+  "center": "Au^+",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 9.1,
+  "note": "二氯合金(I)酸根；NIST logβ2≈9.1"
+ },
+ {
+  "complex": "[PtCl_4]^{2-}",
+  "center": "Pt^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 16.0,
+  "note": "四氯合铂(II)酸根；NIST logβ4≈16.0；顺铂 [Pt(NH3)2Cl2] 的水合前体"
+ },
+ {
+  "complex": "[PdCl_4]^{2-}",
+  "center": "Pd^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 11.0,
+  "note": "四氯合钯(II)酸根；NIST logβ4≈11.0（钯王水溶钯的核心配合物）"
+ },
+ {
+  "complex": "[PdCl_6]^{2-}",
+  "center": "Pd^{4+}",
+  "ligand": "Cl^-",
+  "nu": 6,
+  "logb": 16.0,
+  "note": "六氯合钯(IV)酸根；NIST logβ6≈16.0"
+ },
+ {
   "complex": "[Pd(NH_3)_4]^{2+}",
   "center": "Pd^{2+}",
   "ligand": "NH_3",
@@ -618,6 +688,14 @@
   "note": "二碘合银酸根；NIST/S&M logβ2≈11.7；AgI 在浓 I- 中溶解形成"
  },
  {
+  "complex": "[AgCl_2]^-",
+  "center": "Ag^+",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 5.25,
+  "note": "二氯合银酸根；NIST logβ2≈5.25"
+ },
+ {
   "complex": "[Ag(SCN)_2]^-",
   "center": "Ag^+",
   "ligand": "SCN^-",
@@ -648,6 +726,22 @@
   "nu": 2,
   "logb": 19.0,
   "note": "Au(I) 与 SCN- 配合"
+ },
+ {
+  "complex": "[CuCl_2]^-",
+  "center": "Cu^+",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 5.5,
+  "note": "Cu(I) 二氯配合"
+ },
+ {
+  "complex": "[CuCl_3]^{2-}",
+  "center": "Cu^+",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": 6.0,
+  "note": "Cu(I) 三氯配合"
  },
  {
   "complex": "[CuBr_2]^-",
@@ -882,6 +976,14 @@
   "note": "Pd(II) 四氰配合；极强"
  },
  {
+  "complex": "[PdCl_2]",
+  "center": "Pd^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 12.0,
+  "note": "Pd(II) 双氯配合"
+ },
+ {
   "complex": "[Mo(CN)_8]^{3-}",
   "center": "Mo^{5+}",
   "ligand": "CN^-",
@@ -920,6 +1022,14 @@
   "nu": 4,
   "logb": 1.0,
   "note": "弱"
+ },
+ {
+  "complex": "[HgCl_2]",
+  "center": "Hg^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 13.0,
+  "note": "HgCl2 中性配合物"
  },
  {
   "complex": "[Mn(CN)_6]^{4-}",
@@ -978,6 +1088,14 @@
   "note": "六氨合钴(III)；NIST logβ6≈35.2（经典 Werner 配合物，Co(III) 极稳定，惰性）"
  },
  {
+  "complex": "[CuCl_4]^{2-}",
+  "center": "Cu^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": -0.5,
+  "note": "四氯合铜(II)酸根；四面体；稀释 Cl- 介质中弱形成（NIST 低离子强度 logβ4≈-0.5；高离子强度 4M+ Cl- 时表观 logβ4 可达 +5.6，但因依赖离子强度本表保守取低值以避免在稀溶液中误形成）"
+ },
+ {
   "complex": "[CuBr_4]^{2-}",
   "center": "Cu^{2+}",
   "ligand": "Br^-",
@@ -986,12 +1104,36 @@
   "note": "四溴合铜(II)酸根；四面体；稀 Br- 介质中弱形成（同 [CuCl_4]^{2-}，离子强度依赖，本表保守取低值）"
  },
  {
+  "complex": "[PbCl_4]^{2-}",
+  "center": "Pb^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 1.6,
+  "note": "四氯合铅(II)酸根；NIST logβ4≈1.6（弱稳定，浓 Cl- 中形成；稀 Cl- 中不显著）"
+ },
+ {
   "complex": "[PbBr_4]^{2-}",
   "center": "Pb^{2+}",
   "ligand": "Br^-",
   "nu": 4,
   "logb": 3.0,
   "note": "四溴合铅(II)酸根；NIST logβ4≈3.0（弱稳定，浓 Br- 中形成）"
+ },
+ {
+  "complex": "[SnCl_6]^{2-}",
+  "center": "Sn^{4+}",
+  "ligand": "Cl^-",
+  "nu": 6,
+  "logb": 1.5,
+  "note": "六氯合锡(IV)酸根；NIST logβ6≈1.5（弱稳定；Sn4+ 强水解，需浓 HCl 稳定）"
+ },
+ {
+  "complex": "[TlCl_4]^-",
+  "center": "Tl^{3+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 5.0,
+  "note": "四氯合铊(III)酸根；NIST logβ4≈5.0（Tl(III) 在浓 HCl 中存在）"
  },
  {
   "complex": "[TlBr_4]^-",
@@ -1058,12 +1200,28 @@
   "note": "四羟合铅(II)酸根（亚铅酸盐）；NIST logβ4 文献值范围 14-16（强碱介质），但与现有 [Pb(OH)3]- (logβ3=14) 联合时若取高值会过度掩蔽 [Pb(OH)3]- 通道；本表保守取 12.0 让 [Pb(OH)3]- 仍为中等强度 OH- 下主导产物（化学事实：Pb(OH)2 溶于过量 NaOH 主要形成 [Pb(OH)3]-）"
  },
  {
+  "complex": "[CdCl_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 2.0,
+  "note": "[CdCl4]2-：Cd2+ + 4Cl- → [CdCl4]2-（NIST logβ4=2.0；弱配位）"
+ },
+ {
   "complex": "[VO_2]^+",
   "center": "V^{5+}",
   "ligand": "O^{2-}",
   "nu": 2,
   "logb": 25.0,
   "note": "VO2+：V(V) 二氧钒(V) 阳离子；酸性介质中 V(V) 的主要形态"
+ },
+ {
+  "complex": "[Hg_2Cl_2]",
+  "center": "Hg_2^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 8.0,
+  "note": "Hg2Cl2：甘汞；难溶盐，电对参考电极"
  },
  {
   "complex": "[HfF_6]^{2-}",
@@ -1151,6 +1309,55 @@
   "ligand": "I^-",
   "nu": 4,
   "logb": 2.9
+ },
+ {
+  "complex": "[PbCl_3]^-",
+  "center": "Pb^{2+}",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": 2.0
+ },
+ {
+  "complex": "[ZnCl]^+",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.43
+ },
+ {
+  "complex": "[ZnCl_2]",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 0.6
+ },
+ {
+  "complex": "[ZnCl_3]^-",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": 0.5
+ },
+ {
+  "complex": "[ZnCl_4]^{2-}",
+  "center": "Zn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 0.2
+ },
+ {
+  "complex": "[NiCl]^+",
+  "center": "Ni^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.4
+ },
+ {
+  "complex": "[NiCl_2]",
+  "center": "Ni^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 0.96
  },
  {
   "complex": "AgOH",
@@ -1289,135 +1496,13 @@
   "calibrated": "Lu3+ + H2O -> [Lu(OH)]2+ + H+ 的 log*K1 = -6.4（使用者指示取原书引用值，M'Halla 等引用 Baes & Mesmer）。与 COST-NECTAR 同源摘录的 La/Eu/Gd = -8.5/-7.8/-8.0 不一致，疑为特定离子强度值而非 I→0，且 -6.4 与镧系收缩趋势（Ho -8.0, Tm -7.7）不符 ⟹ **标注待复核**。logb1 = 14.0 + log*K1 = 7.60"
  },
  {
-  "complex": "[CuCl]^+",
-  "center": "Cu^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 0.83,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NAGRA/TDB 2020；Δε=-(0.05±0.02)",
-  "eps_rxn": -0.05
- },
- {
-  "complex": "[CuCl_2]",
-  "center": "Cu^{2+}",
-  "ligand": "Cl^-",
-  "nu": 2,
-  "logb": 0.6,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NAGRA/TDB 2020；Δε=-(0.10±0.06)",
-  "eps_rxn": -0.1
- },
- {
-  "complex": "[CuCl_3]^-",
-  "center": "Cu^{2+}",
-  "ligand": "Cl^-",
-  "nu": 3,
-  "logb": -0.15,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "ε(Na+,CuCl4^2-)≈-0.06（近似，NEA/IUPAC Pitzer 反演）；高配位 I->0 值不确定度大"
- },
- {
-  "complex": "[CuCl_4]^{2-}",
-  "center": "Cu^{2+}",
-  "ligand": "Cl^-",
-  "nu": 4,
-  "logb": -1.2,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "ε(Na+,CuCl4^2-)≈-0.06（近似）；本轮确认无更精确值",
-  "eps_rxn": -0.06
- },
- {
-  "complex": "[ZnCl]^+",
-  "center": "Zn^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 0.4,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "IUPAC Part 5；Δε=-(0.14±0.02)",
-  "eps_rxn": -0.14
- },
- {
-  "complex": "[ZnCl_2]",
-  "center": "Zn^{2+}",
-  "ligand": "Cl^-",
-  "nu": 2,
-  "logb": 0.69,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "IUPAC Part 5；Δε=-(0.20±0.04)",
-  "eps_rxn": -0.2
- },
- {
-  "complex": "[ZnCl_3]^-",
-  "center": "Zn^{2+}",
-  "ligand": "Cl^-",
-  "nu": 3,
-  "logb": 0.18,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "ε(Na+,ZnCl3-)≈-0.05（近似）；IUPAC Part 5",
-  "eps_rxn": -0.05
- },
- {
-  "complex": "[AgCl_2]^-",
-  "center": "Ag^+",
-  "ligand": "Cl^-",
-  "nu": 2,
-  "logb": 5.32,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "Xiong 2006；ε(Ag+,Cl-)=0.14±0.01；ε(Na+,AgCl2-)=-0.05±0.1（NAGRA NTB 21-03）",
-  "eps_rxn": 0.14
- },
- {
-  "complex": "[PbCl]^+",
-  "center": "Pb^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 1.6,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "IUPAC Part 3；ε(Pb2+,Cl-)=0.11±0.02",
-  "eps_rxn": 0.11
- },
- {
-  "complex": "[CdCl]^+",
-  "center": "Cd^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 1.98,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "IUPAC Part 4；ε(Cd2+,Cl-)=0.15±0.01",
-  "eps_rxn": 0.15
- },
- {
-  "complex": "[HgCl]^+",
-  "center": "Hg^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 6.72,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "IUPAC Part 1；ε(Hg2+,Cl-)=0.19±0.03",
-  "eps_rxn": 0.19
- },
- {
   "complex": "[InCl]^{2+}",
   "center": "In^{3+}",
   "ligand": "Cl^-",
   "nu": 1,
   "logb": 2.58,
   "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA-TDB；ε(In3+,Cl-)=0.33±0.02",
-  "eps_rxn": 0.33
+  "calibrated": "Ferri 1972 (Acta Chem. Scand. 26, 733) 电势法，I=3 M NaClO₄ 外推至 I→0；logβ₁ = 2.58 ± 0.02（使用者已核实）"
  },
  {
   "complex": "[InCl_2]^+",
@@ -1426,9 +1511,7 @@
   "nu": 2,
   "logb": 3.84,
   "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA-TDB；同上 ε",
-  "eps_rxn": 0.33
+  "calibrated": "Ferri 1972；logβ₂ = 3.84 ± 0.02（累积）"
  },
  {
   "complex": "InCl_3",
@@ -1437,172 +1520,6 @@
   "nu": 3,
   "logb": 4.2,
   "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA-TDB；同上 ε",
-  "eps_rxn": 0.33
- },
- {
-  "complex": "[AlCl]^{2+}",
-  "center": "Al^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 1.33,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "文献；ε(Al3+,Cl-)=0.33",
-  "eps_rxn": 0.33
- },
- {
-  "complex": "[SnCl]^+",
-  "center": "Sn^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": -0.15,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NAGRA；ε(Sn2+,Cl-)=0.14；ε(SnCl+,Cl-)=-0.15±0.05",
-  "eps_rxn": 0.14
- },
- {
-  "complex": "[SnCl_2]",
-  "center": "Sn^{2+}",
-  "ligand": "Cl^-",
-  "nu": 2,
-  "logb": -0.26,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NAGRA；ε(SnCl+,Cl-) 沿用",
-  "eps_rxn": -0.15
- },
- {
-  "complex": "[SnCl_3]^-",
-  "center": "Sn^{2+}",
-  "ligand": "Cl^-",
-  "nu": 3,
-  "logb": -0.25,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NAGRA；同上",
-  "eps_rxn": -0.15
- },
- {
-  "complex": "[MnCl]^+",
-  "center": "Mn^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 0.85,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA-TDB；ε(Mn2+,Cl-)=0.13±0.01",
-  "eps_rxn": 0.13
- },
- {
-  "complex": "[NdCl]^{2+}",
-  "center": "Nd^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 0.06,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA-TDB；ε(Nd3+,Cl-)=0.31±0.02；**logβ° 不确定度大（±0.50）**",
-  "eps_rxn": 0.31
- },
- {
-  "complex": "[YCl]^{2+}",
-  "center": "Y^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 0.65,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA-TDB；ε(Y3+,Cl-)=0.32±0.02",
-  "eps_rxn": 0.32
- },
- {
-  "complex": "[ZrCl]^{3+}",
-  "center": "Zr^{4+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 1.59,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA-TDB/Nagra；ε(Zr4+,Cl-)=0.48±0.04",
-  "eps_rxn": 0.48
- },
- {
-  "complex": "[CrCl]^{2+}",
-  "center": "Cr^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": -0.4,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA SIT 反推；ε(Cr3+,Cl-)≈0.32（**估计值**）",
-  "eps_rxn": 0.32
- },
- {
-  "complex": "[ScCl]^{2+}",
-  "center": "Sc^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 0.55,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA SIT 反推；ε(Sc3+,Cl-)≈0.31（**估计值**）",
-  "eps_rxn": 0.31
- },
- {
-  "complex": "[HfCl]^{3+}",
-  "center": "Hf^{4+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 0.92,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA SIT 反推；ε(Hf4+,Cl-)≈0.40（**估计值**）",
-  "eps_rxn": 0.4
- },
- {
-  "complex": "[BeCl]^+",
-  "center": "Be^{2+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": -0.1,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "NEA SIT 反推；**ε 仍缺**"
- },
- {
-  "complex": "[TbCl]^{2+}",
-  "center": "Tb^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": -0.57,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "Lee & Byrne 1993c（**I=0.7 mol/kg 条件值**，非 I->0）；ε(Ln3+,Cl-)=0.32",
-  "eps_rxn": 0.32
- },
- {
-  "complex": "[DyCl]^{2+}",
-  "center": "Dy^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": -0.59,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "同上（I=0.7 条件值）",
-  "eps_rxn": 0.32
- },
- {
-  "complex": "[ErCl]^{2+}",
-  "center": "Er^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": -0.62,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "同上（I=0.7 条件值）",
-  "eps_rxn": 0.32
+  "calibrated": "Ferri 1972；logβ₃ = 4.2 ± 0.1（累积）；原文**未发现超过三个氯**的 In 物种"
  }
 ]
