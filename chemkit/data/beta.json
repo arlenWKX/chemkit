@@ -71,7 +71,8 @@
   "ligand": "OH^-",
   "nu": 1,
   "logb": 11.8,
-  "calibrated": "Fe3+ + H2O -> [Fe(OH)]2+ + H+ 的 log*K1 = -2.19（Baes & Mesmer 1976），logb1 = pKw(298) - 2.19 = 11.81；与 pKsp(Fe(OH)3)=38 配合给出 Fe(OH)3 + 2H+ -> [Fe(OH)]2+ + 2H2O 整体 logK = +1.8"
+  "calibrated": "Fe3+ + H2O -> [Fe(OH)]2+ + H+ 的 log*K1 = -2.19（Baes & Mesmer 1976），logb1 = pKw(298) - 2.19 = 11.81；与 pKsp(Fe(OH)3)=38 配合给出 Fe(OH)3 + 2H+ -> [Fe(OH)]2+ + 2H2O 整体 logK = +1.8；ΔH° = **+43.3 ± 0.6 kJ/mol**（Lemire et al. 2013 / NEA-TDB，吸热 ⟹ 升温水解增强）。log*K₁ 保持 −2.19 （与使用者给的 TDB 2020 −2.20 一致）",
+  "dH": 43.3
  },
  {
   "complex": "[Mg(OH)]^+",
@@ -94,8 +95,9 @@
   "center": "Fe^{2+}",
   "ligand": "OH^-",
   "nu": 1,
-  "logb": 4.5,
-  "calibrated": "Fe^{2+} + H2O -> [Fe(OH)]^+ + H+ 的 log*K1 = -9.5（Baes & Mesmer 1976 / Li 2000 汇编，25 °C、I→0），logb1 = pKw(298) + log*K1 = 14.0 + (-9.5) = 4.5；一级水解是二价阳离子在中性水中的主要水解形态。此前该族缺 nu=1 数据，分支 4 只能走 pKsp 派生的复合式（其物理含义是饱和溶液 pH）——可溶氢氧化物（Mg/Ca/Ba/Cd/Mn/Co）的复合 h 甚至低于水自身 1e-7，估计因此回落到 pH 7.000（0.1 M MgCl2 实测 6.2）。"
+  "logb": 4.9,
+  "calibrated": "Fe2+ + H2O -> [Fe(OH)]+ + H+ 的 log*K1 = **−9.1 ± 0.4**（Lemire et al. 2013 / NEA-TDB，按使用者指示统一取该源；另一源 Brown & Ekberg 2016 给 −9.43 ± 0.10）⟹ logb1 = 14.0 + (−9.1) = 4.9；ΔH° = **+50.2 ± 4.2 kJ/mol**（吸热）。一级水解是二价金属在天然水中的主要水解形态。",
+  "dH": 50.2
  },
  {
   "complex": "[Co(OH)]^+",
