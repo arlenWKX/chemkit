@@ -622,6 +622,31 @@ def _pin_ladders(T) -> dict:
     return cache
 
 
+def _pin_frozen(T) -> dict:
+    """各阳离子的**非 OH⁻ 配合物**（按 T 缓存一次）：
+    cat -> ((z, logβ, nu, 配体名, 物种名), …)，仅 m==1 单体配合物。
+
+    钉住固相储库时这些配合物同样从属于钉住的游离 [M]
+    （`[ML_nu] = β·[M]·cL^nu`，cL 冻结取**配体返还后**的账本值）——只从属
+    羟合梯而冻结它们是同一病根的另一半：第 199 轮实测 case 16 账本
+    [AlCl]²⁺ 0.22 mol 被冻结成 +0.67 幻影正电荷，pinned 解抬到 pH 12.33；
+    N22 的 Zn-Cl 配合物 + 被绑 Cl⁻ 未返还 ⟹ pH 13.26 把锌酸根稳定住，
+    沉淀停在 0.18 < 0.7。条目从账本删除时配体按 ν **返还账本**
+    （配体守恒：金属由储库吸收，配体回溶液；与 OH⁻ 不同——OH⁻ 来自水储库）。
+    """
+    cache = getattr(T, "_pin_frozen", None)
+    if cache is None:
+        cache = {}
+        for b in T.beta:
+            if b["ligand"] == "OH^-" or b.get("m", 1) != 1:
+                continue
+            cache.setdefault(b["center"], []).append(
+                (charge_of(b["complex"]), b["logb"], b["nu"],
+                 b["ligand"], b["complex"]))
+        T._pin_frozen = cache
+    return cache
+
+
 def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                    cache: dict | None = None,
                    touch: frozenset | None = None,
@@ -885,15 +910,18 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         # 被挡是因为"排除固相储库"那条闸——而 `charge_pH` 的 `pinned` 参数
         # 正是为储库而生：`[M] = 10^((y(pKw−pH) − pKsp)/x)` 作为电荷项的
         # **一项**随 pH 连续变化，于是"固相是否在场"不再是分支选择。
-        # 钉住后须删掉该阳离子**及其全部 OH⁻ 配合物**的账本条目（电荷由
-        # 钉住项+羟合梯表达），否则双重记账/配平幻觉（第 198 轮教训：
-        # 只删游离离子 ⟹ 0.75 mol 铝酸根被冻结，方程凭空造 0.25 M 游离
-        # Al³⁺ 配平，pH 冻结在 3.2 且走步失去梯度）。
+        # 钉住后须删掉该阳离子**及其全部配合物**的账本条目（电荷由
+        # 钉住项+羟合梯+非 OH⁻ 从属项表达），否则双重记账/配平幻觉（第 198 轮
+        # 教训：只删游离离子 ⟹ 0.75 mol 铝酸根被冻结，方程凭空造 0.25 M 游离
+        # Al³⁺ 配平，pH 冻结在 3.2 且走步失去梯度；第 199 轮残余：非 OH⁻
+        # 配合物（[AlCl]²⁺、Zn-Cl）仍冻结 ⟹ 幻影正电荷把 pinned 解抬到
+        # 12.3/13.26——第 200 轮落地：一并删除 + 配体按 ν 返还账本）。
         _pin = []
         _inv = []
         _led2 = None
         if PINNED_TAKEOVER:
             _lad_all = _pin_ladders(T)
+            _frz_all = _pin_frozen(T)
             _seen = set()
             for _e in T.ksp:
                 _cat, _an = _e["pair"]
@@ -916,7 +944,20 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 for _zc, _lb, _nu, _cx in _lad:
                     if _led2.pop(_cx, 0.0) > 0.0:
                         _n_inv += ledger[_cx]
-                _pin.append((charge_of(_cat), _pksp(_e, T_K), _x, _y, _lad))
+                # 非 OH⁻ 配合物：先删除并**返还配体**（ν×m 回账本），
+                # 再按返还后的账本值冻结 cL，coef = β·cL^ν 折进钉住项。
+                _frz_c = []
+                for _zc, _lb, _nu, _lig, _cx in _frz_all.get(_cat, ()):
+                    _mc = _led2.pop(_cx, 0.0)
+                    if _mc > 0.0:
+                        _n_inv += _mc
+                        _led2[_lig] = _led2.get(_lig, 0.0) + _nu * _mc
+                        _frz_c.append((_zc, _lb, _nu, _lig))
+                _frz = tuple((_zc, (10.0 ** _lb)
+                              * (_led2.get(_lig, 0.0) / V) ** _nu)
+                             for _zc, _lb, _nu, _lig in _frz_c)
+                _pin.append((charge_of(_cat), _pksp(_e, T_K), _x, _y,
+                             _lad, _frz))
                 _inv.append(_n_inv)
         if _pin:
             _ex = charge_pH(_led2, V, T, T_K, fast=True, pinned=tuple(_pin))
@@ -925,10 +966,13 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 # 的前提不成立（固相本该溶完），退回原闸——自洽性判据。
                 _oh = 10.0 ** (_ex - pKw)
                 _ok = True
-                for (_z, _pk, _x2, _y2, _lad), _n_inv in zip(_pin, _inv):
+                for _p, _n_inv in zip(_pin, _inv):
+                    _z, _pk, _x2, _y2, _lad = _p[:5]
+                    _frz = _p[5] if len(_p) > 5 else ()
                     _cm = 10.0 ** ((_y2 * (pKw - _ex) - _pk) / _x2)
                     _d = V * _cm * (1.0 + sum(10.0 ** _lb * _oh ** _nu
-                                              for _zc, _lb, _nu, _cx in _lad))
+                                              for _zc, _lb, _nu, _cx in _lad)
+                                    + sum(_cf for _zc, _cf in _frz))
                     if _d > _n_inv:
                         _ok = False
                         break
