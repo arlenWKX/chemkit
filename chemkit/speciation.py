@@ -471,7 +471,8 @@ def _role_union(T) -> frozenset:
     if u is None:
         cats = {e["pair"][0] for e in T.ksp if e["pair"][1] == "OH^-"}
         first_k = {b["center"] for b in T.beta
-                   if b["ligand"] == "OH^-" and b.get("nu") == 1}
+                   if b["ligand"] == "OH^-" and b.get("nu") == 1
+                   and b.get("m", 1) == 1}
         u = T._role_union = frozenset(
             set(T.pka_acid) | set(T.pka_base) | cats | first_k)
     return u
@@ -560,8 +561,12 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         # 这些阳离子在分支 4 里按**一元弱酸**处理（见 acids_map 追加与
         # hyd_map 的跳过），不再叠加 Ksp 派生的"水解到底"复合式：后者把
         # 一级水解产物当固相，与显式数据是两套模型（§7 X-32 capstone）。
+        # **只收单核一级**（第 170 轮）：`logb` 对多核（m>1）或高配位（nu>1）
+        # 是**高级累积常数**，代入会把"第 n 级"当成"一级" ⟹ pH 严重失真。
+        # 当前库内该集合的取值不受影响（190 条全 m=1、一级条目全 nu=1）。
         _first_k = {b["center"]: 10.0 ** (b["logb"] - pKw) for b in T.beta
-                    if b["ligand"] == "OH^-" and b.get("nu") == 1}
+                    if b["ligand"] == "OH^-" and b.get("nu") == 1
+                    and b.get("m", 1) == 1}
         acids_map: dict = {}   # acid -> Ka 或 _STRONG_ACID 哨兵
         for acid, entries in T.pka_acid.items():
             if acid in amph_eligible:
