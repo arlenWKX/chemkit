@@ -185,12 +185,15 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
             # H+ 项之外的兜底（gas_escape=False 的气体 / 持续供给气体）：
             # 活度一律按溶解态浓度计
             logQ += nu * _logc_of(s, ledger, V, logc)
-    # **离子强度层（第 188 轮起为默认口径）**：I 由当前账本算，交给 logK_T
-    # 施加 SIT 的 Debye-Hückel 主项（Δz² 由反应式自动算）＋（有 ε 数据时）
-    # 特定离子作用项。**对所有平衡统一施加**，避免"混合口径"。
-    # 若需回到全 I→0 的旧口径（仅供对比）：CHEMKIT_SIT=0。
-    _I = _speciation.ionic_strength(ledger, V)
-    return logK_T(c, T_K, _I) - logQ
+    # **反应相关离子强度 + 阻尼不动点**（第 192 轮）：
+    # 只用**参与本反应的物种**贡献 I ⟹ 切断"旁观强电解质 ⟹ 总 I ⟹ 本反应 logK
+    # ⟹ 本反应推进"的正反馈环（第 191 轮实测：总 I 口径下 iters ×2.2、
+    # resid_p90 ×15、单例 62 s）；同时保留"介质越浓、活度修正越强"的真实效应。
+    # 参与物种的浓度本身依赖 I（隐式），用阻尼不动点解到自洽（≤3 次、松弛 0.5）。
+    _sps = list(c.r) + list(c.pr)
+    _I0 = _speciation.ionic_strength(ledger, V)
+    _Ie = _speciation.sit_fixpoint(ledger, V, _sps, _I0)
+    return logK_T(c, T_K, _Ie) - logQ
 
 
 # ========================================================== 残差口径（唯一定义）

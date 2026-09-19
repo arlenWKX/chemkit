@@ -64,12 +64,45 @@ def ionic_strength(ledger: dict, V: float) -> float:
         z = _charge_cached(sp)
         if z:
             s += m * z * z
-
+
     # **I 量化**（第 191 轮）：0.05 的桶。I 在二分中连续变化会让
     # `logK_T` 的 (T_K, I) 缓存全部失效；量化后同一状态的多次求值命中同一
     # 键，而 0.05 分辨率对 DH/ε 项的影响 < 0.004 log 单位（远小于数据本身
     # 的不确定度）⟹ 纯数值分辨率选择，不改物理模型。
     return round(0.5 * s / V * 20.0) / 20.0
+
+
+def ionic_strength_reaction(ledger: dict, V: float, species) -> float:
+    """**反应相关离子强度** `I_eff`（第 192 轮）：只由**参与该反应的物种**贡献。
+
+    切断"旁观强电解质 ⟹ 总 I ⟹ 本反应 logK ⟹ 本反应推进"的**正反馈环**
+    （第 191 轮实测：总 I 口径下 iters ×2.2、resid_p90 ×15、单例 62 s），
+    同时保留"介质越浓、活度修正越强"的真实效应——因为反应物种的浓度本身
+    就随介质（同离子/配体过量）而变。
+    """
+    s = 0.0
+    for sp in species:
+        m = ledger.get(sp, 0.0)
+        if m <= 0.0:
+            continue
+        z = _charge_cached(sp)
+        if z:
+            s += m * z * z
+    if s <= 0.0:
+        return 0.0
+    return round(0.5 * s / V * 20.0) / 20.0
+
+
+def sit_fixpoint(ledger: dict, V: float, species, I0: float,
+                 iters: int = 3, relax: float = 0.5) -> float:
+    """阻尼不动点：I 与"参与物种浓度"互相依赖时解到自洽（≤ iters 次）。"""
+    I = I0
+    for _ in range(iters):
+        In = ionic_strength_reaction(ledger, V, species)
+        if abs(In - I) < 1e-3:
+            return In
+        I = I + relax * (In - I)
+    return round(I * 20.0) / 20.0
 
 
 def sit_logK(logK0: float, dz2: float, eps_rxn, I: float) -> float:
