@@ -22,6 +22,47 @@ from .candidates import (Cand, logK_T, build_derived, WATER, H_ION, X_MIN,
 from .normalize import _mol_fraction
 from .acidbase import build_families, charge_pH
 
+
+
+# ========================================================== 离子强度修正（第 180 轮）
+
+_SIT_A = 0.51          # Debye-Hückel 常数（25 °C, 水）
+
+
+def ionic_strength(ledger: dict, V: float) -> float:
+    """由账本算离子强度 I = ½·Σ cᵢzᵢ²（只计带电、非固相物种）。"""
+    s = 0.0
+    for sp, m in ledger.items():
+        if m <= 0.0 or sp == WATER or sp.startswith("__"):
+            continue
+        z = charge_of(sp)
+        if z:
+            s += (m / V) * z * z
+    return 0.5 * s
+
+
+def sit_logK(logK0: float, dz2: float, eps_rxn, I: float) -> float:
+    """SIT 修正：logK(I) = logK° + Δz²·A√I/(1+1.5√I) + ε_rxn·I。
+
+    `eps_rxn is None` 时只施加 Debye-Hückel 主项（缺特定相互作用系数）。
+    """
+    if I <= 0.0:
+        return logK0
+    r = I ** 0.5
+    v = logK0 + dz2 * _SIT_A * r / (1.0 + 1.5 * r)
+    if eps_rxn is not None:
+        v += eps_rxn * I
+    return v
+
+
+def _beta_dz2(b, T) -> float:
+    """M^{n+} + nu·Cl⁻ ⇌ 络合物 的 Δz²（正比于反应式两侧电荷平方差）。"""
+    zc = charge_of(b["complex"])
+    zn = charge_of(b["center"])
+    nu = b.get("nu", 1)
+    return zc * zc - zn * zn - nu * 1.0
+
+
 # ========================================================== pH 估计器（§3.2，教科书近似）
 
 def _buffer_holds(pH: float, a: float, b: float, pKw: float) -> bool:

@@ -185,7 +185,12 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
             # H+ 项之外的兜底（gas_escape=False 的气体 / 持续供给气体）：
             # 活度一律按溶解态浓度计
             logQ += nu * _logc_of(s, ledger, V, logc)
-    return logK_T(c, T_K) - logQ
+    # **离子强度修正（第 180 轮）**：只有带 `meta["eps"]` 的候选（Cl⁻ 系 β 派生
+    # 反应）会真正用到它；其他候选 `logK_T` 内直接忽略 ⟹ 无额外开销。
+    _I = 0.0
+    if c.meta and c.meta.get("eps") is not None:
+        _I = _speciation.ionic_strength(ledger, V)
+    return logK_T(c, T_K, _I) - logQ
 
 
 # ========================================================== 残差口径（唯一定义）

@@ -356,12 +356,18 @@ class Cand:
         return k
 
 
-def logK_T(c: Cand, T_K: float) -> float:
-    """logK(T) 三通道：redox Nernst 缩放（无 dH 时的回退）/ van't Hoff（有 dH）
+def logK_T(c: Cand, T_K: float, I: float = 0.0) -> float:
+    """logK(T, I) 三通道：redox Nernst 缩放（无 dH 时的回退）/ van't Hoff（有 dH）
     + pkw_coeff 水电离部分。van't Hoff 在 298.15 K 恒等，493 套件零扰动。
-    值只依赖 (Cand, T_K)——按 T_K 缓存在 Cand 上（S_of 每次求值的必经点，
-    缓存后与逐次重算 bit 级一致）。"""
-    k = c._logK_c.get(T_K)
+    值只依赖 (Cand, T_K, I)——按 (T_K, I) 缓存在 Cand 上（S_of 每次求值的必经点，
+    缓存后与逐次重算 bit 级一致）。
+
+    **离子强度修正（第 180 轮）**：仅对带 `meta["eps"]` 的候选（即 Cl⁻ 系 β 派生
+    反应）施加 SIT：`logK(I) = logK° + Δz²·A√I/(1+1.5√I) + ε·I`，
+    `Δz² = Σz²(产物) − Σz²(反应物)`（按反应式逐物种算，自动正确）。
+    `I = 0` 时与旧行为**逐位相同**。"""
+    key = (T_K, I) if I else T_K
+    k = c._logK_c.get(key)
     if k is None:
         if c.redox is not None:
             n, dE0 = c.redox
@@ -372,7 +378,21 @@ def logK_T(c: Cand, T_K: float) -> float:
         else:
             vant = _vant(c.dH, T_K) if c.dH is not None else 0.0
             k = c.logK + c.pkw_coeff * (pKw_of(T_K) - PKW_298) + vant
-        c._logK_c[T_K] = k
+        # **SIT 离子强度修正**（只对有 eps 元数据的候选；I=0 时不触发）
+        _eps = c.meta.get("eps") if c.meta else None
+        if I > 0.0 and _eps is not None:
+            _dz2 = 0.0
+            for _sp, _n in c.pr.items():
+                _z = charge_of(_sp)
+                if _z:
+                    _dz2 += _n * _z * _z
+            for _sp, _n in c.r.items():
+                _z = charge_of(_sp)
+                if _z:
+                    _dz2 -= _n * _z * _z
+            _r = I ** 0.5
+            k += _dz2 * 0.51 * _r / (1.0 + 1.5 * _r) + _eps * I
+        c._logK_c[key] = k
     return k
 
 
@@ -774,6 +794,10 @@ def build_derived(T) -> list[Cand]:
     # β ⊗ pKa：complex + ν·H+ ⇌ center + ν·共轭酸（logK = ν·pKa − logβ）
     for b in T.beta:
         lig = b["ligand"]
+        # **离子强度修正的元数据**（第 180 轮）：只有 Cl⁻ 系 β 带 `eps_rxn`。
+        # 派生反应（complex + νH⁺ ⇌ center…）的反应级 ε 与 β 反应**反号**，
+        # Δz² 同样反号 —— 由 `_beta_dz2` 与 `-eps_rxn` 推出，见 speciation.sit_logK。
+        _sit = ({"eps": -b["eps_rxn"]} if "eps_rxn" in b else {}) if lig == "Cl^-" else {}
         if lig == "OH^-":
             lg = b["nu"] * PKW_298 - b["logb"]
             bal = _bal([b["complex"], H_ION], [b["center"], WATER], [WATER])
@@ -796,7 +820,8 @@ def build_derived(T) -> list[Cand]:
                               -kc * b["dH"] if "dH" in b else None)
                 out.append(Cand("derived", dict(bal["reactants"]), dict(bal["products"]),
                                 pe["pka"] * k_acid - b["logb"] * kc,
-                                0.0, dH=dh, meta={"src": f"beta_pka:{b['complex']}"}))
+                                0.0, dH=dh,
+                                meta={"src": f"beta_pka:{b['complex']}", **_sit}))
 
     # Ksp⊗弱酸（酸为反应物）：solid + HA -> cat + 共轭碱（弱酸溶蚀沉淀，
     # 如 CaCO3 + CO2 + H2O -> Ca2+ + 2HCO3-，钟乳石/暂时硬水；强酸溶解由
