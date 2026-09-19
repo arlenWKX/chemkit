@@ -107,9 +107,12 @@ def sit_fixpoint(ledger: dict, V: float, species, I0: float,
     for _ in range(iters):
         In = ionic_strength_reaction(ledger, V, species)
         if abs(In - I) < 1e-3:
-            return In
+            return round(In * 10.0) / 10.0
         I = I + relax * (In - I)
-    return round(I * 20.0) / 20.0
+    # **量化到 0.1**：让 `logK_T` 的 (T_K, I) 缓存能命中（同一账本状态下
+    # 多次求值落在同一桶）。0.1 的 I 分辨率对 DH/ε 项的影响 ≤ 0.01 log 单位，
+    # 远小于数据不确定度 ⟹ 纯数值分辨率选择。
+    return round(I * 10.0) / 10.0
 
 
 def sit_logK(logK0: float, dz2: float, eps_rxn, I: float) -> float:
