@@ -155,7 +155,27 @@ def main() -> int:
     rules["mcl_no_beta"] = rank(
         c for c in explicit1 if c not in cl_centers)
 
-    # 8) 表内物种总数与交集（信息项）
+    # 8) **死数据候选**（第 165 轮，D4 的机械化）：化合物固相既不缺数据、
+    #    也没被任何表引用、且**没有任何用例投料**它 ⟹ 当前无从被触及。
+    #    与 `solid_no_thermo` 分开列：那 146 条里 141 条是真缺口（136 条被表
+    #    引用 + 5 条被用例投料），只有 5 条落进这一类。
+    used_tables = (ksp_all | beta_all | pka_species | cpl_all)
+    feed = set()
+    try:
+        import json as _json
+        _cs = _read("tests.json")
+        _cs = _cs if isinstance(_cs, list) else (
+            _cs.get("cases") or _cs.get("entries") or [])
+        for _c in _cs:
+            for _x in (_c.get("subs") or []):
+                feed.add(_x[0])
+    except Exception:                                       # noqa: BLE001
+        pass
+    rules["solid_unused"] = rank(
+        s for s in solids
+        if s not in used_tables and s not in feed and not _is_element(s))
+
+    # 9) 表内物种总数与交集（信息项）
     allsp = th_keys | pka_species | beta_all | ksp_all | cpl_all
     rules["_summary"] = [f"物种并集 {len(allsp)}"]
     for nm, st in (("thermo", th_keys), ("pka", pka_species), ("beta", beta_all),
