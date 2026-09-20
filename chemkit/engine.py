@@ -507,6 +507,32 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 if h <= -1e-3:
                     return min(_pKw_c + 1.0, _pKw_c + log10(-h))
                 return _ph_water
+    # D14（第 201 轮）：pinned 口径**双端一致冻结**——分别用步首态
+    # (ledger, H_excess) 与 x_max 端态（changing 投影 + He+nu_H·x_max）各评
+    # 一次，**两端都采用 pinned 才冻结 ON，否则 OFF**。理由：两端口径一致的步
+    # 说明 pinned 在整个步区间内自洽；不一致说明该步横跨机制切换（固相耗尽/
+    # 退化区边界——B26 rec5 入口有固相、x_max 固相溶完；AM03 病灶步方向相反），
+    # 交回启发式光滑口径（D14）。逐点判定会让切换边界在二分探针间穿越
+    # （B26：pH 13.73→1.52 接缝悬崖被二分当根）。判据读回用 estimate_state
+    # 自身的 PH_TAGS 标注，不复制判据（D2）。
+    _pin_mode = None
+    if _need_ph and _ph_closed is None and _speciation.PINNED_TAKEOVER:
+        def _pin_adopted(led, he):
+            _save = _speciation.PH_TAGS
+            _speciation.PH_TAGS = []
+            estimate_pH(led, he, V, T, T_K, _bt_cache, _touch,
+                        _no_base, _no_acid)
+            _tags = _speciation.PH_TAGS
+            _speciation.PH_TAGS = _save
+            return bool(_tags) and _tags[-1] == "电荷平衡精确解(pinned)"
+        _pin_entry = _pin_adopted(ledger, H_excess)
+        # x_max 端态：changing 物种投影（计量上限处 limiting 物种归零，
+        # 浮点毛刺取 max(0,·)；负/零条目不影响 estimate_pH 的判定）。
+        _led_hi = dict(ledger)
+        for _s, _d, _o in changing:
+            _led_hi[_s] = max(0.0, _o + _d * x_max)
+        _pin_hi = _pin_adopted(_led_hi, H_excess + nu_H * x_max)
+        _pin_mode = _pin_entry and _pin_hi
     # f 求值间的浓度对数缓存：led_work 仅 changing 物种随 x 变化，
     # 其余物种的 log10(c/V) 在整个二分期间不变——按物种记忆、逐次失效
     # changing 条目（值与逐次计算 bit 级一致）
@@ -542,7 +568,8 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             else:
                 pH_x, led_v, _ = estimate_state(led_work, H_excess + nu_H * x,
                                                 V, T, T_K, _bt_cache, _touch,
-                                                _no_base, _no_acid)
+                                                _no_base, _no_acid,
+                                                pin_mode=_pin_mode)
             if _atrace is not None:
                 _tags = _speciation.PH_TAGS
                 _atrace.append((x, pH_x, _sol(x),
@@ -562,9 +589,12 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                                     _logc if led_v is led_work else None)
         if _atrace is not None:
             _speciation.PH_TAGS = []
-        pH_x = (_ph_closed(H_excess + nu_H * x) if _ph_closed is not None
-                else estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
-                                 _bt_cache, _touch, _no_base, _no_acid))
+        if _ph_closed is not None:
+            pH_x = _ph_closed(H_excess + nu_H * x)
+        else:
+            pH_x = estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
+                               _bt_cache, _touch, _no_base, _no_acid,
+                               pin_mode=_pin_mode)
         if _atrace is not None:
             _tags = _speciation.PH_TAGS
             _he = H_excess + nu_H * x

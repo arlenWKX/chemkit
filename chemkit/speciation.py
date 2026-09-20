@@ -563,9 +563,10 @@ def estimate_pH(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 cache: dict | None = None,
                 touch: frozenset | None = None,
                 no_base: frozenset | None = None,
-                no_acid: frozenset | None = None) -> float:
+                no_acid: frozenset | None = None,
+                pin_mode: bool | None = None) -> float:
     return estimate_state(ledger, H_excess, V, T, T_K, cache, touch,
-                          no_base, no_acid)[0]
+                          no_base, no_acid, pin_mode)[0]
 
 
 # 分支标注（**仅审计**：`tools/roots.py` 之外恒为 None，生产路径零成本）。
@@ -651,9 +652,15 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                    cache: dict | None = None,
                    touch: frozenset | None = None,
                    no_base: frozenset | None = None,
-                   no_acid: frozenset | None = None) -> tuple[float, dict, float]:
+                   no_acid: frozenset | None = None,
+                   pin_mode: bool | None = None) -> tuple[float, dict, float]:
     """返回 (pH, 滴定后的虚拟账本, 残余He)。虚拟账本是 pH 一致的自由形态分布；
-    残余He是弱酸/弱碱储备吸收后仍未中和的游离强酸/强碱（酸碱平衡后的真实 He）。"""
+    残余He是弱酸/弱碱储备吸收后仍未中和的游离强酸/强碱（酸碱平衡后的真实 He）。
+
+    pin_mode：pinned 口径的**整步冻结**开关（D14，第 201 轮）——None（默认）
+    = 现状逐点自判定（h_c≈o_c 退化区闸）；False = 本步冻结"弃用"（pinned 块
+    整体跳过）；True = 本步冻结"采用"（绕过退化区闸仍尝试 pinned，块内结构性
+    前提仍逐点评估）。逐点判定会在二分探针上制造 pH 接缝悬崖被当成根。"""
     pKw = pKw_of(T_K)    # 1) 强酸连续形态分布后，游离 H+ 全部由 He 记账（分子分数不贡献游离 H+，
     #    不再有"分子态浓酸"直读分支——pH 即 -log10(自由 H+) 的自然结果）
     # 2) 缓冲滴定（质子条件近似）：游离强酸/强碱先被在账弱碱/弱酸储备按强度
@@ -904,7 +911,8 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # + 80/80 条目自洽）：它把"选哪一侧"变成"解一个方程"，即第 161 轮判定的
     # **代数同一性**。只在"量级相当"这个**退化区**触发 ⟹ 热路径成本可控
     # （`fast=True` 为阻尼 Newton，4–6 次求值；非退化区仍走原启发式）。
-    if (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c):
+    _deg = (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c)
+    if _deg or pin_mode:
         # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198/199 轮）：
         # 第 197 轮查明，E55 这类病灶的 `h_c ≈ o_c`（触发条件本就满足），
         # 被挡是因为"排除固相储库"那条闸——而 `charge_pH` 的 `pinned` 参数
@@ -919,7 +927,10 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         _pin = []
         _inv = []
         _led2 = None
-        if PINNED_TAKEOVER:
+        # pin_mode（第 201 轮，D14）：True=整步冻结的"采用"口径——绕过退化区闸
+        # （闸随 f(x) 的 x 穿界 = 接缝悬崖，B26 实测 pH 13.73→1.52 跳变被二分
+        # 当根）；False=冻结"弃用"；None=逐点自判定。结构性前提仍逐点评估。
+        if PINNED_TAKEOVER and pin_mode is not False and (_deg or pin_mode):
             _lad_all = _pin_ladders(T)
             _frz_all = _pin_frozen(T)
             _seen = set()
@@ -980,20 +991,23 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                     _tag("电荷平衡精确解(pinned)")
                     return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
                 _tag("pinned耗尽回绝")
-        _els = frozenset(T.solids)
-        _fam = frozenset(build_families(T))
-        _res = any(m > X_MIN and sp in _els
-                   for sp, m in ledger.items() if sp != WATER)
-        _nf = sum(1 for sp, m in ledger.items() if m > 0.0 and sp in _fam)
-        _net = 0.0
-        for sp, m in ledger.items():
-            if m > 0.0 and sp != WATER and not sp.startswith("__"):
-                _net += charge_of(sp) * m
-        if not _res and _nf >= 2 and abs(_net + He_res) <= 1e-6:
-            _ex = charge_pH(ledger, V, T, T_K, fast=True)
-            if _ex is not None:
-                _tag("电荷平衡精确解")
-                return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
+        # 非 pinned 精确解路径：仍只在退化区（_deg）走——pin_mode=True 绕过
+        # 退化区闸只为 pinned 接管，不扩大此路径的触发面（行为不变）。
+        if _deg:
+            _els = frozenset(T.solids)
+            _fam = frozenset(build_families(T))
+            _res = any(m > X_MIN and sp in _els
+                       for sp, m in ledger.items() if sp != WATER)
+            _nf = sum(1 for sp, m in ledger.items() if m > 0.0 and sp in _fam)
+            _net = 0.0
+            for sp, m in ledger.items():
+                if m > 0.0 and sp != WATER and not sp.startswith("__"):
+                    _net += charge_of(sp) * m
+            if not _res and _nf >= 2 and abs(_net + He_res) <= 1e-6:
+                _ex = charge_pH(ledger, V, T, T_K, fast=True)
+                if _ex is not None:
+                    _tag("电荷平衡精确解")
+                    return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
     pH = -log10(h_c) if h_c >= o_c else pKw + log10(o_c)
     _tag("酸侧max" if h_c >= o_c else "碱侧max")
     if _src is not None:
