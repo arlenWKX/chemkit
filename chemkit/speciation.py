@@ -648,6 +648,39 @@ def _pin_frozen(T) -> dict:
     return cache
 
 
+def _exact_ok(ledger: dict, He_res: float, T, V: float) -> bool:
+    """`charge_pH` 在**本账本**上是否可证可信（第 263 轮抽出，原为 `_deg`
+    路径里的内联块——抽出后两处调用点共用同一把尺子，不再各写一遍）。
+
+    三条同时成立才可信：
+
+      ① **无固相在场** —— `charge_pH` 只解账本内部的电荷自洽，不解 Ksp
+         储库（见其 docstring 的边界声明）；有固相时账本溶解量本身就可能
+         与电荷平衡不自洽（L08 型）。⚠️ 第 263 轮实测 N15：**光靠这条不够**
+         —— 走步的探针会在"固相尚未析出"的状态上问 pH，此时闸放行，
+         但轨迹已被改变（详见 §5「家族再分配抵消走步」）。
+      ② **至少 2 个质子化族成员** —— 族再分配才有对象。注：
+         `build_families` 以**物种**为键，故同一族的两个成员（如 H₂S/HS⁻）
+         就满足此条；"只有一个成员"（纯两性盐）不满足。
+      ③ **账本电荷与残余强酸记账一致**（`|Σz·n + He_res| ≤ 1e-6`）——
+         这条是"账本自洽"的直接判据，也是 `charge_pH` 结论可用的前提：
+         该函数把 `V·h − V·oh` 与账本电荷配平，若账本自身就不满足
+         `Σz·n = −He_res`，它解出的是"把账本拉回自洽"的 pH 而非真值。
+    """
+    _els = frozenset(T.solids)
+    for sp, m in ledger.items():
+        if m > X_MIN and sp != WATER and sp in _els:
+            return False
+    _fam = frozenset(build_families(T))
+    if sum(1 for sp, m in ledger.items() if m > 0.0 and sp in _fam) < 2:
+        return False
+    _net = 0.0
+    for sp, m in ledger.items():
+        if m > 0.0 and sp != WATER and not sp.startswith("__"):
+            _net += charge_of(sp) * m
+    return abs(_net + He_res) <= 1e-6
+
+
 def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                    cache: dict | None = None,
                    touch: frozenset | None = None,
@@ -772,6 +805,29 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             #  将来出现 M₂O 型条目时指数悄悄错位）
             hyd_map[cat] = (10.0 ** ((_pksp(e, T_K) - _y * pKw) / _x),
                             _y / _x)
+        # **两性物种 → (共轭酸, 共轭碱)**（第 263 轮）：判定账本里的两性物种
+        # 是"纯两性盐"还是"**缓冲对的一员**"。中点式 `(pKa1+pKa2)/2` 的推导
+        # 前提是 `[H₂A] = [A²⁻]` **由歧化自身产生**（即该物种是唯一质子条件
+        # 物种）；共轭伙伴同时在账时，`[H₂A]`（或 `[A²⁻]`）由投料定，
+        # 前提整个不成立 ⟹ 那是缓冲体系，不是纯两性盐。
+        # 实测（`tools/amph_exact.py`，独立闭式解为判据）：
+        #   H₂S 半中和 中点 10.500 / 精确 7.0000；CO₂+NaOH 1:1 中点 8.350 / 6.3999。
+        # 而**纯**两性盐（NaHCO₃ 8.350/8.3456、纯 NaHS 10.500/9.4972）里，
+        # 前者的残差来自"丢了 h/oh"的近似误差（≤1.0），不是模型错——
+        # 第 263 轮先只在**模型错**的那一侧接管（见 §5 的记账）。
+        amph_partner: dict = {}
+        for sp in amph_eligible:
+            _eca = None
+            for _e in T.pka_base.get(sp, ()):
+                if _e.get("n", 1) == 1:
+                    _eca = _e.get("acid")
+                    break
+            _ecb = None
+            for _e in T.pka_acid.get(sp, ()):
+                if _e.get("n", 1) == 1:
+                    _ecb = _e.get("base")
+                    break
+            amph_partner[sp] = (_eca, _ecb)
         # 共轭酸碱对映射（缓冲对识别）：base -> (acid, pKa)，取最强一级
         conj: dict[str, tuple[str, float]] = {}
         for e in T.pka:
@@ -791,9 +847,10 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                            hyd_map.get(sp),
                            amph_pH.get(sp) if sp not in T.solids else None)
         sc = (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj,
-              rolemap)
+              rolemap, amph_partner)
         est_cache[T_K] = sc
-    amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj, rolemap = sc
+    (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj, rolemap,
+     amph_partner) = sc
     # 单遍扫描在账物种：合并原 acids_l/bases_l/hyd_l/amph/buf 五个独立循环。
     # max/sum 可换序，h_c/o_c/amph/buf 的最终值与原实现等价。
     amph: list = []
@@ -860,7 +917,13 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                     _src.append((sp, f"Kh({npp:g})", _v))
             continue
         if amph_v is not None and c > 1e-6:
-            amph.append((c, amph_v))
+            # 共轭伙伴是否**同时在账**（第 263 轮）：伙伴在场 ⟹ 缓冲对，
+            # 非纯两性盐 ⟹ 中点式的推导前提不成立。
+            _pa, _pb = amph_partner.get(sp, (None, None))
+            _has_pair = bool(
+                (_pa is not None and ledger.get(_pa, 0.0) > _floor_V)
+                or (_pb is not None and ledger.get(_pb, 0.0) > _floor_V))
+            amph.append((c, amph_v, _has_pair))
     # **X-45 的两种判据均被实测否掉**（第 151/152 轮），当前**不修**，只留标签
     # `_free_side`（标记 h_c/o_c 的哪一侧来自游离质子池 `He_res/V`）：
     #   · 判据 A（按数值相当去重，1e-2 相对容差）：D47 悬崖消除、iters −0.33%，
@@ -877,8 +940,32 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # 两性物种（HCO3-、HS-、H2PO4- 等）：pH ≈ (pKa_酸 + pKa_共轭酸)/2，
     # 其浓度远大于其他酸碱贡献时以两性平衡为准（NaHCO3 溶液 pH≈8.3）
     if amph:
-        c_a, pH_a = max(amph, key=lambda t: t[0])
+        c_a, pH_a, _pair = max(amph, key=lambda t: t[0])
         if c_a > 100.0 * max(h_c, o_c):
+            # **精确质子条件优先——仅当模型结构性错误时**（第 263 轮根治）：
+            # 中点式 `(pKa1+pKa2)/2` 不是独立的化学模型，它是**质子条件的
+            # 近似**——由 `[H₂A] = [A²⁻]`（忽略 h 与 oh）推出，并默认
+            # "该两性物种是**唯一**的质子条件物种"。**两个前提都会破**，
+            # 但性质不同：
+            #   · **模型错**（`_pair`）：其共轭伙伴同时在账 ⟹ `[H₂A]` 由投料
+            #     定、不由歧化定 ⟹ 它是**缓冲对的一员**，中点式的前提整个
+            #     不成立。H₂S 半中和 中点 10.500 / 精确 7.0000 (= pKa1)；
+            #     CO₂+NaOH 1:1 中点 8.350 / 精确 6.3999。**没有任何近似能修**，
+            #     只能换成方程 ⟹ 本支路接管。
+            #   · **近似误差**（纯两性盐、无伙伴）：中点式丢了 h/oh，
+            #     纯 NaHS 0.01 M 中点 10.500 / 精确 9.4972（+1.0）。
+            #     第 263 轮**不接管**这一侧——不是不能（`charge_pH` 在
+            #     NaHS 上与独立闭式解差 0.0000），而是实测接管会把 N15
+            #     （硅酸体系）推进走步层极限环（见 §5「家族再分配抵消走步」），
+            #     收益/风险不成比例 ⟹ 记账待后续，不在本轮赌。
+            # 触发面实测：中点支路仅占全部 `estimate_pH` 调用的 **0.71%**
+            # （1,314,020 次中 9,362 次，`tools/amph_survey.py`）。
+            # 判据与正/负对照见 `tools/amph_exact.py`（引擎无关的闭式解）。
+            if _pair and _exact_ok(ledger, He_res, T, V):
+                _ex = charge_pH(ledger, V, T, T_K, fast=True)
+                if _ex is not None:
+                    _tag("电荷平衡精确解(两性)")
+                    return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
             _tag("两性中点")
             return min(max(pH_a, -1.0), pKw + 1.0), ledger, He_res
     # 共轭缓冲对：弱碱与其共轭酸（或反之）同时在账时，pH 由
@@ -994,16 +1081,9 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         # 非 pinned 精确解路径：仍只在退化区（_deg）走——pin_mode=True 绕过
         # 退化区闸只为 pinned 接管，不扩大此路径的触发面（行为不变）。
         if _deg:
-            _els = frozenset(T.solids)
-            _fam = frozenset(build_families(T))
-            _res = any(m > X_MIN and sp in _els
-                       for sp, m in ledger.items() if sp != WATER)
-            _nf = sum(1 for sp, m in ledger.items() if m > 0.0 and sp in _fam)
-            _net = 0.0
-            for sp, m in ledger.items():
-                if m > 0.0 and sp != WATER and not sp.startswith("__"):
-                    _net += charge_of(sp) * m
-            if not _res and _nf >= 2 and abs(_net + He_res) <= 1e-6:
+            # 判据已抽为 `_exact_ok`（第 263 轮）：与本函数上方"两性支路"
+            # 共用同一把尺子。此处仍取 `min_fams=2`（行为逐位不变）。
+            if _exact_ok(ledger, He_res, T, V):
                 _ex = charge_pH(ledger, V, T, T_K, fast=True)
                 if _ex is not None:
                     _tag("电荷平衡精确解")
