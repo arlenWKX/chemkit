@@ -288,6 +288,13 @@ def _solve_ph(ledger: dict, H_excess: float, actives: list, V: float,
             else:
                 out.append(S_of(c, led, V, 7.0, T_K, T, gsup,
                                 p_ext_kpa, gas_escape))
+        # ---- pH 闭合行（**保持启发式**，第 220/237 轮两次验证后决定）----
+        # `estimate_pH(led, He) − ph`：把联立 pH 锚在 pH 机器的读数上。
+        # **曾试改为守恒方程 `charge_pH(led) − ph`**（第 220 轮单测：安全，
+        # 8/1147 例变、零通过性翻转；第 237 轮与"停滞期联立"合用再测）：
+        # 结果 `resid_p90` 不变、`n(|S|>1)` 反而 58→59、且 **B 组
+        # （`F31`/`H45`/`H43`/`T52`）完全未动** ⟹ **换闭合行无收益**，
+        # 故**不落盘**（保留启发式；改动写法见 `handoff` §2.12/§2.16）。
         out.append(estimate_pH(led, He, V, T, T_K) - ph)
         return out
 

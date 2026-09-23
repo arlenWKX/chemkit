@@ -56,11 +56,18 @@ from .templates import (_redox_pair_static, _redox_templates,
                         _product_form_ok)
 
 _TRACE = bool(_os.environ.get("CHEM_TRACE"))
-# **第四触发点：停滞期联立**（第 236 轮）。默认**关闭**，先测半径再决定落盘。
-# 背景：现有三触发点全要求"近 24 步全微步"，而"零推进家族"是大步走完后停住
-# ⟹ `joint_tries` 恒为 0（第 221 轮实测）。语义上，停滞 + 残差大正是该问联立
-# 的时候（`_joint_collect(None)` 收的就是耦合约束方程组）。
-_JOINT_ON_STALL = bool(_os.environ.get("CHEMKIT_JOINT_ON_STALL"))
+# **第四触发点：停滞期联立**（第 236 轮实现、第 237 轮转正）。
+# 背景：原三触发点（①②爬行 / ③社区 pH）**都要求"近 24 步全微步(<0.02)"**，
+# 而"零推进家族"（B+C 共 29 例 / 216.6 残差 / 占全库 66%）是**大步走完后停住**
+# ⟹ `joint_tries` 恒为 0（第 221 轮实测）。语义上，**停滞 + 残差大恰恰该问联立**
+# （`_joint_collect(None)` 收的就是耦合约束方程组）。
+# 第 236/237 轮全量对拍（1176 例，开/关逐例）：
+#   `resid_p90` 0.447→**0.427**、`n(|S|>1)` 62→**58**、`n(|S|>0.1)` 200→**198**、
+#   **通过性翻转 0 例、变差例 0**（改善例 `RX14` −4.06、`DB8` −1.06、`H32`/`K01` −0.81）。
+# ⟹ 无回归且有实测改善，**转正为默认开启**。可用 `CHEMKIT_JOINT_ON_STALL=0` 关闭。
+# **限度**：它未修好 B 组（`H45`/`H43`/`F31` 残差未动）——触发对了，
+# 但 `joint_solve` 在这些"有固相 + 强驱动"的态上**解不动**（boundary/fail）。
+_JOINT_ON_STALL = _os.environ.get("CHEMKIT_JOINT_ON_STALL", "1") != "0"
 _JOINT_STALL_S = float(_os.environ.get("CHEMKIT_JOINT_ON_STALL_S", "1.0"))
 # ---- X-39 审计开关（默认全开 = 现行为；置 1 = 关掉该性能手段）----
 # 用途：把"用正确性借性能"的手段逐项关掉做全量对照（代价 vs 残差/断言）。
