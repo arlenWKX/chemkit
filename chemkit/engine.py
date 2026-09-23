@@ -397,9 +397,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             # HNO2 等弱酸形态，estimate_pH 仍报酸），真实 OH- 储备 ~1e-10、
             # 无实际限量对象——S 随 pH 下降自限。否则 NO2 歧化类产酸通道被
             # 幻影残差顶成每轮 -He/nu_H 的微步爬行（T78 曾 1500 轮 6.6s）
-            _cls0 = closed_pH(ledger, H_excess, V, T, T_K)
-            _ph0 = _cls0[0] if _cls0 is not None else estimate_pH(
-                ledger, H_excess, V, T, T_K)
+            _ph0 = solver_pH(ledger, H_excess, V, T, T_K)
             if _ph0 > 9.0:
                 # v0.5.0 X-26：碱储备上限只能由**热力学可能的**自由碱授予。
                 # 账本里有 Ksp 阳离子时用与呈现层同一函数 `_presentation_He`
@@ -923,6 +921,29 @@ def _ksp_cations(T: Tables) -> frozenset:
     if _KSP_CATS is None:
         _KSP_CATS = frozenset(e["pair"][0] for e in T.ksp)
     return _KSP_CATS
+
+
+def solver_pH(ledger: dict, H_excess: float, V: float, T,
+              T_K: float) -> float:
+    """**求解器口径 pH 的唯一入口**（第 225 轮收敛重复的降级逻辑）。
+
+    原先"先试闭式快路径、失败再退回通用估计器"这段降级逻辑在本文件里
+    抄了多处（`_cls0` / `_cls` / `_cls_s`），任一处漏改就会产生
+    **又一种行为**——这正是"同一数值多套算法"的温床（使用者指出的问题）。
+
+    `closed_pH` 是**快路径**：无弱组分时闭式直出 `(pH, vled, He_res)`；
+    含弱组分时返回 `None` ⟹ 必须退回 `estimate_pH`（完整路径）。
+    两种调用的语义相同（`estimate_pH` 内部同样处理弱组分），故可安全合一。
+
+    **不可并入的其它 `closed_pH` 调用**（语义不同，勿合并）：
+    * L496 附近的：额外做弱组分检查并返回一个**闭包**（微步快通道）；
+    * L1586 附近的：降级分支还要同时算 `vled/He_v`（`_full_speciation`）；
+    * L646 附近的：只判"是否非 None"（纯探针，不取值）。
+    """
+    _cls = closed_pH(ledger, H_excess, V, T, T_K)
+    if _cls is not None:
+        return _cls[0]
+    return estimate_pH(ledger, H_excess, V, T, T_K)
 
 
 def judge(substances: list[dict], conditions: dict | None, T: Tables,
@@ -2256,9 +2277,7 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
     # 用呈现 pH 评残差就等于**换一个态**去质问求解器——旧口径下 104 例
     # "张力"里大部分是这类假象。故：`S` 一律在**求解器 pH** 上评（口径基准），
     # 呈现 pH 上的值单列 `S_pres` 供透明核对。
-    _cls_s = closed_pH(led, He_raw, V, T, T_K)
-    pH_solver = (_cls_s[0] if _cls_s is not None
-                 else estimate_pH(led, He_raw, V, T, T_K))
+    pH_solver = solver_pH(led, He_raw, V, T, T_K)
     H_excess = _presentation_He(led, He_raw, V, T, T_K)
     pH_f = presentation_pH(led, H_excess, V, T, T_K)
     # **枚举也必须用走步那一套 (He, pH)**（v0.5.0 两侧同态，承 §7 X-9）：
