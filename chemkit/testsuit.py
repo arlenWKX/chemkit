@@ -848,14 +848,127 @@ def _perf_report() -> None:
             print(f"    #{idx:<5d} {v:9.1f} ms  {nm}")
 
 
-def main(cases_path: str | None = None, out_path: str | None = None) -> int:
+def _par_init():
+    """并行 worker 启动：自己载表 + **预热**。
+
+    `spawn` 下 worker 不继承父进程状态 ⟹ 必须自己载表（实测 182 ms）。
+    **预热不可省**（第 206 轮实测）：否则每个 worker 的首个用例要独自承担
+    全部惰性缓存构建，使套件最靠前的简单用例（`1 HCl+NaOH` 等）显示成
+    12~24 s —— 看着像算法病态，其实同一用例预热后只要 9~270 ms。
+    `main()` 本就有预热，并行路径必须一致，否则"最慢用例"榜被冷启动污染。
+    """
+    global _PAR_T
+    _T = load_tables()
+    judge([{"name": "NaCl", "mol": 0.1}], {"V_L": 1.0}, _T)
+    _PAR_T = _T
+
+
+_PAR_T = None
+
+
+def _par_run(case: dict):
+    """并行 worker：跑单个用例，回传 (name, ok, ms, errors, result_dict)。
+
+    与 `run_case` 共用同一份判定逻辑（**不复制**）：清空 worker 内的全局
+    残余，调用 `run_case` 取本次追加的失败项与 RESULTS 条目，再把全局复原。
+    """
+    global PASS_N
+    name = case["name"]
+    n_f0, n_r0, n_p0 = len(FAILS), len(RESULTS), PASS_N
+    t0 = time.time()
+    try:
+        ok = run_case(case, _PAR_T, verbose=False)
+    except Exception as exc:                                # noqa: BLE001
+        ok = False
+        FAILS.append(name)
+        RESULTS.append({"index": 0, "name": name, "ok": False,
+                        "ms": round((time.time() - t0) * 1000, 2),
+                        "errors": [f"运行异常 {type(exc).__name__}: {exc}"],
+                        "note": case.get("note") or "", "pH": None,
+                        "degree": None, "changed": None,
+                        "annotations": [], "net_equation": None})
+    ms = round((time.time() - t0) * 1000, 2)
+    errs = list(FAILS[n_f0:])
+    rec = dict(RESULTS[n_r0]) if len(RESULTS) > n_r0 else None
+    if rec is not None:
+        rec["ms"] = ms
+    # 复原 worker 全局，避免跨用例串味
+    del FAILS[n_f0:]
+    del RESULTS[n_r0:]
+    PASS_N = n_p0
+    return (name, bool(ok), ms, errs, rec)
+
+
+def run_cases_parallel(cases: list[dict], jobs: int) -> tuple[int, float]:
+    """并行跑用例，把结果**按原顺序**填入 RESULTS/TIMES/FAILS/PASS_N。
+
+    返回 (通过数, 墙钟秒)。用例之间互相独立（各跑自己的 judge），
+    故并行安全；已实测**逐例结果（通过性 + 错误文本）与串行完全一致**。
+    """
+    global PASS_N
+    from concurrent.futures import ProcessPoolExecutor
+    if jobs <= 1:
+        raise ValueError("jobs<=1 应走串行分支")
+    # 长尾负载均衡：**先跑慢例**（静态排序表；没有表就按原顺序）。
+    # 实测最慢单例 ~20 s，若落到最后启动，墙钟直接被它拖住。
+    order = list(range(len(cases)))
+    slow = _SLOW_FIRST
+    if slow:
+        rank = {n: i for i, n in enumerate(slow)}
+        order.sort(key=lambda i: rank.get(cases[i]["name"], len(rank)))
+    t0 = time.perf_counter()
+    got: dict[int, tuple] = {}
+    with ProcessPoolExecutor(max_workers=jobs,
+                             initializer=_par_init) as ex:
+        futs = {ex.submit(_par_run, cases[i]): i for i in order}
+        from concurrent.futures import as_completed
+        for fu in as_completed(futs):
+            got[futs[fu]] = fu.result()
+    wall = time.perf_counter() - t0
+    PASS_N = 0
+    for i, c in enumerate(cases):
+        _nm, ok, ms, errs, rec = got[i]
+        if rec is None:
+            rec = {"index": i + 1, "name": c["name"], "ok": bool(ok),
+                   "ms": ms, "errors": errs, "note": c.get("note") or "",
+                   "pH": None, "degree": None, "changed": None,
+                   "annotations": [], "net_equation": None}
+        rec["index"] = i + 1
+        RESULTS.append(rec)
+        TIMES.append((ms / 1000.0, c["name"]))
+        if ok:
+            PASS_N += 1
+        else:
+            FAILS.append(c["name"])
+    return PASS_N, wall
+
+
+# 已知慢例（按经验排序，仅用于并行**调度**，不影响判定）。数值来自
+# `tools/suite_parallel.py` 的逐例留档；表过期只会让负载均衡变差，不会错判。
+_SLOW_FIRST = (
+    "Y05 BaCl2+Na2SO3 白沉", "Z07 MnS+醋酸 溶解",
+    "N19 Na[Al(OH)4]+CO2过量", "Z04 Ag+稀硝酸 放NO",
+    "Cu31 CuSO4+NaCl+Cu 还原", "X10 Cu+Hg(NO3)2 置换",
+    "Amp14 AlCl3+少量NaOH", "M01 AlCl3+少量NaOH",
+)
+
+
+def main(cases_path: str | None = None, out_path: str | None = None,
+         jobs: int = 1) -> int:
     T = load_tables()
     judge([{"name": "NaCl", "mol": 0.1}], {"V_L": 1.0}, T)   # 预热：模板/缓存冷启动不计入首例
     TIMES.clear()
     RESULTS.clear()
     FAILS.clear()
-    for c in load_cases(cases_path):
-        run_case(c, T)
+    _cases = load_cases(cases_path)
+    if jobs and jobs > 1:
+        global _PAR_T
+        _PAR_T = T                       # 串行分支复用
+        n_ok, wall = run_cases_parallel(_cases, jobs)
+        print(f"[并行 {jobs} workers] 墙钟 {wall:.1f}s")
+    else:
+        for c in _cases:
+            run_case(c, T)
     CHECKS.clear()
     for _nm, _fn in (("T_range", lambda: case_T_range(T)),
                      ("acidbase", lambda: acidbase_check(T)),

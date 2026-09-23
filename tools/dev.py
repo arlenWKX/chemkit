@@ -126,8 +126,9 @@ def _banner(verb: str) -> None:
 
 
 # --------------------------------------------------------------- suite
-def cmd_suite(prefixes: list[str], keep: int = 40) -> int:
-    _banner("suite" + (f" {' '.join(prefixes)}" if prefixes else "（全量）"))
+def cmd_suite(prefixes: list[str], keep: int = 40, jobs: int = 1) -> int:
+    _banner("suite" + (f" {' '.join(prefixes)}" if prefixes else "（全量）")
+            + (f"  jobs={jobs}" if jobs > 1 else ""))
     from chemkit import testsuit
     tmp = None
     if prefixes:
@@ -142,12 +143,13 @@ def cmd_suite(prefixes: list[str], keep: int = 40) -> int:
         print(f"[子集] {len(cases)} 例")
     buf = io.StringIO()
     with redirect_stdout(buf):
-        rc = testsuit.main(tmp, None)
+        rc = testsuit.main(tmp, None, jobs=jobs)
     out = buf.getvalue()
     lines = out.split("\n")
     for ln in lines:                      # 摘要 + 结论行（其余明细丢弃）
         if ln.startswith("=====") or ln.startswith("失败:") \
-                or ln.startswith("总耗时") or "环闭合" in ln:
+                or ln.startswith("总耗时") or ln.startswith("[并行") \
+                or "环闭合" in ln:
             print(ln[:400])
     bad = [r for r in testsuit.RESULTS if not r.get("ok")]   # 失败明细（套件本体不打）
     # **结构化留档**（第 146 轮）：一次运行把逐例结果全量落盘，后续用工具/程序
@@ -582,7 +584,15 @@ def main(argv: list[str]) -> int:
     if verb == "guide":
         return cmd_guide()
     if verb == "suite":
-        return cmd_suite(args)
+        jobs = 1
+        for a in rest:
+            if a.startswith("--jobs="):
+                jobs = max(1, int(a.split("=", 1)[1]))
+        # 默认并行（第 206 轮合并：8 worker 实测 111s -> 60s，逐例结果逐位一致）。
+        # `--jobs=1` 强制串行（调试用）；`--jobs=N` 指定。
+        if not any(a.startswith("--jobs") for a in rest):
+            jobs = max(1, min(8, (os.cpu_count() or 1)))
+        return cmd_suite(args, jobs=jobs)
     if verb == "perf":
         base = (args[0] if args and args[0].endswith(".json")
                 else "converg-baseline.json")
