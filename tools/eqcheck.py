@@ -11,6 +11,13 @@ from fractions import Fraction as F
 
 sys.path.insert(0, ".")
 
+# Windows 控制台默认 GBK，`✓/✗/⟹` 会 UnicodeEncodeError 直接崩掉工具
+# （本轮就踩了一次：跑到一半抛异常，0 违规的结论读不出来）。
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 from chemkit.core import charge_of, elements_of   # noqa: E402
 
 
