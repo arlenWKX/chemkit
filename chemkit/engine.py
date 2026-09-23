@@ -488,6 +488,9 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
     # 视为弱组分在场（保守方向：宁可走完整路径）。闭式时 f(x) 跳过全套
     # estimate_state（滴定+分支扫描——二分的最大热点），led_v 直接取
     # led_work 身份（与完整路径无滴定时的返回身份一致，_logc 缓存衔接）。
+    # `_ph_closed = None` 是**有意义的默认值**（不是死赋值）：L520/L567/L593
+    # 都用 `_ph_closed is None` 判定"闭式快路径是否成立"，闭式不成立时
+    # 必须存在该名字。pyflakes 会报 redefinition，此处属误报，勿删。
     _ph_closed = None
     if _need_ph:
         _cls = closed_pH(ledger, H_excess, V, T, T_K)
@@ -1115,7 +1118,6 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 仲裁已完成，活动子集的联立不动点 ≠ 仲裁点，跳步=语义翻案，
     # Co32/Co33/T34/Fe33 四例翻车；J06 型欠收敛真因是 pH 滴定端点悬崖。）
     _joint_crawl_last = -32
-    _joint_idle_sig = None
     _joint_fires = 0
     _joint_blacklist: set = set()   # 失败循环签名（canonical keys 排序元组）
 

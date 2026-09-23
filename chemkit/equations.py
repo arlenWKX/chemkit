@@ -24,7 +24,7 @@ _TRACE_EQ = bool(_os.environ.get("CHEM_TRACE_EQ"))
 
 from dataclasses import dataclass
 
-from .candidates import WATER, H_ION, X_MIN, ANN_MIN_EXTENT
+from .candidates import (WATER, H_ION, OH_ION, X_MIN, ANN_MIN_EXTENT)
 
 from .data import load_tables as _load_tables
 
@@ -66,9 +66,8 @@ _SPECIES_NORMALIZE = {
 _TERM_RE = re.compile(r"^(\d+(?:\.\d+)?)(\D.*)$")
 _SIDE_SEP = " + "
 
-WATER = "H_2O"
-H_ION = "H^+"
-OH_ION = "OH^-"
+# WATER / H_ION / OH_ION 一律从 `candidates` 导入（第 203 轮合并：此处原
+# 重写了三份字面量，与 candidates/acidbase 的同名常量重复）。
 
 
 def _parse_side(s: str) -> dict[str, float]:

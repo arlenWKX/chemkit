@@ -54,9 +54,9 @@ from __future__ import annotations
 from math import log10, sqrt
 
 from .core import pKw_of, _vant, charge_of, elements_of
-from .candidates import WATER, H_ION
+from .candidates import WATER, H_ION, OH_ION
 
-OH_ION = "OH^-"
+# OH_ION 亦从 candidates 导入（第 203 轮合并：此处原又写了一遍 "OH^-"）。
 PH_LO = -1.5                    # pH 搜索域下界（浓酸可到 −1）
 
 

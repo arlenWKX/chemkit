@@ -117,17 +117,21 @@ def _redox_pair_static(T):
                 kin = c.get("kinetics")
                 if kin and partner["red"] in kin.get("closed_with_red", ()):
                     closed_red = True
-                # pH 条件化封闭（§7 X-35 第 51 轮）：速率论断依赖介质，
-                # pH **高于**阈值时对该还原剂封闭、酸性侧照旧。
-                # 事实依据（两条用例互为对照）：Eu²⁺ 在酸性介质迅速还原
-                # H⁺ 析氢（EU05，pH 1.3），在近中性介质被动力学稳定
-                # （EU01，pH≈6，可稳定数小时）；无条件封闭会把 EU05
-                # 一起封死（round 36 实测回退）。
-                if kin:
-                    for _r, _pth in kin.get("closed_with_red_above_pH",
-                                            {}).items():
-                        if partner["red"] == _r and pH > _pth:
-                            closed_red = True
+                # **已删除的死分支（第 203 轮清理）**：此处原有
+                #   for _r, _pth in kin.get("closed_with_red_above_pH", {}).items():
+                #       if partner["red"] == _r and pH > _pth: closed_red = True
+                # 三点使它永远是死代码且含**未定义名**：
+                #  ① `_redox_pair_static(T)` 是**静态**预解析，作用域内没有
+                #     `pH`（pyflakes: undefined name 'pH'）⟹ 一旦执行必 NameError；
+                #  ② `closed_with_red_above_pH` **不在** `data.py` 的键白名单里
+                #     （见 data.py L140-145），早已被静默丢弃进 `kinetics_all`，
+                #     永远到不了这里 ⟹ 该分支从未执行过；
+                #  ③ `data.py` L144-145 明写**不要**把它接回去：这条分支在本层
+                #     求值会把 pH 判据冻进 (T_K, kinetics) 缓存（本函数按该键
+                #     缓存模板），pH 随时间变化时给出错误结果。
+                # 结论：删掉比留着安全（留着 = 一个随时可能被"修复"成 NameError
+                # 的陷阱）。若将来要做 pH 条件化封闭，必须放到
+                # `enumerate_candidates` 的**动态层**（那里有真 pH），而不是这里。
             if skip:
                 continue
             # only_vs_red 温度闸门预解析（T_min 对指定还原剂生效，

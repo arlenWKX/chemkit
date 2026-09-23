@@ -110,6 +110,10 @@ def _half_scale(c: dict) -> float:
     return scale
 WATER = "H_2O"
 H_ION = "H^+"
+# 水的三种"溶剂/离子"哨兵名。**唯一定义处**（第 203 轮合并）：此前
+# `equations.py` L69-71 与 `acidbase.py` L59 各自又写了一遍字面量，
+# 同一个量出现三份定义——改一处漏两处。所有模块一律从这里 import。
+OH_ION = "OH^-"
 WATER_MOL_PER_L = 55.6
 # 浓溶液中以分子态记账的强酸（HCl 任何浓度全电离，不在此列——原条目永不命中，已移除）
 STRONG_MOLECULAR_ACIDS = {"H_2SO_4": 2, "HNO_3": 1}

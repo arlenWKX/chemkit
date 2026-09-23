@@ -451,7 +451,8 @@ def acidbase_check(T: Tables) -> int:
             logw.append(acc)
         mx = max(logw)
         ws = [10.0 ** (v - mx) for v in logw]
-        sw = sum(ws)
+        # 注：此处原有 `sw = sum(ws)`——**死变量**，从未被消费（第 203 轮清理）。
+        # 比值用 ws 的两项直接相除，`mx` 平移已在比值中相消 ⟹ 归一化本来就不需要。
         got = ws[order.index(b)] / ws[order.index(a)]
         want = 10.0 ** (pH_ref - pka)
         if abs(got / want - 1.0) > 0.02:
