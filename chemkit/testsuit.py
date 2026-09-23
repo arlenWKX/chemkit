@@ -247,7 +247,12 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
     name = c["name"]
     subs = [{"name": n, "mol": m} for n, m in c["subs"]]
     t0 = time.time()
-    r = judge(subs, c.get("cond") or {"V_L": 1.0}, T)
+    # 探针（收敛画像）顺带取回：`judge` 本来只多填一个 dict，成本可忽略；
+    # 存到模块级供并行 worker 回传（第 214 轮），避免为拿残差再跑一遍 judge。
+    _pr: dict = {}
+    r = judge(subs, c.get("cond") or {"V_L": 1.0}, T, _probe=_pr)
+    _LAST_PROBE.clear()
+    _LAST_PROBE.update(_pr)
     TIMES.append((time.time() - t0, name))
     errs = []
     # 量值校验统一用 最终态∪产物 的合并视图
@@ -783,6 +788,9 @@ def write_report(path: str, extra: dict | None = None) -> str:
     over100 = [{"index": i + 1, "name": r["name"], "ms": r["ms"]}
                for i, r in enumerate(RESULTS) if r["ms"] > PERF_EDGES[3]]
     over100.sort(key=lambda x: -x["ms"])
+    # 质量口径（第 214 轮）：并行路径也把探针带来的收敛残差写进留档，
+    # 于是"通过性 + 耗时 + 残差 + 归因"一份 JSON 齐备 ⟹ 不必再跑来换信息。
+    _enrich_results_with_probe(RESULTS, _PROBES)
     doc = {
         "meta": {
             "at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -864,13 +872,25 @@ def _par_init():
 
 
 _PAR_T = None
+# 并行路径收集的探针（收敛画像），供 write_report 落盘 `resid_live` 等
+# 质量口径字段——否则并行留档只有通过性/耗时，残差还得另跑 converg（第 214 轮）。
+_PROBES: dict = {}
+# `run_case` 每次调用会把本次 judge 的探针存到这里（`_probe` 传入），
+# 并行 worker 取走后再回传父进程。**避免了并行路径重复调用 judge**
+# （第 214 轮踩到：为拿 probe 又调一次 judge，墙钟直接翻倍到 108s）。
+_LAST_PROBE: dict = {}
 
 
 def _par_run(case: dict):
-    """并行 worker：跑单个用例，回传 (name, ok, ms, errors, result_dict)。
+    """并行 worker：跑单个用例，回传 (name, ok, ms, errors, result_dict, probe)。
 
     与 `run_case` 共用同一份判定逻辑（**不复制**）：清空 worker 内的全局
     残余，调用 `run_case` 取本次追加的失败项与 RESULTS 条目，再把全局复原。
+
+    **第 214 轮：同时回传 `probe`**（`judge(..., _probe=...)` 的收敛画像）。
+    此前并行路径丢弃 probe ⟹ `resid_live`（质量口径）拿不到，只能另跑
+    `converg` 串行全量。现在一份留档同时含：通过性、耗时、**与收敛残差**，
+    满足"跑一次、读多次"。probe 只含 float/list/dict，跨进程可 pickle。
     """
     global PASS_N
     name = case["name"]
@@ -878,6 +898,7 @@ def _par_run(case: dict):
     t0 = time.time()
     try:
         ok = run_case(case, _PAR_T, verbose=False)
+        errs = list(FAILS[n_f0:])
     except Exception as exc:                                # noqa: BLE001
         ok = False
         FAILS.append(name)
@@ -892,11 +913,10 @@ def _par_run(case: dict):
     rec = dict(RESULTS[n_r0]) if len(RESULTS) > n_r0 else None
     if rec is not None:
         rec["ms"] = ms
-    # 复原 worker 全局，避免跨用例串味
     del FAILS[n_f0:]
     del RESULTS[n_r0:]
     PASS_N = n_p0
-    return (name, bool(ok), ms, errs, rec)
+    return (name, bool(ok), ms, errs, rec, _LAST_PROBE)
 
 
 def run_cases_parallel(cases: list[dict], jobs: int) -> tuple[int, float]:
@@ -926,8 +946,12 @@ def run_cases_parallel(cases: list[dict], jobs: int) -> tuple[int, float]:
             got[futs[fu]] = fu.result()
     wall = time.perf_counter() - t0
     PASS_N = 0
+    global _PROBES
+    _PROBES = {}
     for i, c in enumerate(cases):
-        _nm, ok, ms, errs, rec = got[i]
+        _nm, ok, ms, errs, rec, probe = got[i]
+        if probe:
+            _PROBES[c["name"]] = probe
         if rec is None:
             rec = {"index": i + 1, "name": c["name"], "ok": bool(ok),
                    "ms": ms, "errors": errs, "note": c.get("note") or "",
@@ -953,6 +977,39 @@ _SLOW_FIRST = (
 )
 
 
+def _enrich_results_with_probe(results: list, probes: dict) -> None:
+    """把并行收集的探针（收敛画像）并进逐例结果，**原地**改 `results`。
+
+    产出字段（质量口径，与 `converg._live` 同一函数，口径只此一处）：
+      `resid_live`（值得解且 walk 会解的两侧平衡最大 |S|）、`resid_max`、
+      `iters`、`exit`、`pH_solver`、`resid_src_eq/kind`（残差归因）。
+    这样一份 `logs/suite-latest.json` 同时含通过性、耗时、残差与归因 ⟹
+    **不必为看残差另跑 converg 串行全量**（第 214 轮动因）。
+    """
+    if not probes:
+        return
+    try:
+        from .converg import _live
+    except Exception:                                       # noqa: BLE001
+        return
+    for r in results:
+        p = probes.get(r["name"])
+        if not p:
+            continue
+        try:
+            act = p.get("active") or []
+            src = p.get("resid_src") or {}
+            r["resid_live"] = _live(act)
+            r["resid_max"] = p.get("max_abs_S")
+            r["iters"] = p.get("iters")
+            r["exit"] = p.get("exit")
+            r["pH_solver"] = p.get("pH_solver")
+            r["resid_src_eq"] = src.get("eq")
+            r["resid_src_kind"] = src.get("kind")
+        except Exception:                                   # noqa: BLE001
+            continue
+
+
 def main(cases_path: str | None = None, out_path: str | None = None,
          jobs: int = 1) -> int:
     T = load_tables()
@@ -969,6 +1026,11 @@ def main(cases_path: str | None = None, out_path: str | None = None,
     else:
         for c in _cases:
             run_case(c, T)
+    # ===== 质量口径富化（第 214 轮）：把探针带来的收敛残差并进逐例结果 =====
+    # 放在 `main` 里（而不是只放 `write_report`）——`dev.py suite` 调用的是
+    # `main(tmp, None)`，`out_path=None` 时 `write_report` 根本不执行，
+    # 而 `dev.py` 直接 dump `RESULTS` ⟹ 只写 write_report 会**静默丢失**。
+    _enrich_results_with_probe(RESULTS, _PROBES)
     CHECKS.clear()
     for _nm, _fn in (("T_range", lambda: case_T_range(T)),
                      ("acidbase", lambda: acidbase_check(T)),
