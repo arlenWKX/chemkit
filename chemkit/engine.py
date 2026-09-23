@@ -616,7 +616,43 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
         for _s, _d, _o in changing:
             _led_hi[_s] = max(0.0, _o + _d * x_max)
         _pin_hi = _pin_adopted(_led_hi, H_excess + nu_H * x_max)
-        _pin_mode = _pin_entry and _pin_hi
+        # **第 266 轮：两端不一致时要分两种成因**（原实现一律回退启发式）。
+        #
+        # 实测（`tools/cliff_census.py` 全库 63,425 次 `solve_extent`）：
+        # "候选评估用的 pH"与"求解器在 x=0 用的 pH"不一致（>0.05）的有
+        # **5,862 次 (9.242%)**，且 **⟺ `entry ∧ ¬hi`**（模型吻合 99.953%，
+        # 见 `tools/pin_hi_why.py`）。后果是同一迭代里两个口径：
+        # 评估在主循环 pH 上看到 S>0"有驱动"，求解器在冻结口径上看到 S≈0
+        # ⟹ `x*≈0` ⟹ 零推进（lessons **D2** 的字面实例）。
+        #
+        # `_pin_hi` 为 False 有**两种成因，处置必须不同**：
+        #   ① hi 端**储库（该阳离子的 Ksp-OH 固相）已不在场** ⟹ 钉住前提真的
+        #      失效，整步回退启发式 —— 这是 D14 的原意，`B26` 即此例
+        #      （"rec5 入口有固相、x_max 固相溶完"；把这一档也冻结到入口
+        #      会让它把 `Fe(OH)₃` 变成 `Fe₂O₃`，化学直接错）。
+        #   ② 储库**仍在场**、只是 `charge_pH(pinned)` 那边另有原因没被采用
+        #      ⟹ 钉住前提**整步成立**，此时冻结到**入口口径**才是对的：
+        #      求解器在 x=0 用的就是评估用的那个口径，两个口径合一。
+        # 证据（`tools/pin_hi_why.py` 逐段分类，"hi 端固相在/没了"）：
+        #   改善例 `E55` **95/95 全在**、`Amp14` 951 在 / 194 没了、
+        #   `M01` 516 在 / 130 没了；变差例 `EU01` 22 在 / **96 没了**、
+        #   `B26` 9 在 / 8 没了 ⟹ 判据能把两类分开。
+        # **再收窄到非 redox 步**：引擎自己已把 redox 候选的 S 评估特殊化
+        # 到虚拟账本（L1653-1658："redox 候选的驱动力对强酸/强碱下的自由形态
+        # 敏感"）⟹ redox 步的 pH 口径耦合与沉淀/质子步不同；实测宽版会让
+        # 两个 Eu²⁺ 氧化还原竞争用例翻红（`EU01`/`EU02`），而它们与
+        # 本判据要修的"两性金属 Ksp 储库"族无关。
+        if _pin_entry and not _pin_hi and c.kind != "redox":
+            _oh = getattr(T, "_ksp_oh_pairs", None)
+            if _oh is None:
+                _oh = T._ksp_oh_pairs = tuple(
+                    (e["pair"][0], e["solid"]) for e in T.ksp
+                    if e["pair"][1] == "OH^-")
+            _pin_mode = any(_led_hi.get(_cc, 0.0) > 0.0
+                            and _led_hi.get(_ss, 0.0) > X_MIN
+                            for _cc, _ss in _oh)
+        else:
+            _pin_mode = _pin_entry and _pin_hi
     # f 求值间的浓度对数缓存：led_work 仅 changing 物种随 x 变化，
     # 其余物种的 log10(c/V) 在整个二分期间不变——按物种记忆、逐次失效
     # changing 条目（值与逐次计算 bit 级一致）
