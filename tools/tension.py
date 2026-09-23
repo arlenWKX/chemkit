@@ -27,9 +27,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from chemkit.candidates import ANN_MIN_EXTENT, WATER, X_MIN   # noqa: E402
 from chemkit.data import load_tables                          # noqa: E402
-from chemkit.engine import (judge, solve_extent, S_of,        # noqa: E402
+from chemkit.engine import (RESID_FROZEN_TOL, judge, solve_extent, S_of,        # noqa: E402
                             _respeciate_strong_acids, _presentation_He,
-                            _fmt)
+                            resid_live_ok, _fmt)
 from chemkit.speciation import estimate_pH                    # noqa: E402
 from chemkit.templates import enumerate_candidates            # noqa: E402
 from chemkit.testsuit import load_cases                       # noqa: E402
@@ -37,7 +37,12 @@ from chemkit.testsuit import load_cases                       # noqa: E402
 
 def _why(a: dict) -> str:
     if a["frozen"]:
-        return "frozen（引擎宣告平衡止震）"
+        # X-38：冻结**只有在真的接近平衡时**才算"宣告平衡"；冻结在强驱动上
+        # 是"把问题藏起来"，必须与"已达平衡"分开显示（resid_live_ok 的判据）。
+        if abs(a.get("S", 0.0)) > RESID_FROZEN_TOL:
+            return (f"**冻结在强驱动上**（|S|={abs(a['S']):.3g} > "
+                    f"RESID_FROZEN_TOL={RESID_FROZEN_TOL}，X-38 病根一）")
+        return "frozen（引擎宣告平衡止震，|S| 在容差内）"
     if a.get("slow"):
         return "slow（动力学标注）"
     if a.get("blocked"):
@@ -80,9 +85,7 @@ def main() -> None:
         judge(subs, cond, T, _probe=probe)
         if not probe or not probe.get("active"):
             continue
-        act = [a for a in probe["active"] if a["two_sided"]
-               and not a["frozen"] and not a.get("slow") and not a.get("blocked")
-               and a.get("ext_max", 9e9) >= ANN_MIN_EXTENT]
+        act = [a for a in probe["active"] if resid_live_ok(a)]
         if not act:
             continue
         top = max(act, key=lambda a: abs(a["S"]))

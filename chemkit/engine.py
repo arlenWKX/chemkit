@@ -77,6 +77,8 @@ _NO_DRAIN = bool(_os.environ.get("CHEM_NO_DRAIN"))
 # 用途：把第 272 轮的收益与代价**逐例归因**——某例变差究竟是重建引起的，
 # 还是走步轨迹被动改变引起的。默认关 = 现行为。
 _NO_FORM_REBUILD = bool(_os.environ.get("CHEM_NO_FORM_REBUILD"))
+# 第 274 轮实验开关：关掉"周期解冻复核"（只保留退出闸解冻）。
+_PERIODIC_REVIVE = _os.environ.get("CHEM_NO_PERIODIC_REVIVE", "1") != "0"
 
 # ---- 共轭形态重建的起火普查（仅 tools/ 诊断启用；生产路径恒为 None）------
 # 每次重建记一条 {s, p, ka, base, pH, tot, c, eq, floor_logc}。用途：把
@@ -85,6 +87,13 @@ _NO_FORM_REBUILD = bool(_os.environ.get("CHEM_NO_FORM_REBUILD"))
 # "与重建有关"，说不出是哪一条把走步点燃的）。
 FORM_AUDIT: list | None = None
 _FORM_CUR = None            # 当前求值的候选（仅 FORM_AUDIT 非空时被读）
+
+# ---- 冻结守卫的"为什么没认作强驱动"普查（仅 tools/ 诊断启用）-----------
+# `_strong_keys` 有 7 条 `continue`，任一条命中都会让一个真有驱动力的通道
+# 变成"可冻结"⟹ 被冻成"已平衡"（X-38 病根一）。`H35` 的
+# `CaCO_3 + 2H^+ -> Ca^{2+} + CO_2`（|S|=11.094、求解器判"已执行"）
+# 正是这样被藏起来的，必须知道是哪一条滤掉的。
+FREEZE_AUDIT: list | None = None
 
 # B4 判据的"纯形态变化"类（proton/dissolve/complex/decomplex）：逐步 `chem`
 # 标记与 `reacted` 判据共用同一份定义（§7 X-19），避免两处口径漂移。
@@ -1325,11 +1334,30 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # ① 冻结时该通道就在错处（|S| 大）；② 冻结时它确实近平衡，但**后续步把状态
     # 带走了**而冻结是永久的 ⟹ 宣告失效。只写不读（除探针导出），零行为影响。
     _frozen_at: dict = {}
+    # **第 274 轮：解冻的"终身额度"全部取消，成本由复核节奏承担**。原实现
+    # 两个计数器各自全局封顶 12（`_revive < _REVIVE_MAX` 与 `_expired_n < 12`），
+    # 语义上是"整条走步最多复核 12 次"。实测 `H35 Ca(HCO3)2 加热 353K`
+    # （324 步、8 个冻结键）：`CaCO_3 + 2H^+ -> Ca^{2+} + CO_2` 在强/弱之间
+    # 来回（`tools/freeze_why.py --eq=…` 轨迹：9.961 → 0.021 → 9.407 →
+    # 0.000 → 5.693 → 0.218 …），**弱相位里被冻结**，之后涨回 |S| = 11.094
+    # 却再也无人复核 —— 12 次额度**在状态长出强驱动之前就被别的键花光**，
+    # 引擎于是对自己撒谎（X-38 病根一"冻结在强驱动上属把问题藏起来"）。
+    #
+    # **额度是纯害**（全量实测，`docs`/log 第 274 轮，基准 r273b 质量 162.796）：
+    #   逐键 1 → 通过 1201 / 质量 251.911（+89.1）
+    #   逐键 2 → 通过 1203 / 质量 181.365（+18.6）
+    #   逐键 8 → 通过 1205 / 质量 169.644（+6.85）
+    #   无上限 → 通过 1205 / 质量 164.311（**+1.52**）且 `n(|S|>0.1)` 196→**182**
+    # **单调**：额度越松，每一项指标越好（含墙钟 59→53.5 s）⟹ 它不是"成本闸
+    # 的判据"，只是**永久失明**。成本的真实来源是 `_strong_keys()` 的枚举，
+    # 而它由**复核节奏**（每 16 个实质步一次，见 `_frz_reval`）决定，
+    # 走步长度本身已受 `MAX_ITER` 约束 ⟹ 不需要任何终身额度。
+    #
+    # 反面对照（同样实测，**别再试**）：只保留退出闸解冻、关掉周期复核
+    # （`CHEM_NO_PERIODIC_REVIVE=0`）→ 通过 1199（−4）、质量 259.810（+97.0）
+    # ⟹ **周期复核是主力**，退出闸只作最后一道。
     _frz_reval = 0            # 上次"冻结有效期复核"的步序号（见 _exec 之后）
-    _revive = 0               # 退出闸里"解冻强驱动键继续走"的次数
-    _expired_n = 0            # 周期复核作废冻结的次数（上限见下）
-    _REVIVE_MAX = 12          # 成本闸已换成判据（零推进键不入强键集），
-    #                           上限只作最后防线
+    _revive = 0               # 解冻复核**实际解冻**的次数（诊断用，无上限）
     # 慢标注采样节奏记忆：(key, d) -> 上次阈值下评的 hist 位点。
     # 原实现 slow_seen 恒 False 的体系（慢通道永不可达显著量）每迭代对
     # 全部慢候选重解（Fe31：104 迭代×12 候选=1209 次 solve_extent，占
@@ -1595,6 +1623,21 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         的键：`|S|` 大而 `ext_max ≈ 0` 是**痕量伪驱动**（引擎注释即此，D38 型），
         把它算进来只会让退出闸空转。度量与质量口径 `resid_live_ok` 同一把尺子。"""
         out = set()
+
+        def _skip(cc, dd, why: str, sval=None) -> None:
+            """**第 274 轮**：记录"某个强驱动候选为什么没被认作强驱动"。
+            生产路径 `FREEZE_AUDIT is None` ⟹ 零成本。用途：`H35` 的
+            `CaCO_3 + 2H^+ -> Ca^{2+} + CO_2` 是 |S| = 11.094 的**强驱动**，
+            却被冻结（`tools/tension.py` 报"冻结在强驱动上"，X-38 病根一）
+            ⟹ 必须知道 `_strong_keys` 里**哪一条**把它滤掉了。"""
+            if FREEZE_AUDIT is not None:
+                FREEZE_AUDIT.append({
+                    "eq": (" + ".join(f"{_fmt(nu)}{s}" for s, nu in cc.r.items()
+                                      if s != WATER) + " -> "
+                           + " + ".join(f"{_fmt(nu)}{s}" for s, nu in cc.pr.items()
+                                        if s != WATER)),
+                    "kind": cc.kind, "dir": dd, "why": why, "S": sval})
+
         # **逐方向**判在场（X-38 病根三）：`_joint_collect` 要求两侧都在场
         # （那是**质量口径**的语义：单侧在场=正常终态，不算残差），而冻结守卫
         # 要问的是"走步还能不能动它"——E26 实测：`[Fe(OH)]²⁺ + H⁺ → Fe³⁺`
@@ -1603,12 +1646,14 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         # Fe(III)（偏离水解平衡 75 倍）而自报 max|S| = 0.001 的态上。
         for c in cands:
             if kinetics and (c.meta.get("slow") or c.meta.get("deferred")):
+                _skip(c, 0, "kinetics")
                 continue
             if (c.kind == "redox" and c.meta.get("ox_couple") == H_ION
                     and blocked_solids
                     and any(s in blocked_solids
                             for s in list(c.r) + list(c.pr)
                             if s not in (WATER, H_ION))):
+                _skip(c, 0, "blocked_membrane")
                 continue
             ps = c.pres_specs
             nk_c = (c.netkey_fwd if c.netkey_fwd <= c.netkey_rev
@@ -1618,13 +1663,17 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             # 139 次冻结 / 1614 步）。
             if any("零推进" in str((dis_why.get((c.key, dd)) or ("",))[0])
                    for dd in (1, -1)):
+                _skip(c, 0, "zero_progress")
                 continue
             S_f = None
+            _any_dir = False
             for dd in (1, -1):
                 # 驱动方向的反应物必须在场（与 pick 循环同口径）
                 if not all(ledger.get(s, 0.0) > X_MIN
                            for s in (ps[0] if dd > 0 else ps[1])):
+                    _skip(c, dd, "no_reactant")
                     continue
+                _any_dir = True
                 if S_f is None:
                     S_f = S_of(c, ledger, V, pH, T_K, T, gsup, p_ext_kpa,
                                gas_escape, logc)
@@ -1634,6 +1683,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 # （EU01 的 `2H⁺+2Eu²⁺ → H₂+2Eu³⁺` |S|=16.2 被解冻后
                 # Eu²⁺ 0.1 → 0.0751）。冻结在这里是"时间到了"的正确表达。
                 if _rate_eta(c, dd, T, pH) is not None:
+                    _skip(c, dd, "rate_eta", Sd)
                     continue
                 # 单侧在场（另一侧缺席）时抬高门槛：见 FREEZE_MAX_S_1SIDE
                 _oth = ps[1] if dd > 0 else ps[0]
@@ -1646,17 +1696,51 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     # derived/precip/dissolve/proton）才保护——它们不执行
                     # 意味着**报告组成**是错的（E26 的 `[Fe(OH)]²⁺+H⁺ → Fe³⁺`
                     # S=+13.3 而 free Fe³⁺ 为 0）。
+                    _skip(c, dd, "redox_1side", Sd)
                     continue
                 if Sd <= (thr if _two else max(thr, FREEZE_MAX_S_1SIDE)):
+                    _skip(c, dd, "weak_S", Sd)
                     continue
                 dr = c.r if dd > 0 else c.pr
                 lim = [ledger.get(s, 0.0) / nu for s, nu in dr.items()
                        if s not in (WATER, H_ION) and nu > 0]
                 if not lim or min(lim) < ANN_MIN_EXTENT:
+                    _skip(c, dd, "trace_lim", Sd)
                     continue
+                if FREEZE_AUDIT is not None:
+                    _skip(c, dd, "**STRONG**", Sd)
                 out.add(nk_c)
                 break
+            if not _any_dir:
+                pass
         return out
+
+    def _try_revive() -> int:
+        """**唯一解冻入口**（第 274 轮重写）：把当前**仍是强驱动**的冻结键解冻。
+
+        **无终身额度**（见 `_frz_reval` 定义处的全量实测：额度越松，
+        每一项指标单调越好，含墙钟）——成本由**复核节奏**承担，
+        而不是由"整条走步最多解冻几次"承担；后者只会让状态长出强驱动
+        之后**永久失明**（`H35` 的 |S| = 11.094 即此，X-38 病根一）。
+        返回实际解冻的键数（0 = 本次无可解冻）。
+        """
+        nonlocal _revive
+        if not frozen_perm:
+            return 0
+        hit = [k for k in _strong_keys() if k in frozen_perm]
+        if not hit:
+            return 0
+        _revive += 1
+        for k in hit:
+            frozen_perm.discard(k)
+            frozen_perm.discard((k[1], k[0]))
+            _frozen_at.pop(k, None)
+            _frozen_at.pop((k[1], k[0]), None)
+        _diag["freeze_expired"] = _diag.get("freeze_expired", 0) + len(hit)
+        if _TRACE:
+            print(f'  [freeze-revive] {len(hit)} 个强驱动冻结键解冻'
+                  f'（第 {_revive} 次）')
+        return len(hit)
 
     def _freeze(keys, why: str) -> int:
         """**唯一冻结入口**（X-38 病根二）：强驱动键不冻，且记录冻结时刻。
@@ -2057,27 +2141,13 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 # 每 16 步一次的周期复核）；N30 则是冻结时通道还单侧在场。
                 # 退出前用同一把尺子复核：还有强驱动冻结键就解冻继续走——
                 # 宁可多走几步，也不许把非平衡当收敛交出去。上限
-                # `_REVIVE_MAX = 2` 防"零推进"型强键（S 强而 x*≈0，引擎自己的
-                # dis_why 分类）把走步拖成"冻↔解"churn——实测 Ni41 无上限时
-                # 139 次冻结 / 1614 步，而有上限的 N30/D14 依然一次到位。
-                if frozen_perm and _revive < _REVIVE_MAX:
-                    _st = _strong_keys()
-                    _hit = [k for k in _st if k in frozen_perm]
-                    if _hit:
-                        _revive += 1
-                        for k in _hit:
-                            frozen_perm.discard(k)
-                            frozen_perm.discard((k[1], k[0]))
-                            _frozen_at.pop(k, None)
-                            _frozen_at.pop((k[1], k[0]), None)
-                        _diag["freeze_expired"] = (
-                            _diag.get("freeze_expired", 0) + len(_hit))
-                        disabled.clear(); dis_why.clear()
-                        idle = 0
-                        if _TRACE:
-                            print(f'  [freeze-revive] {len(_hit)} 个强驱动'
-                                  f'冻结键解冻（第 {_revive} 次复核）')
-                        continue
+                # **第 274 轮**：解冻不再有任何终身额度（见 `_frz_reval`
+                # 定义处的全量实测：额度越松、每一项指标单调越好）。
+                # 解冻后**照原样落空**到下面的"第四触发点"（原实现即如此，
+                # 第 272 轮改写时曾误把它挪进 `_TRACE` 分支，已复原）。
+                if _try_revive():
+                    disabled.clear(); dis_why.clear()
+                    idle = 0
                 # ---- **第四触发点：停滞期联立**（第 236 轮，环境开关控制）----
                 # 现有三触发点（①②爬行 / ③社区 pH / ④净质子循环）**全部要求
                 # "近 24 步全微步(<0.02)"或"质子中性循环"**，而"零推进家族"
@@ -2303,19 +2373,12 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         # `frozen_perm` 是永久的：N30 冻于第 12 步、之后 96 步把状态带走，
         # 退出时该通道 |S| = 3.53（偏离平衡 3.5 个 log 单位）却无人复核。
         # 每 16 步用同一把尺子（_strong_keys）复核：涨过阈值者立即作废。
-        if (frozen_perm and len(hist) - _frz_reval >= 16
-                and _expired_n < 12):
+        # **第 274 轮**：复核**不再有次数上限**（原 `_expired_n < 12` 会在
+        # 状态长出强驱动之前把额度耗尽 ⟹ 永久失明，见 `_frz_reval` 定义处的
+        # 全量实测）。成本由本行的**节奏**（每 16 个实质步）承担。
+        if frozen_perm and len(hist) - _frz_reval >= 16 and _PERIODIC_REVIVE:
             _frz_reval = len(hist)
-            _expired_n += 1
-            for k in _strong_keys():
-                if k in frozen_perm:
-                    frozen_perm.discard(k)
-                    frozen_perm.discard((k[1], k[0]))
-                    _frozen_at.pop(k, None)
-                    _frozen_at.pop((k[1], k[0]), None)
-                    _diag["freeze_expired"] = _diag.get("freeze_expired", 0) + 1
-                    if _TRACE:
-                        print('  [freeze-expired]', k[0][:1])
+            _try_revive()
         # 极限环检测（仅在实质步后判定）：账本签名精确复现 ⇒ 确定性求解器
         # 进入零净推进循环，永久冻结窗口内全部净反应让其他通道接手；
         # 窗口为空（微步原地）则不动作，交由 disabled/微步机制处理
