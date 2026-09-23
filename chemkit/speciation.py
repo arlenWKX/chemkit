@@ -792,6 +792,40 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             e1s = [e for e in entries if e["n"] == 1] or entries
             pka = max(_pkapp(e, T_K) for e in e1s)           # 最强一级共轭酸
             bases_map[base] = 10.0 ** (pka - pKw)
+        # **两性金属的含氧酸根：先不改 `bases_map`**（第 275 轮否证，见下）
+        #
+        # 实测（`tools/branch4_src.py H43`）：`H43 AlCl3+NaOH 1:3.5` 的**呈现
+        # pH = 3.26**，而同一账本的电荷平衡精确解（引擎自己的 `pH_solver`）
+        # 是 **12.037**，与手算 12.03 逐位吻合。成因：分支 4 的 `o_c` 扫的是
+        # `rolemap`，而账本里 **0.845 M 的 `[Al(OH)_4]^-`** 在其中**没有角色**
+        # ⟹ `o_c` 看不见它 ⟹ 只剩痕量 `Al^{3+}`（0.031 M）撑起 `h_c = 3.2e-3`
+        # ⟹ 启发式以为这是酸液，选酸侧给 3.26。
+        #
+        # **第一版修法（把含氧酸根补进 `bases_map`）被全量实测否掉**：
+        # Kb 本身可由库内数据精确推出（`[M(OH)_k] ⇌ [M(OH)_{k-1}] + OH⁻`
+        # ⟹ Kb = β_{k-1}/β_k；中间级缺数据时退回固相 Kb = 1/(β_k·Ksp)，
+        # 校验 `[Al(OH)_4]^-` 得 Kb = 0.0316 ⟹ `Al(OH)₃ + OH⁻ ->
+        # [Al(OH)₄]⁻` 的 logK = **+1.5**，与该 beta 条目自己的 `calibrated`
+        # 注记逐位一致；普查见 `tools/ladder_base_census.py`，11 个物种）。
+        # 但 `o_c` 是"游离 [OH⁻]"的**代理量**，弱碱式给它 0.148（0.845 M ×
+        # Kb=0.0316），而该态的电荷平衡真值只要 0.011 ⟹ **高估 13 倍**：
+        #   通过 1208 → **1179（翻红 29 / 翻绿 0）**、`n(|S|>1)` 40 → 54；
+        #   受害例形态高度一致 —— `16 AlCl3+3NaOH`（**恰好 3 当量**）给出
+        #   pH 13.08 + 净方程 `4OH⁻ + Al³⁺ -> [Al(OH)₄]⁻`，而教科书产物是
+        #   **Al(OH)₃**（要第 4 个 OH⁻ 才溶成铝酸根）；`19 ZnCl2+2NaOH`、
+        #   `E55 明矾+适量NaOH`、`E41/E43/N18/N19/N20` 同形。
+        # ⟹ **"角色表缺谁"与"该用多大浓度"是两件事**：补角色会把启发式的
+        # 代理量算错。正确的方向见下面 `_blind` 的**前提判据**。
+        _ladder_cx = {b["complex"] for b in T.beta
+                      if b["ligand"] == "OH^-" and b.get("m", 1) == 1
+                      and b.get("complex")}
+        bases_map: dict = {}   # base -> Kb
+        for base, entries in T.pka_base.items():
+            if base in T.solids or base == WATER or base in amph_eligible:
+                continue
+            e1s = [e for e in entries if e["n"] == 1] or entries
+            pka = max(_pkapp(e, T_K) for e in e1s)           # 最强一级共轭酸
+            bases_map[base] = 10.0 ** (pka - pKw)
         hyd_map: dict = {}    # cat -> (Kh 每阳离子, qc)
         for e in T.ksp:
             cat, an = e["pair"]
@@ -846,11 +880,19 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                            conj.get(sp) if sp in bases_map else None,
                            hyd_map.get(sp),
                            amph_pH.get(sp) if sp not in T.solids else None)
+        # **只收净负电的含氧酸根**（铝酸根/锌酸根/锡酸根…）：它们是"完全水解
+        # 的产物"，在账本里可以成为**主要物种**却对角色表完全隐形。阳离子型
+        # 部分水解产物（`[Ca(OH)]⁺`、`[Al(OH)]^{2+}` 等）**不收**——`hyd_map`/
+        # `_first_k` 已经覆盖它们，且实测把 `[Ca(OH)]⁺` 算进来会打坏
+        # `Y18 CaO+水 放熟石灰`（`Ca(OH)₂` 0.9999 → 0.0202、残差 0 → 4.556）。
+        _ladder_cx = {b["complex"] for b in T.beta
+                      if b["ligand"] == "OH^-" and b.get("m", 1) == 1
+                      and b.get("complex") and charge_of(b["complex"]) < 0}
         sc = (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj,
-              rolemap, amph_partner)
+              rolemap, amph_partner, _ladder_cx)
         est_cache[T_K] = sc
     (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj, rolemap,
-     amph_partner) = sc
+     amph_partner, _ladder_cx) = sc
     # 单遍扫描在账物种：合并原 acids_l/bases_l/hyd_l/amph/buf 五个独立循环。
     # max/sum 可换序，h_c/o_c/amph/buf 的最终值与原实现等价。
     amph: list = []
@@ -858,12 +900,17 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     _floor_V = 1e-12 * V
     _role_get = rolemap.get
     _src = PH_SRC      # 诊断开关：一次全局查找，循环内只判 None
+    # **被角色表忽略的羟合梯配合物**（第 275 轮）：账本里存在、但 `rolemap`
+    # 没有它的酸碱角色 ⟹ 分支 4 的 `h_c`/`o_c` 对它**完全盲**。
+    _blind = 0.0
     for sp, m in ledger.items():
         if m <= _floor_V:
             continue
         c = m / V
         role = _role_get(sp)
         if role is None:
+            if sp in _ladder_cx and c > _blind:
+                _blind = c
             continue
         Ka, Kb, conj_pair, Kh_qc, amph_v = role
         if Ka is not None:
@@ -998,8 +1045,28 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # + 80/80 条目自洽）：它把"选哪一侧"变成"解一个方程"，即第 161 轮判定的
     # **代数同一性**。只在"量级相当"这个**退化区**触发 ⟹ 热路径成本可控
     # （`fast=True` 为阻尼 Newton，4–6 次求值；非退化区仍走原启发式）。
+    # **角色盲区判据**（第 275 轮·§1.12）：上面那句"启发式只在两侧量级相当
+    # （退化区）时才让位给精确解"隐含一个**前提**——`h_c`/`o_c` 确实看到了
+    # 账本里的酸碱内容。前提不成立时这个"量级相当"判断本身没有意义。
+    #
+    # 实测（`tools/branch4_src.py H43`）：`H43 AlCl3+NaOH 1:3.5` 的账本里有
+    # **0.845 M `[Al(OH)_4]^-`**，而角色表里没有它 ⟹ `o_c` 只看到纯水的
+    # 1e-7、`h_c` 只看到痕量 `Al³⁺` 给的 3.2e-3 ⟹ 比值 3 万，"不退化"
+    # ⟹ 启发式选酸侧给 **pH 3.26**；而同账本的电荷平衡精确解（引擎自己的
+    # `pH_solver`）是 **12.037**，与手算 12.03 逐位吻合 —— **差 8.8 个
+    # pH 单位**，`resid_max` 被算成 24.511。
+    #
+    # 判据只用"读账本"、不含新阈值：**被忽略的羟合梯配合物比启发式实际
+    # 用到的任何量都大** ⟹ 启发式无权选支，改用精确解。尺度直接取
+    # `max(h_c, o_c)`（启发式自己的量级），不引入新常数。
+    #
+    # ⚠️ **不要改成"给含氧酸根补 Kb 角色"**（第 275 轮已否，数字见
+    # `bases_map` 上方注释）：Kb 可精确推出，但 `o_c` 是"游离 [OH⁻]"的
+    # 代理量，补角色会把它算成 0.148 而真值 0.011 ⟹ 通过 1208→1179、
+    # 教科书例 `16 AlCl3+3NaOH`（恰好 3 当量）从 Al(OH)₃ 变成纯铝酸根。
+    _blind_dom = _blind > max(h_c, o_c)
     _deg = (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c)
-    if _deg or pin_mode:
+    if _deg or pin_mode or _blind_dom:
         # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198/199 轮）：
         # 第 197 轮查明，E55 这类病灶的 `h_c ≈ o_c`（触发条件本就满足），
         # 被挡是因为"排除固相储库"那条闸——而 `charge_pH` 的 `pinned` 参数
@@ -1017,7 +1084,8 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         # pin_mode（第 201 轮，D14）：True=整步冻结的"采用"口径——绕过退化区闸
         # （闸随 f(x) 的 x 穿界 = 接缝悬崖，B26 实测 pH 13.73→1.52 跳变被二分
         # 当根）；False=冻结"弃用"；None=逐点自判定。结构性前提仍逐点评估。
-        if PINNED_TAKEOVER and pin_mode is not False and (_deg or pin_mode):
+        if (PINNED_TAKEOVER and pin_mode is not False
+                and (_deg or pin_mode or _blind_dom)):
             _lad_all = _pin_ladders(T)
             _frz_all = _pin_frozen(T)
             _seen = set()
@@ -1092,9 +1160,11 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                     _tag("电荷平衡精确解(pinned)")
                     return min(max(_ex, -1.0), pKw + 1.0), ledger, He_res
                 _tag("pinned耗尽回绝")
-        # 非 pinned 精确解路径：仍只在退化区（_deg）走——pin_mode=True 绕过
-        # 退化区闸只为 pinned 接管，不扩大此路径的触发面（行为不变）。
-        if _deg:
+        # 非 pinned 精确解路径：退化区（_deg）**或角色盲区（_blind_dom）**走。
+        # pin_mode=True 绕过退化区闸只为 pinned 接管，不扩大此路径的触发面。
+        # `_blind_dom`（第 275 轮）是**前提判据**：角色表看不见账本里的羟合梯
+        # 配合物时，`h_c/o_c` 的"量级相当"比较本身无意义，交回精确解。
+        if _deg or _blind_dom:
             # 判据已抽为 `_exact_ok`（第 263 轮）：与本函数上方"两性支路"
             # 共用同一把尺子。此处仍取 `min_fams=2`（行为逐位不变）。
             if _exact_ok(ledger, He_res, T, V):
