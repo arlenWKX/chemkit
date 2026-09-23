@@ -648,7 +648,13 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                 _oh = T._ksp_oh_pairs = tuple(
                     (e["pair"][0], e["solid"]) for e in T.ksp
                     if e["pair"][1] == "OH^-")
-            _pin_mode = any(_led_hi.get(_cc, 0.0) > 0.0
+            # **判据只看"储库（固相）还在不在"，不看账本里的游离阳离子量**：
+            # 钉住口径下 `[M]` 由 Ksp 给出，账本量不作数；而某一步可能把该
+            # 阳离子整步消耗到 0（`H45` 的 `x_max` 恰等于账本 `Al³⁺`）
+            # ⟹ 若把"阳离子量 > 0"写进判据，就会在本该冻结的步上误判为
+            # "储库没了"。第 267 轮初版正是这么写的，实测**一例未变**
+            # （`H45`/`H43`/`M03` 残差全部原样），因为 `H45` 恰好卡在这里。
+            _pin_mode = any(_led_hi.get(_cc, 0.0) >= 0.0
                             and _led_hi.get(_ss, 0.0) > X_MIN
                             for _cc, _ss in _oh)
         else:

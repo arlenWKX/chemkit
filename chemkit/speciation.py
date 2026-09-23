@@ -1032,6 +1032,20 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 _ns = ledger.get(_solid, 0.0)
                 if _ns <= X_MIN:
                     continue
+                # **第 267 轮：冻结采用 pinned 时，账本里的游离阳离子量不作数。**
+                # 钉住口径下 `[M] = 10^((y(pKw−pH) − pKsp)/x)` 由 **Ksp 给出**，
+                # 账本里那点游离量是走步的记账、不是约束。而某一步可能把该阳离子
+                # **整步消耗到 0**——`H45 Na[Al(OH)4]+HCl 半量` 实测：残差通道
+                # `Al³⁺ -> [Al(OH)₄]⁻ + 4H⁺` 的 `x_max` **恰等于**账本 `Al³⁺`
+                # (0.016999)，于是 `x_max` 端 `Al³⁺ = 0` ⟹ 原闸跳过 ⟹ `_pin` 空
+                # ⟹ 即使 `pin_mode=True` 也会在端点退回逐点自判定 ⟹ 退回
+                # `酸侧max`（pH 12.185 → 3.70，跳 −8.48）⟹ 二分落在跳上
+                # ⟹ `x*=0`、残差 24.991。
+                # 故：**整步冻结为 True 时不受此闸限制**（前提仍由固相在场把关）；
+                # 逐点自判定（`pin_mode is None`）与显式弃用（`False`）时
+                # 行为**逐位不变**。
+                if ledger.get(_cat, 0.0) <= 0.0 and pin_mode is not True:
+                    continue
                 _seen.add(_cat)
                 _x, _y = _ksp_xy(_e)
                 _lad = _lad_all.get(_cat, ())
