@@ -139,6 +139,32 @@ He=-0.001 … He=+1e-4 → 全为 1.310882（完全平台 ⟹ 分支硬切换，
   它是被**错误的 pH** 判成"不饱和"的，不是没被枚举。
 * ❌ **"F31 是镓特有缺陷"** —— 见下方族扫结果：**同签名在 Al 上复现 3 例**。
 
+**⭐ PHREEQC 独立权威交叉核对（第 203 轮，回应使用者"可从 phreeqc 获取灵感"）**：
+工具 `tools/ga_xcheck.py`（可复用于任何元素）。三条实测结论：
+1. **PHREEQC 六个主流库全无 Ga 水解配合物**：`llnl.dat` / `minteq.v4.dat` /
+   `wateq4f.dat` / `phreeqc.dat` / `sit.dat` / `pitzer.dat` 里 Ga **只有主物种**
+   （llnl.dat L138 `Ga Ga+3 0 Ga 69.723`，L413 `Ga+3 = Ga+3`）。
+   ⟹ **"库里没有"不能当作"化学上没有"**——chemkit 收 Ga 羟合梯是**对的**。
+2. **`PHREEQC_ThermoddemV1.10_15Dec2020.dat` 有完整 Ga 数据**（源：97ben/dia、
+   99dia/sch），可作独立核对。换算口径 `logβₙ = n·pKw + log*Kₙ`
+   （Thermoddem 给 `Ga³⁺+nH₂O = Ga(OH)n + nH⁺` 的 log\*Kₙ）
+   **已用 Al 自校验通过**（Al 两源偏差 β₄ +1.37 / Ksp +1.26，
+   属库间正常分歧 ⟹ 换算式无误，Ga 的对比才可信）：
+   | | chemkit | Thermoddem | Δ |
+   |---|---|---|---|
+   | logβ₁ | 11.4 | 11.164 | +0.24 ✓ 吻合 |
+   | logβ₄ | 37.6 | 40.367 | −2.77 |
+   | logKsp | −35.1（`Ga(OH)₃`） | −40.513（**GaOOH**） | +5.41 |
+   | 缺级 | Ga(OH)₂⁺ / Ga(OH)₃(aq) **缺** | 有（20.730 / 30.076） | 数据缺口 |
+3. ⚠️ **pKsp 的 5.4 log 差不是取值错，是固相选择不同**：Thermoddem 里 Ga 的
+   固相**只有 GaOOH**（晶质羟基氧化镓），**根本没有 Ga(OH)₃ 相**；chemkit 用
+   `Ga(OH)_3`（新鲜沉淀/无定形口径）。5.4 个 log 正是"无定形 vs 晶质"的常见量级。
+   **不能据此判定任一侧错。**
+4. **两套常数解 F31 的严格解一致给出"析出 ~1.0 mol 固相、pH 中性附近"**：
+   chemkit → pH **5.764** / 析出 0.999998；Thermoddem → pH **6.883** / 1.000000。
+   ⟹ **F31 的病根与 Ga 常数取值无关**，仍是引擎走步/pH 分支（结论加固）。
+   ⟹ 遗留**数据缺口**（可补，非根因）：Ga 中间级 Ga(OH)₂⁺、Ga(OH)₃(aq)。
+
 **⭐ 族扫结论（第 203 轮子代理实测 109 例，工具 `tools/fam_hydroxo.py`）**：
 * **不是普遍缺陷，也不是镓特有**：109 例断言金属氢氧化物固相的用例中，
   **A 正常 102 例 / B 同缺陷 4 例 / C 其它 3 例**。
@@ -209,14 +235,28 @@ python tools/dev.py anchor on|off    # pKw 约定切换（提交前两套都要�
 **分层测试协议**见 [`tools.md`](tools.md)：T0 不跑 / T1 定向 / T2 全量 /
 T3 双约定+perf+审计。**默认 T1**；回退到已知状态**不要重测**。
 
-**本轮新增的诊断工具**（未入库，根目录 `.tmp_` 前缀，可复用）：
-* `.tmp_pin_audit.py` —— pinned 触发面 A/B：同进程开/关 `PINNED_TAKEOVER`
-  跑两遍全套件，按用例报命中数与翻转集（经 `speciation.PH_TAGS` 审计钩子）。
-* `.tmp_pin_cap.py <用例前缀>` —— pinned 捕获：spy `speciation.charge_pH`
-  （模块内自调用，patch 模块属性有效），记录每次 pinned 调用的真实
-  `(ledger, pinned, 返回pH)`，并统计命中/耗尽回绝次数。
-* `.tmp_b26_t3.py` —— ROOT_AUDIT 61 点细扫（第 200 轮）：f(x) 全程
-  `(x, pH, 固相在场, tag, 账本电荷+He)` 轨迹，专看口径接缝悬崖（D14）。
+**诊断工具**（第 203 轮已**全部入库到 `tools/`**，根目录 `.tmp_*` 已清理干净）：
+
+* F31 / D15 专线（本轮新增，可直接复用）：
+  * `tools/f31_probe.py <前缀>` —— **走步诊断正门**：`judge(...,_probe={})` 导出
+    `exit/iters/cycle_jumps/joint_tries/frozen_at/ledger/active`，并自动判读
+    "机制是否被问过"。**别再写勾子**（内部函数是嵌套闭包，勾不住）。
+  * `tools/f31_exact.py` —— **严格化学正解**（只用库内常数独立解电荷+质量守恒）：
+    给出真 pH 与固相析出量，是判"引擎错多少"的唯一硬标尺。
+  * `tools/f31_scan.py` —— 起始态 `S(x)` 细扫（含 `_exec` 记账语义），
+    用来看二分根落在哪、是否跨分支。
+  * `tools/heaxis.py` —— `estimate_pH` 的 **He 轴连续性普查**（发现阶跃的利器，
+    换账本即可复用）。
+  * `tools/f31_phtruth.py` —— 由账本电荷条件求**电荷自洽 pH**，与引擎自报对比。
+  * `tools/f31_extent.py` —— 终态逐候选 `solve_extent` 定影（ext/x_max/S 并排）。
+  * `tools/phcache.py` —— 判 `estimate_pH` 是否为纯函数（冷 vs 预热 cache）。
+  * `tools/f31_data.py` —— 库内常数核对（**先读库再下结论**，勿据 S 反推）。
+  * `tools/f31_init.py` / `tools/f31_hecheck.py` / `tools/f31_hewhy.py` /
+    `tools/f31_diag.py` —— 起始态记账、He 轨迹、取值勾子（早期版本，留档用）。
+* 族扫：`tools/fam_hydroxo.py` —— 109 例"断言金属氢氧化物固相"用例的
+  分类扫描（A 正常/B 同缺陷/C 其它），输出 `logs/fam_hydroxo.json`。
+* 早期轮次：`tools/diag_{e55pin,pinaudit,pincap,fxscan}.py`（pinned 触发面）、
+  `tools/phq_parse.py` + `tools/xcheck.py`（PHREEQC 解析与交叉核对）。
 
 ---
 
