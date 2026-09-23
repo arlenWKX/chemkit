@@ -73,6 +73,18 @@ _JOINT_STALL_S = float(_os.environ.get("CHEMKIT_JOINT_ON_STALL_S", "1.0"))
 # 用途：把"用正确性借性能"的手段逐项关掉做全量对照（代价 vs 残差/断言）。
 _NO_MICRO_FAST = bool(_os.environ.get("CHEM_NO_MICRO_FAST"))
 _NO_DRAIN = bool(_os.environ.get("CHEM_NO_DRAIN"))
+# 第 273 轮新增：关掉"共轭形态重建"（`_logc_form` 的 Ka 分裂，第 272 轮落地）。
+# 用途：把第 272 轮的收益与代价**逐例归因**——某例变差究竟是重建引起的，
+# 还是走步轨迹被动改变引起的。默认关 = 现行为。
+_NO_FORM_REBUILD = bool(_os.environ.get("CHEM_NO_FORM_REBUILD"))
+
+# ---- 共轭形态重建的起火普查（仅 tools/ 诊断启用；生产路径恒为 None）------
+# 每次重建记一条 {s, p, ka, base, pH, tot, c, eq, floor_logc}。用途：把
+# "某例变差"归因到**具体哪条候选的哪个物种**——第 273 轮 `H35 Ca(HCO3)2
+# 加热` 0.363 → 10.055 → 11.094 的归因就卡在这里（全局指标只能说明
+# "与重建有关"，说不出是哪一条把走步点燃的）。
+FORM_AUDIT: list | None = None
+_FORM_CUR = None            # 当前求值的候选（仅 FORM_AUDIT 非空时被读）
 
 # B4 判据的"纯形态变化"类（proton/dissolve/complex/decomplex）：逐步 `chem`
 # 标记与 `reacted` 判据共用同一份定义（§7 X-19），避免两处口径漂移。
@@ -175,6 +187,70 @@ def _form_partners(T) -> dict:
     return mp
 
 
+def _form_families(T) -> dict:
+    """物种 → **其酸碱族**的成员集合（并查集；覆盖全部 pKa 条目，不限 `n`）。
+
+    **第 273 轮·为什么需要"族"这个粒度**
+
+    第 272 轮的准入判据是"伙伴不是本反应的参与者"，它挡住了
+    `ClO^- + H2O -> HClO + OH^-`（伙伴就在反应里），但**漏掉了伙伴不在
+    反应里、而族内另一个形态在反应里的情形**：
+
+    实测 `Ni41 NiCl2+NaHCO3`（第 272 轮把它的残差从 0.859 推到 **11.964**，
+    成为新 `resid_max` 榜首）走步进了一个 **333 步的极限环**：
+
+        CO_3^{2-} + 2H^+ -> CO_2        S=13.2
+        NiCO_3 + 2H^+ -> Ni^{2+} + CO_2 S=13.1
+        HCO_3^- -> CO_3^{2-} + H^+      S=6.63
+        CO_2 -> CO_3^{2-} + 2H^+        S=1.13     ← 漏点
+        Ni^{2+} + CO_3^{2-} -> NiCO_3   S=4.67
+        （逐字重复）
+
+    `CO_2 -> CO_3^{2-} + 2H^+` 里 `CO_2` 与 `CO_3^{2-}` 的伙伴**都是
+    `HCO_3^-`**，而 `HCO_3^-` **不在**该反应里 ⟹ 第 272 轮的闸放行，
+    于是**两侧都被从同一个 `HCO_3^-` 池重建** ⟹ 这条反应（碳酸族的
+    形态互变）的 `S` 变成**恒等式**，走步被凭空点燃，与 `CO_3^{2-}`
+    的沉淀/再溶解凑成极限环。
+
+    **正确粒度是族**：`HCO_3^-` 与 `CO_3^{2-}` 在**同一个酸碱族**里。
+    判据 ⇒ **本反应里不得出现 `s` 所属族的其它形态**（`s` 自己不算）。
+    这条**蕴含**第 272 轮的伙伴判据（伙伴按构造必在同族），故是它的
+    严格推广；化学含义也更强：**当一条反应只是在讲某个酸碱族内部的
+    形态互变时，该族的形态分布本来就是账本自己的记账内容，用 Ka 重建
+    等于把这条反应的 `S` 写成恒等式**。
+
+    反例（必须放行，实测都靠它）：`Ni^{2+} + CO_3^{2-} -> NiCO_3`（只含
+    `CO_3^{2-}` 一个族成员 ⟹ 放行，这正是需要真实碳酸根活度的地方）、
+    `2ClO_3^- + 2H^+ + 5Br_2 -> Cl_2 + 10HBrO`（`ClO_3^-` 的族只有
+    `HClO_3`/`ClO_3^-`，反应里再无同族形态 ⟹ 放行，第 272 轮的收益来源）。
+    """
+    fam = getattr(T, "_form_family", None)
+    if fam is not None:
+        return fam
+    par: dict[str, str] = {}
+
+    def find(x: str) -> str:
+        par.setdefault(x, x)
+        while par[x] != x:
+            par[x] = par[par[x]]
+            x = par[x]
+        return x
+
+    for e in T.pka:
+        a, b = e.get("acid"), e.get("base")
+        if not a or not b:
+            continue
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            par[ra] = rb
+    groups: dict[str, set] = {}
+    for x in list(par):
+        groups.setdefault(find(x), set()).add(x)
+    fam = {x: frozenset(g) for g in groups.values() for x in g}
+    T._form_family = fam
+    return fam
+
+
 def _logc_form(s: str, ledger: dict, V: float, pH: float, T,
                logc: dict | None, alt) -> float:
     """按**给定 pH 的酸碱分裂**取 s 的游离浓度对数（酸/碱对整池记在
@@ -205,6 +281,11 @@ def _logc_form(s: str, ledger: dict, V: float, pH: float, T,
         return _logc_of(s, ledger, V, logc)
     a_h = 10.0 ** (-pH)
     f = (ka / (ka + a_h)) if s_is_base else (a_h / (ka + a_h))
+    if FORM_AUDIT is not None:
+        FORM_AUDIT.append({"s": s, "p": p, "ka": ka, "base": s_is_base,
+                           "pH": pH, "tot": tot, "c": tot * f / V,
+                           "eq": _FORM_CUR,
+                           "floor_logc": log10(max(0.0 / V, ACT_FLOOR))})
     return log10(max(tot * f / V, ACT_FLOOR))
 
 
@@ -228,15 +309,26 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
     tid = id(T)
     plan = c._plan
     if plan is None or c._plan_tid != tid:
-        # 共轭形态重建的**准入判定**（见 `_logc_form` 文档）：只有"伙伴不是
-        # 本反应的参与者"才许重建——伙伴在反应里 ⟹ 本反应就是在讲这个
-        # 酸碱对的质子化态，槽位原样读。判定是候选级静态量，与 plan 同缓存。
+        # 共轭形态重建的**准入判定**（见 `_logc_form` / `_form_families` 文档）：
+        #   ① 伙伴不在本反应里（第 272 轮；防 `ClO^- + H2O -> HClO + OH^-`
+        #      这类"酸碱对自身的质子转移"被重建抹成恒等式）；
+        #   ② **本反应里不得出现该物种所属酸碱族的其它形态**（第 273 轮；
+        #      ①的严格推广，防 `CO_2 -> CO_3^{2-} + 2H^+` 这类"伙伴不在、
+        #      但族内另一形态在"的漏网 —— `Ni41` 极限环的病根）。
+        # 判定是候选级静态量，与 plan 同缓存。
         _rs = set(c.r) | set(c.pr)
         _fp = _form_partners(T)
+        _fam = _form_families(T)
 
         def _alt(sp: str):
+            if _NO_FORM_REBUILD:
+                return None
             a = _fp.get(sp)
-            return a if (a is not None and a[0] not in _rs) else None
+            if a is None or a[0] in _rs:
+                return None
+            if (_fam.get(sp, frozenset()) & _rs) - {sp}:
+                return None
+            return a
 
         terms = []
         for s, nu in c.r.items():
@@ -259,6 +351,9 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
         c._plan = plan
         c._plan_tid = tid
     logQ = 0.0
+    if FORM_AUDIT is not None:
+        global _FORM_CUR
+        _FORM_CUR = c
     for typ, s, nu, alt in plan:
         if typ == 2:
             logQ -= nu * _logc_form(s, ledger, V, pH, T, logc, alt)
