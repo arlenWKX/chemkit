@@ -477,19 +477,30 @@ if not _res and _nf >= 2 and abs(_net + He_res) <= 1e-6:
 
 ### 3.3 代码质量（使用者明确要求，分批做）
 
-**已完成**（全套件 1030/1176 逐位不变）：`WATER`/`H_ION`/`OH_ION` 三处字面量
-合并为 `candidates.py` 唯一定义；删除 `templates.py` 死分支（含未定义名 `pH`）、
-`testsuit.py` 死变量 `sw`、`engine.py` 未用 `_joint_idle_sig`。
-**pyflakes 的 redefinition/undefined/unused：7 条 → 1 条（且是已注明的误报）。**
+**已完成**：
+* 第 203 轮：`WATER`/`H_ION`/`OH_ION` 三处字面量合并为 `candidates.py` 唯一定义；
+  删除 `templates.py` 死分支（含未定义名 `pH`）、`testsuit.py` 死变量 `sw`、
+  `engine.py` 未用 `_joint_idle_sig`。**pyflakes redefinition/undefined/unused：7 → 1**
+  （剩 1 条是已注明误报）。
+* 第 205 轮：`tools/namescan.py` 量化"同一含义多个名字"——
+  **pH 一个量有 12 个名字**、He 9 个、物种名 10 个、浓度 8 个。
+* **第 224 轮：`_presentation_He` 加"固相在场"条件**（**行为有实质改善**）。
+  该闸的语义是"自由强碱被**已析出的**阳离子氢氧化物吸收"；原实现只查
+  "账本阳离子是否与自由碱超 Ksp 3 个数量级"，**不要求固相在场** ⟹
+  当账本里**没有固相**时，它把"走步留在溶液里的阳离子 + 自由碱"这一
+  **矛盾态**判成"幻影碱"并把 `He` **归零**——**这是掩盖问题**。
+  加 `if ledger.get(e["solid"], 0.0) <= X_MIN: continue` 后：
+  * **F31 的呈现 `He` 由 `0.0` 纠正为 `-0.024007`**（不再撒谎）；
+  * 全量套件 **1030/1176 · 123/123 不变**，**通过性翻转 0 例、`pH` 变化 0 例**
+    （该闸是呈现层专用，不接触走步机器——与其 docstring 一致）；
+  * 原设计动因 `RX13`（pH 2.06）与 `SE03`（pH 7.8）均未回归。
 
-**待做**（每项都需全库差分验证）：
-1. **同一含义多名字收敛**（`tools/namescan.py` 已量化：**pH 一个量有 12 个名字**、
-   He 9 个、物种名 10 个、浓度 8 个）。优先 `pH` 与 `He` 两簇。
-2. **`_presentation_He`（engine.py L2165）与 `charge_pH` 语义去重** ——
-   `acidbase.py` L36 自述二者"做的是同类事"。
-3. **4 处 `closed_pH → estimate_pH` 降级复制**（engine L400-402、L493-498、
+**待做**（每项都需 T1+T2 验证）：
+1. **同一含义多名字收敛**（`namescan.py` 已量化）：优先 `pH`（12 个名字）与
+   `He`（9 个）两簇——纯改名、零行为变化，但**触及面广**，需一次全量验证。
+2. **4 处 `closed_pH → estimate_pH` 降级复制**（engine L400-402、L493-498、
    L1584-1585、L2248-2250）收敛为单一辅助函数。
-4. **验收**：同一 `(ledger, He)` 的**所有** pH 通路差异 < 0.01
+3. **验收**：同一 `(ledger, He)` 的**所有** pH 通路差异 < 0.01
    （用 `chargeprobe.py` + `phaudit.py` 全库回归）。
 
 > **架构参照（PHREEQC，`thirdparty/phreeqc-3.8.6-17100/src/model.cpp`）**：
