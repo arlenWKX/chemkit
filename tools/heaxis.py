@@ -11,8 +11,6 @@
 
 用法： python tools/heaxis.py [用例前缀，默认 F31]
 """
-import io
-import json
 import os
 import sys
 
@@ -45,6 +43,7 @@ print(f"  ledger = { {k: round(v, 6) for k, v in led0.items() if k != 'H_2O'} }"
 print(f"\n  {'He':>12} {'estimate_pH':>12} {'closed_pH':>11} {'presentation':>12} "
       f"{'差(est-cls)':>12}")
 prev = None
+prev_he = None
 bad = []
 for he in (-3.0, -2.5, -2.0, -1.5, -1.0, -0.5, -0.2, -0.1, -0.05, -0.02,
            -0.01, -0.005, -0.002, -0.001, -5e-4, -2e-4, -1e-4, -1e-5, -1e-6,
