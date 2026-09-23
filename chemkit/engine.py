@@ -56,6 +56,12 @@ from .templates import (_redox_pair_static, _redox_templates,
                         _product_form_ok)
 
 _TRACE = bool(_os.environ.get("CHEM_TRACE"))
+# **第四触发点：停滞期联立**（第 236 轮）。默认**关闭**，先测半径再决定落盘。
+# 背景：现有三触发点全要求"近 24 步全微步"，而"零推进家族"是大步走完后停住
+# ⟹ `joint_tries` 恒为 0（第 221 轮实测）。语义上，停滞 + 残差大正是该问联立
+# 的时候（`_joint_collect(None)` 收的就是耦合约束方程组）。
+_JOINT_ON_STALL = bool(_os.environ.get("CHEMKIT_JOINT_ON_STALL"))
+_JOINT_STALL_S = float(_os.environ.get("CHEMKIT_JOINT_ON_STALL_S", "1.0"))
 # ---- X-39 审计开关（默认全开 = 现行为；置 1 = 关掉该性能手段）----
 # 用途：把"用正确性借性能"的手段逐项关掉做全量对照（代价 vs 残差/断言）。
 _NO_MICRO_FAST = bool(_os.environ.get("CHEM_NO_MICRO_FAST"))
@@ -1770,6 +1776,30 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                             print(f'  [freeze-revive] {len(_hit)} 个强驱动'
                                   f'冻结键解冻（第 {_revive} 次复核）')
                         continue
+                # ---- **第四触发点：停滞期联立**（第 236 轮，环境开关控制）----
+                # 现有三触发点（①②爬行 / ③社区 pH / ④净质子循环）**全部要求
+                # "近 24 步全微步(<0.02)"或"质子中性循环"**，而"零推进家族"
+                # （B+C 共 29 例 / 216.6 残差 / 占全库 66%）是**大步走完后停住**
+                # ——`hist=3`/14 步，永不满足那些条件，`joint_tries` 恒为 0。
+                #
+                # 语义依据：`_joint_collect(None)` 收的是"**两侧在场的活性平衡**"，
+                # 那**正是耦合约束方程组**；而这些例停滞时尚有强驱动通道
+                # 互相耦合（如 E41 的 `HCO3^-→CO3^2-+H+` 与 Al(OH)₃/CO₂ 各通道
+                # 共享 H⁺）。**停滞 + 残差大 = 恰恰该问联立的时候**，
+                # 与既有"联立→落实→重评估"语义一致（走步会自行复核）。
+                #
+                # 开关：`CHEMKIT_JOINT_ON_STALL=1` 启用；阈值
+                # `CHEMKIT_JOINT_ON_STALL_S`（默认 1.0）。**先测半径再决定落盘。**
+                if _JOINT_ON_STALL:
+                    _lact = _joint_collect(None)
+                    _lmax = max((abs(_s) for _c, _d, _s in _lact), default=0.0)
+                    if len(_lact) >= JOINT_MIN_M and _lmax >= _JOINT_STALL_S:
+                        if _joint_fire(None):
+                            if _TRACE:
+                                print(f'  [joint-stall] 停滞期联立成功 '
+                                      f'm={len(_lact)} max|S|={_lmax:.2f} '
+                                      f'-> continue')
+                            continue
                 _exit_reason = "no-cands"   # 快慢候选全部耗尽（自然收敛点）
                 break
 
