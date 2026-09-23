@@ -130,6 +130,84 @@ def _logc_of(s: str, ledger: dict, V: float, logc: dict | None) -> float:
     return v
 
 
+def _form_partners(T) -> dict:
+    """共轭形态伙伴表（T 级静态缓存，一次构建）：物种 → (伙伴, Ka, 本物种是否碱侧)。
+
+    **第 272 轮·为什么必须有这个机制**
+
+    账本是"引擎选定的记账形态"，同一个化学态可以记成不同形态对，而
+    `S_of` / `_logc_of` 把 `ledger[s]/V` **当作游离活度**读。两者在
+    "酸/碱对整池记在一侧"时就对不上：
+
+    实测（`tools/x8gap.py`）`BR2 Cl2 过量+KBr 0.5 半量` 退出态——
+    真账本 `ClO_3^- = 0.1866103`，`estimate_state` 返回的虚拟账本
+    `led_v` 把它**整池**记成 `HClO_3 = 0.1866103`（`He` 同步
+    1.1196825 → 0.9330721，pH 两口径同为 0.030085 ⟹ 同一化学态）。
+    redox 分支的 `f` 用 `led_v` 求 S，于是按候选写作式去查 `ClO_3^-`
+    槽位得 **0**，落到 `ACT_FLOOR = 1e-12`，`logQ` 被凭空推低
+    `2×(12 − 0.73) ≈ 22.5`（实测口径差 **−22.58**）⟹ `f(0)=+7.6e-05≈0`
+    ⟹ `x* = 0`（零推进），而残差口径同一态报 `|S| = 22.433`。
+
+    引擎自己的 pH 模型**当作强酸全电离**（`tools/formprobe.py`：把
+    `HClO_3` 池按 0.5/0.9/0.915/1.0 任意比例分裂回 `ClO_3^-`，pH 恒为
+    0.030085）⟹ 修正方向是**按 Ka 在给定 pH 下重建该形态的游离分数**：
+    pKa = −1、a_H = 0.933 处阴离子占 0.9147，与"全电离"只差 0.078 个
+    对数单位，却与"整池消失"差 22.5 个数量级。
+
+    只收 `n == 1` 的单质子对（多质子对的中间态另有归属，收益不明而风险
+    不清，宁缺勿错）；只在该物种槽位**确为 0** 时启用，命中面窄、不动
+    绝大多数既有路径。
+    """
+    mp = getattr(T, "_form_partner", None)
+    if mp is not None:
+        return mp
+    mp = {}
+    for e in T.pka:
+        if e.get("n") != 1:
+            continue
+        a, b, pk = e.get("acid"), e.get("base"), e.get("pka")
+        if a is None or b is None or pk is None:
+            continue
+        ka = 10.0 ** (-float(pk))
+        mp.setdefault(a, (b, ka, False))     # 本物种是酸侧：伙伴是碱
+        mp.setdefault(b, (a, ka, True))      # 本物种是碱侧：伙伴是酸
+    T._form_partner = mp
+    return mp
+
+
+def _logc_form(s: str, ledger: dict, V: float, pH: float, T,
+               logc: dict | None, alt) -> float:
+    """按**给定 pH 的酸碱分裂**取 s 的游离浓度对数（酸/碱对整池记在
+    另一侧时的重建；见 `_form_partners`）。
+
+    槽位有量 ⟹ 与 `_logc_of` 完全同路径（**逐字节不变**，绝大多数调用）；
+    槽位为 0 且共轭伙伴在场 ⟹ 用 Ka/(Ka+a_H)（碱侧）或 a_H/(Ka+a_H)
+    （酸侧）从伙伴池分裂出来。分裂值随 pH 变，**不写入 logc 缓存**。
+
+    `alt` 由 `S_of` 建计划时**预先判定**（见那里的"伙伴是否在反应里"判据）：
+    None = 不许重建。判据必须有——第 272 轮首版只按"槽位为 0 + 伙伴在场"
+    就重建，实测**打掉 10 条断言**（全库 `resid` 质量同时降 47.6，见
+    `tools/flip_census.py`）：受害例的失败形态高度一致——
+    `R08 NaClO 0.1M`/`F29 Na[B(OH)4]`/`E14 Cl2+水` 的 `net_equation`
+    从"某质子转移步"变成 **None**、`iters 3 -> 1`。成因：`ClO^- + H2O ->
+    HClO + OH^-` 这类候选**本身就是酸碱对的质子转移**，用 Ka 分裂重建
+    `HClO` 后 `S` 恒 ≈ 0（**同一平衡的两种写法必然自洽**）⟹ 走步不再
+    执行"把账本从阴离子形态改记成分子形态"的那一步 ⟹ 呈现层无步可示。
+    正确的分界正是**伙伴是不是本反应的参与者**：是 ⟹ 本反应就是在讲
+    这个对的质子化态，槽位原样读（原语义）；不是 ⟹ 槽位为空纯属记账
+    形态问题，必须重建（`BR2` 的 `ClO_3^-` 之于 `HClO_3` 即此类）。
+    """
+    if alt is None or ledger.get(s, 0.0) > 0.0:
+        return _logc_of(s, ledger, V, logc)
+    p, ka, s_is_base = alt
+    tot = ledger.get(p, 0.0)
+    if tot <= 0.0:
+        return _logc_of(s, ledger, V, logc)
+    a_h = 10.0 ** (-pH)
+    f = (ka / (ka + a_h)) if s_is_base else (a_h / (ka + a_h))
+    return log10(max(tot * f / V, ACT_FLOOR))
+
+
 def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
          gsup: frozenset = frozenset(), p_ext_kpa: float = P_EXT_KPA,
          gas_escape: bool = True, logc: dict | None = None) -> float:
@@ -150,32 +228,42 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
     tid = id(T)
     plan = c._plan
     if plan is None or c._plan_tid != tid:
+        # 共轭形态重建的**准入判定**（见 `_logc_form` 文档）：只有"伙伴不是
+        # 本反应的参与者"才许重建——伙伴在反应里 ⟹ 本反应就是在讲这个
+        # 酸碱对的质子化态，槽位原样读。判定是候选级静态量，与 plan 同缓存。
+        _rs = set(c.r) | set(c.pr)
+        _fp = _form_partners(T)
+
+        def _alt(sp: str):
+            a = _fp.get(sp)
+            return a if (a is not None and a[0] not in _rs) else None
+
         terms = []
         for s, nu in c.r.items():
             if s == H_ION:
-                terms.append((0, s, nu))
+                terms.append((0, s, nu, None))
             elif s == WATER or s in T.solids:
                 pass
             else:
-                terms.append((2, s, nu))
+                terms.append((2, s, nu, _alt(s)))
         for s, nu in c.pr.items():
             if s == H_ION:
-                terms.append((1, s, nu))
+                terms.append((1, s, nu, None))
             elif s == WATER or s in T.solids:
                 pass
             elif s in T.gases:
-                terms.append((4, s, nu))
+                terms.append((4, s, nu, _alt(s)))
             else:
-                terms.append((3, s, nu))
+                terms.append((3, s, nu, _alt(s)))
         plan = tuple(terms)
         c._plan = plan
         c._plan_tid = tid
     logQ = 0.0
-    for typ, s, nu in plan:
+    for typ, s, nu, alt in plan:
         if typ == 2:
-            logQ -= nu * _logc_of(s, ledger, V, logc)
+            logQ -= nu * _logc_form(s, ledger, V, pH, T, logc, alt)
         elif typ == 3:
-            logQ += nu * _logc_of(s, ledger, V, logc)
+            logQ += nu * _logc_form(s, ledger, V, pH, T, logc, alt)
         elif typ == 0:
             logQ += nu * pH
         elif typ == 1:
