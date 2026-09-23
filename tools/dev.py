@@ -584,14 +584,19 @@ def main(argv: list[str]) -> int:
     if verb == "guide":
         return cmd_guide()
     if verb == "suite":
-        jobs = 1
+        jobs = 0
         for a in rest:
             if a.startswith("--jobs="):
                 jobs = max(1, int(a.split("=", 1)[1]))
-        # 默认并行（第 206 轮合并：8 worker 实测 111s -> 60s，逐例结果逐位一致）。
-        # `--jobs=1` 强制串行（调试用）；`--jobs=N` 指定。
-        if not any(a.startswith("--jobs") for a in rest):
-            jobs = max(1, min(8, (os.cpu_count() or 1)))
+        # 默认按**物理核数**定 worker（第 207 轮实测，勿凭"逻辑核数"取满）：
+        # 本机 i7-8650U = 4 物理核 / 8 逻辑核（HT）。实测墙钟
+        #   2w 74.8s / 4w 55.5s / 6w 50.0s / 8w 51.5s
+        # ⟹ **8 并不快于 6**（超订物理核只增争用：单例 CPU 成本由 111ms
+        #   涨到 220ms）；收益在 4~6 之间饱和。且 4 worker 恰好占满物理核、
+        #   把 CPU 合计压在 176s（8w 是 258s），**机器更不卡、留出余量**。
+        # 故默认 = min(4, 物理核)；`--jobs=N` 可覆盖（6 可再快 ~10%）。
+        if jobs == 0:
+            jobs = min(4, max(1, (os.cpu_count() or 2) // 2))
         return cmd_suite(args, jobs=jobs)
     if verb == "perf":
         base = (args[0] if args and args[0].endswith(".json")
