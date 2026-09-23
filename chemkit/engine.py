@@ -246,6 +246,76 @@ FREEZE_MAX_S = 0.5
 FREEZE_MAX_S_1SIDE = 2.0
 
 
+def _stoich_cap(c: Cand, d: int, ledger: dict) -> float:
+    """驱动方向反应物的**化学计量上限**（mol），忽略酸/碱储备与 redox 限量。
+
+    与 `solve_extent` 的第一段同式（`x_max = min(ledger[s]/nu)`），
+    故它是真实 `x_max` 的**上界**——用于"这一步有没有可能走够量"的粗判，
+    方向安全：上界够大而真实 x_max 很小时，只是多给一次机会，
+    随后仍由 `solve_extent` + 微步分支按原逻辑处理。
+    """
+    rr = c.r if d > 0 else c.pr
+    lim = [ledger.get(s, 0.0) / nu for s, nu in rr.items()
+           if s not in (WATER, H_ION) and nu > 0]
+    return min(lim) if lim else float("inf")
+
+
+def _chem_products(c: Cand, d: int) -> frozenset:
+    """驱动方向的**化学产物**集合（剔除 `H⁺`/`H₂O` 这类记账物种）。
+
+    用途：判定两条候选是否"产出同一个东西"——同产物但走不同反应物的通道
+    是同一条净转化的不同路线，选哪条不改变**生成什么**，只改变**能不能走够量**。
+    """
+    pp = c.pr if d > 0 else c.r
+    return frozenset(s for s in pp if s not in (WATER, H_ION))
+
+
+def _pick_ev(evals: list, ledger: dict) -> tuple:
+    """拾取候选：`S` 贪心 + **同产物通道的可动量回退**（第 264 轮根治）。
+
+    **纯 `max(S)` 是短视的**：`S` 只回答"驱动力多大"，不回答"这一步能走多少"。
+    两条通往**同一化学产物**的通道可以 S 几乎相同、可动量却差几个数量级，
+    此时纯 S 贪心会选小的那条，于是每轮只推进痕量。
+
+    `N15 Na₂SiO₃+足量CO₂` 实测（`tools/crawl2.py` 末态探针）：
+
+        A `2H⁺ + SiO₃²⁻ -> H₂SiO₃`（precip）  S = **4.162**  可动量 **1.99e-4**
+        B `HSiO₃⁻ + H⁺ -> H₂SiO₃`（proton）   S =  4.077     可动量 **0.5605**
+
+    A 每轮都被选中（S 高 0.085），但它只能动 1.99e-4；而 SiO₃²⁻ 是**痕量族成员**
+    （pH 7.79 下只占硅总量的一小部分），A 消耗掉的 SiO₃²⁻ 立刻被
+    `HSiO₃⁻ -> SiO₃²⁻ + H⁺`（S 同为 ~4.2）补回 ⟹ **等量乒乓 3000 轮**
+    （`tools/crawl.py` 实测 3000 次 `[pick]` 只在两个键之间交替），
+    `H₂SiO₃` 停在 0.4393 而真值 1.0000。
+
+    **判据（三条同时用，尽量窄）**：
+      ① 只用**引擎既有**的显著程度线 `ANN_MIN_EXTENT`（`converg.resid_live_ok`
+         的 ext_max 闸、`equations` 的净步取舍、slow 标注同用这条线）
+         —— **不引入新阈值**；消除"引擎一边说某通道无关、一边拿它当主步"。
+      ② **只在同化学产物之间回退** —— 不改变"生成什么"，只改变"走哪条路线"，
+         故化学上是中性的；产物不同的通道一律不动。
+      ③ **先判首选** —— 首选（S 最大者）本身够显著时**零额外开销**直接返回；
+         只有它落在痕量档时才扫一遍找同产物的显著替代。
+
+    否证记录：第 264 轮试过**不要求同产物**的宽版（任何显著的次优通道都可
+    顶掉痕量首选），残差质量多降但**净丢 1 例通过**、且 `D08`（原本残差 0）
+    恶化到 4.32 ⟹ 收窄到同产物。宽版数字见 `agents/log.md` 第 264 轮。
+    """
+    top = max(evals, key=lambda e: e[2])
+    if _stoich_cap(top[0], top[1], ledger) >= ANN_MIN_EXTENT:
+        return top
+    pr_top = _chem_products(top[0], top[1])
+    best = None
+    for e in evals:
+        if e is top or _chem_products(e[0], e[1]) != pr_top:
+            continue
+        if _stoich_cap(e[0], e[1], ledger) < ANN_MIN_EXTENT:
+            continue
+        if best is None or e[2] > best[2]:
+            best = e
+    return best if best is not None else top
+
+
 def resid_live_ok(a: dict) -> bool:
     """质量口径 `resid_live` 的单一定义（converg._live 与本模块探针共用）。
 
@@ -1845,7 +1915,8 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
           water_c = [] if strong_ox else [
               e for e in evals if e[0].meta.get("ox_couple") == H_ION
               and e[2] >= SOLVENT_FIRST and H_excess / V < 1e-3]
-          pick, d, S = max(water_c, key=lambda e: e[2]) if water_c else max(evals, key=lambda e: e[2])
+          pick, d, S = (max(water_c, key=lambda e: e[2]) if water_c
+                        else _pick_ev(evals, ledger))
           if _TRACE: print('  [pick]', pick.key, d, round(S,2))
 
           nk = _netkey(pick, d)
