@@ -967,13 +967,22 @@ def run_cases_parallel(cases: list[dict], jobs: int) -> tuple[int, float]:
     return PASS_N, wall
 
 
-# 已知慢例（按经验排序，仅用于并行**调度**，不影响判定）。数值来自
-# `tools/suite_parallel.py` 的逐例留档；表过期只会让负载均衡变差，不会错判。
+# 已知慢例（仅用于并行**调度**，不影响判定）。数值取自
+# `logs/suite-parallel-latest.json` 的逐例留档；表过期只会让负载均衡变差，
+# 不会错判。
+#
+# ⚠️ 第 241 轮实测：**同一用例的单例耗时会随 worker 数大幅波动**
+# （`Y05` 在 4 workers 下 14.7 s、6 workers 18.9 s、8 workers 20.2 s）——
+# 因为超订物理核后单例内部就在跟别的 worker 抢 CPU。故任何形如
+# "Y05 耗时 20 s 是算法病态"的结论，**必须先说明当时的 worker 数**；
+# 本表只当作**排序提示**，不当作性能结论。
 _SLOW_FIRST = (
     "Y05 BaCl2+Na2SO3 白沉", "Z07 MnS+醋酸 溶解",
-    "N19 Na[Al(OH)4]+CO2过量", "Z04 Ag+稀硝酸 放NO",
-    "Cu31 CuSO4+NaCl+Cu 还原", "X10 Cu+Hg(NO3)2 置换",
-    "Amp14 AlCl3+少量NaOH", "M01 AlCl3+少量NaOH",
+    "N19 Na[Al(OH)4]+CO2过量", "X10 Cu+Hg(NO3)2 置换",
+    "M01 AlCl3+少量NaOH", "Amp14 AlCl3+少量NaOH",
+    "Z04 Ag+稀硝酸 放NO", "MX01 Fe3+ + SCN- 显色平衡",
+    "Cu31 CuSO4+NaCl+Cu 还原", "DR6 MgCl2+Na2CO3",
+    "H42 AlCl3+NaOH 1:2.5", "Co41 CoCl2+NaHCO3",
 )
 
 

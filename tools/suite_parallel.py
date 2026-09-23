@@ -1,26 +1,33 @@
 # -*- coding: utf-8 -*-
-"""第 206 轮 · 并行跑套件（多进程）—— 回答"能否用多进程提高效率"。
+"""并行跑套件 —— **薄封装**，真正的实现在 `chemkit/testsuit.py`。
 
-为什么多进程可行（已实测）：
-  · `Tables` 载入仅 **182 ms**、pickle 后 0.16 MB ⟹ 每个 worker 自己载一份
-    的启动成本远小于单例耗时；
-  · 本机 `cpu_count = 8`，且**只有 `spawn`** 启动方式（无 fork）⟹
-    worker 不继承父进程状态，**必须自己载表**（这反而是干净的）；
-  · 用例之间**互相独立**（各自 `judge()` 自己的 subs/cond）。
+⚙️ 第 241 轮重构（根因修，不是补丁）：
+本脚本原先自己建 `ProcessPoolExecutor` 并只回传 `(name, ok, errors, ms)`，
+另写一份 `logs/suite-parallel-latest.json`。它有三个真实缺陷：
 
-为什么不改 `testsuit.run_case`：它写模块级全局（`PASS_N`/`FAILS`/`RESULTS`），
-改它有回归风险。本脚本用**进程隔离**绕开：每个 worker 只回传
-`(name, ok, errors, ms)`，父进程汇总。
+1. **错误文本丢失**：它从 `ts.FAILS[n0:]` 取本次失败项，而 `testsuit` 在
+   失败时往 `FAILS` 里 append 的是**用例名、不是错误文本**（错误文本进
+   `RESULTS[i]["errors"]`）⟹ 留档里 `errors` 只有 `["9 BaSO4+Na2CO3(浓)"]`
+   这种"名字当错误"的垃圾，看失败原因必须回去翻控制台。
+2. **质量口径字段全缺**：没有 `resid_live` / `resid_max` / `iters` /
+   `exit` / `pH_solver` / `resid_src_eq`，于是"残差"还得另跑 `converg`。
+3. **两份实现必然漂移**：`testsuit` 的 `_par_init` 预热、`_SLOW_FIRST` 慢例
+   优先调度、`_enrich_results_with_probe` 富化，本脚本一个都没有——包括那条
+   代价高昂的预热教训（不预热则每 worker 首例假性 12~24 s）。
+
+现在它只做一件事：调 `testsuit.main(jobs=N)`（**唯一实现**），把并行统计
+写进 `logs/suite-parallel-latest.json`（只含墙钟/worker/CPU 合计/最慢榜，
+逐例结果不在此处复制 —— 那在 `logs/suite-latest.json`）。
 
 用法：
   python tools/suite_parallel.py            # 自动选 worker 数
   python tools/suite_parallel.py 6          # 指定 worker 数
-  python tools/suite_parallel.py 6 --check  # 与串行结果逐例对拍（慢但严谨）
+  python tools/suite_parallel.py 6 --check  # 额外串行跑一遍对拍（慢但严谨）
 """
 import io
+import json
 import os
 import sys
-import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
@@ -31,154 +38,82 @@ for s in (sys.stdout, sys.stderr):
     except Exception:
         pass
 
-import multiprocessing as mp                               # noqa: E402
-from concurrent.futures import ProcessPoolExecutor         # noqa: E402
-
-_T = None                       # worker 内缓存的 Tables
+from chemkit import testsuit as ts                            # noqa: E402
 
 
-def _worker_init():
-    """每个 worker 进程启动时载一次表（spawn 下无继承，必须自己载），
-    并做一次**预热**。
+def _default_jobs():
+    """按**物理核**取，不按逻辑核取满。
 
-    ⚠️ 第 206 轮实测教训：不预热时，每个 worker 的**首个用例**要独自承担
-    全部惰性缓存构建（`_redox_pair_static` / `logk_poly` / `build_derived`…），
-    于是套件里位置最靠前的简单用例（`1 HCl+NaOH`、`3 HCl+NaOH 碱过量`…）
-    显示成 12~24 s —— 看着像算法病态，其实**纯冷启动**：同一用例在已预热的
-    进程里只要 **9~270 ms**。`testsuit.main` 本就有预热，并行器必须照做，
-    否则 8 个 worker 各付一次，还污染"最慢用例"榜。
+    实测（i7-8650U = 4 物理 / 8 逻辑）：2w 74.8s / 4w 55.5s / 6w 50.0s /
+    8w 51.5s ⟹ 超过物理核只增争用（单例 CPU 成本 111→220 ms）。
     """
-    global _T
-    from chemkit.data import load_tables
-    from chemkit.engine import judge
-    _T = load_tables()
-    judge([{"name": "NaCl", "mol": 0.1}], {"V_L": 1.0}, _T)   # 预热
-
-
-def _worker_run(case):
-    """跑单个用例，返回 (name, ok, errors, ms)。"""
-    from chemkit import testsuit as ts
-    name = case["name"]
-    # 清掉该 worker 内的全局残余，只取本次追加的失败项
-    n0 = len(ts.FAILS)
-    _t0 = time.perf_counter()
-    try:
-        ok = ts.run_case(case, _T, verbose=False)
-        errs = list(ts.FAILS[n0:])
-    except Exception as exc:                                # noqa: BLE001
-        ok = False
-        errs = [f"运行异常 {type(exc).__name__}: {exc}"]
-    del ts.FAILS[n0:]
-    return (name, bool(ok), errs, round((time.perf_counter() - _t0) * 1000, 1))
-
-
-def run_parallel(n_workers, cases, chunksize=1):
-    """chunksize 取 1：单例耗时差异极大（有 100s+ 的慢例），块太大会造成
-    **尾部长尾**（实测 chunksize=4 时 800→1000 例期间墙钟几乎不前进）。"""
-    t0 = time.perf_counter()
-    out = []
-    with ProcessPoolExecutor(max_workers=n_workers,
-                             initializer=_worker_init) as ex:
-        for i, res in enumerate(ex.map(_worker_run, cases,
-                                       chunksize=chunksize), 1):
-            out.append(res)
-            if i % 200 == 0:
-                el = time.perf_counter() - t0
-                print(f"  {i}/{len(cases)}  elapsed {el:.1f}s", flush=True)
-    return out, time.perf_counter() - t0
-
-
-def run_serial(cases):
-    from chemkit.data import load_tables
-    from chemkit import testsuit as ts
-    T = load_tables()
-    t0 = time.perf_counter()
-    out = []
-    for c in cases:
-        n0 = len(ts.FAILS)
-        try:
-            ok = ts.run_case(c, T, verbose=False)
-            errs = list(ts.FAILS[n0:])
-        except Exception as exc:                            # noqa: BLE001
-            ok, errs = False, [f"{type(exc).__name__}: {exc}"]
-        del ts.FAILS[n0:]
-        out.append((c["name"], bool(ok), errs, None))
-    return out, time.perf_counter() - t0
+    cpu = os.cpu_count() or 2
+    return max(1, min(4, cpu // 2))
 
 
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     do_check = "--check" in sys.argv
-    n = int(args[0]) if args else max(1, min(8, (os.cpu_count() or 4)))
-    from chemkit.testsuit import load_cases
-    cases = load_cases(None)
-    print(f"用例 {len(cases)} 个；worker 数 = {n}（cpu_count="
-          f"{os.cpu_count()}，spawn 模式）")
+    jobs = int(args[0]) if args else _default_jobs()
+    if jobs <= 1:
+        print("!! jobs<=1 请直接跑 `python tools/dev.py suite --jobs=1`")
+        return 2
 
-    res_p, t_p = run_parallel(n, cases)
-    n_ok = sum(1 for _nm, ok, _e, _m in res_p if ok)
-    fails = [nm for nm, ok, _e, _m in res_p if not ok]
-    print(f"\n[并行 {n} workers] 用例 {n_ok}/{len(cases)}  墙钟 {t_p:.1f}s")
+    # 捕获 canonical 并行路径的墙钟（不改 testsuit 接口：临时换引用再还原）
+    wall = {}
 
-    # 逐例耗时 → 解释"为什么并行只有 ~2x"（长尾决定墙钟上限）
-    timed = sorted(((m or 0.0, nm) for nm, _ok, _e, m in res_p), reverse=True)
-    tot = sum(m for m, _nm in timed)
-    if timed:
-        print(f"\n串行 CPU 合计 {tot / 1000:.1f}s；"
-              f"理论下限 = max(最慢单例, CPU合计/worker数)")
-        print(f"最慢 8 例:")
-        for m, nm in timed[:8]:
-            print(f"  {m / 1000:7.2f}s  {nm}")
-        print(f"最慢单例 = {timed[0][0] / 1000:.2f}s ⟹ 并行墙钟**不可能**低于它")
+    def _spy(cases, n):
+        r = _orig(cases, n)
+        wall["s"] = r[1]
+        return r
 
-    # ===== 一次运行写全部产物：**不得为看另一面而重跑** =====
-    import json
-    import datetime
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    _orig = ts.run_cases_parallel
+    ts.run_cases_parallel = _spy
+    try:
+        print(f"[并行] worker={jobs}（cpu_count={os.cpu_count()}，spawn 模式）")
+        rc = ts.main(jobs=jobs)
+    finally:
+        ts.run_cases_parallel = _orig
+
+    if do_check:
+        print("\n[对拍] 串行再跑一遍（严谨但慢）…")
+        keep = {r["name"]: (r["ok"], tuple(r["errors"])) for r in ts.RESULTS}
+        ts.main(jobs=1)
+        now = {r["name"]: (r["ok"], tuple(r["errors"])) for r in ts.RESULTS}
+        diffs = [n for n in keep if now.get(n) != keep[n]]
+        print(f"[对拍] 逐例不一致 {len(diffs)} 例"
+              + ("（通过性 + 错误文本完全一致 ⟹ 并行安全）" if not diffs else ""))
+        for n in diffs[:10]:
+            print(f"  ✗ {n}\n     并行: {keep[n]}\n     串行: {now[n]}")
+
+    # ---- 并行统计侧车（逐例结果不在这里复制）----
+    times = sorted((t, n) for t, n in ts.TIMES)
+    tot = sum(t for t, _ in times)
+    top = [{"name": n, "ms": round(t * 1000, 1)}
+           for t, n in reversed(times[-40:])]
+    n_ok = sum(1 for r in ts.RESULTS if r["ok"])
     payload = {
-        "n_workers": n, "wall_s": round(t_p, 2),
-        "n_cases": len(cases), "n_ok": n_ok, "n_fail": len(fails),
-        "cpu_total_s": round(tot / 1000, 1),
-        "slowest_case_s": round(timed[0][0] / 1000, 2) if timed else None,
-        "fails": fails,
-        "cases": [{"name": nm, "ok": ok, "errors": e, "ms": m}
-                  for nm, ok, e, m in res_p],
-        "slowest": [{"name": nm, "ms": m} for m, nm in timed[:40]],
+        "n_workers": jobs,
+        "wall_s": round(wall.get("s", 0.0), 2),
+        "n_cases": len(ts.RESULTS),
+        "n_ok": n_ok,
+        "n_fail": len(ts.RESULTS) - n_ok,
+        "cpu_total_s": round(tot, 1),
+        "slowest_case_s": round(times[-1][0], 2) if times else None,
+        "slowest": top,
+        "cases_json": "logs/suite-latest.json",
+        "note": "逐例 ok/errors/ms/pH/resid_* 在 logs/suite-latest.json"
+                "（dev.py suite 写，本文件不复制）",
     }
-    jp = os.path.join(ROOT, "logs", f"suite-parallel-{stamp}.json")
-    with io.open(jp, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=1)
     lp = os.path.join(ROOT, "logs", "suite-parallel-latest.json")
     with io.open(lp, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=1)
-    print(f"\n[留档] {os.path.relpath(jp, ROOT)}")
-    print(f"[留档] {os.path.relpath(lp, ROOT)}（机读，含逐例 ok/errors/ms）")
-    print("  ⟹ 后续要看慢例/失败清单/耗时，**读这个文件**，不要重跑"
-          "（`python tools/suite_show.py`）")
-
-    if do_check:
-        res_s, t_s = run_serial(cases)
-        n_ok_s = sum(1 for _nm, ok, _e, _m in res_s if ok)
-        print(f"[串行]           用例 {n_ok_s}/{len(cases)}  墙钟 {t_s:.1f}s")
-        print(f"加速比 = {t_s / t_p:.2f}x")
-        # 逐例对拍
-        d = {nm: (ok, tuple(e)) for nm, ok, e, _m in res_p}
-        ds = {nm: (ok, tuple(e)) for nm, ok, e, _m in res_s}
-        diff = [nm for nm in ds if d.get(nm) != ds[nm]]
-        print(f"逐例对拍不一致: {len(diff)} 例")
-        for nm in diff[:10]:
-            print(f"  ✗ {nm}")
-            print(f"     并行: {d.get(nm)}")
-            print(f"     串行: {ds[nm]}")
-        if not diff:
-            print("  ✓ 逐例结果（通过性 + 错误文本）完全一致 ⟹ 并行安全")
-    else:
-        print(f"（加 --check 可串行对拍并测加速比）")
-
-    print(f"\n失败 {len(fails)} 例")
-    for nm in fails[:15]:
-        print(f"  {nm}")
+    print(f"\n[留档] {os.path.relpath(lp, ROOT)}"
+          f"（worker 数 / 墙钟 / CPU 合计 / 最慢榜）")
+    print("[留档] logs/suite-latest.json（逐例 ok/errors/ms/pH/resid_*）")
+    print("  ⟹ 看任何一面都用 `python tools/suite_show.py`，**不要重跑**")
+    return rc
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
