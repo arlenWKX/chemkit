@@ -53,7 +53,7 @@ from __future__ import annotations
 
 from math import log10, sqrt
 
-from .core import pKw_of, _vant, charge_of, elements_of
+from .core import pKw_of, _vant, charge_of, elements_of, PKW_298
 from .candidates import WATER, H_ION, OH_ION
 
 # OH_ION 亦从 candidates 导入（第 203 轮合并：此处原又写了一遍 "OH^-"）。
@@ -108,6 +108,45 @@ def build_families(T) -> dict:
         key = (a, b) if a <= b else (b, a)
         bond.setdefault(key, (e["pka"], dh))
         bond_dir.setdefault(key, (a, b))
+    # **羟合梯也是质子化族**（第 269 轮）。
+    #
+    # 原先本函数**只读 `T.pka`**，而金属的 `M(OH)_k` 梯来自 `T.beta`（logβ）
+    # ⟹ 一切"只有金属水解物种"的账本族成员数恒为 **0** ⟹ `_exact_ok` 第②条
+    # （族成员 ≥2）恒挡 ⟹ `_deg` 退化区里的精确解**永不启用**，只好让
+    # `max(h_c, o_c)` 两个启发式以**浮点末位**分胜负
+    # （第 268 轮 `F31 GaCl3+3NaOH`：`h_c == o_c == 0.024006826`，九位相同，
+    #  却因此落到 pH 1.62 而不是 Ga(OH)₃ 该在的近中性区）。
+    #
+    # 换算：`M(OH)_{k-1} + H₂O ⇌ M(OH)_k + H⁺`
+    # ⟹ `Ka_k = Kw·β_k/β_{k-1}` ⟹ `pKa_k = pKw(298) − (logβ_k − logβ_{k-1})`。
+    # 只连**相邻**的 ν（`_nu == _prev_nu + 1`）：ν 有空洞时（`Ga³⁺` ν=1,4；
+    # `Al³⁺` ν=1,2,4；`Pb²⁺` ν=1,3,4 …共 10 个中心）梯子只能连长出来的那几段，
+    # 缺口要靠**补数据**（`tools/ladder_gap_census.py` 已普查）。
+    #
+    # ⚠️ 诚实记录：`T.beta` 192 条里只有 **7 条带 `dH`** ⟹ 这些梯步
+    # **绝大多数没有温度修正**（`dh=None`，van't Hoff 项为 0）。
+    # 这是数据现状，不是本函数的选择；补 `dH` 属数据工作。
+    _lad: dict = {}
+    for _b in T.beta:
+        if _b.get("ligand") != "OH^-" or _b.get("m", 1) != 1:
+            continue
+        _lad.setdefault(_b["center"], []).append(
+            (_b.get("nu"), _b["logb"], _b["complex"], _b.get("dH")))
+    for _cat, _ent in _lad.items():
+        _ent.sort(key=lambda t: (t[0] or 0))
+        _pnu, _plb, _psp = 0, 0.0, _cat
+        for _nu, _lb, _sp, _dH in _ent:
+            if _nu is None or _nu != _pnu + 1:
+                _pnu, _plb, _psp = (_nu if _nu is not None else _pnu), _lb, _sp
+                continue
+            _pka = PKW_298 - (_lb - _plb)
+            # 与 `T.pka` 同一条装配路径（acid → base 方向即"少 OH → 多 OH"）
+            adj.setdefault(_psp, []).append((_sp, _pka, _dH))
+            adj.setdefault(_sp, []).append((_psp, _pka, _dH))
+            _key = (_psp, _sp) if _psp <= _sp else (_sp, _psp)
+            bond.setdefault(_key, (_pka, _dH))
+            bond_dir.setdefault(_key, (_psp, _sp))
+            _pnu, _plb, _psp = _nu, _lb, _sp
     seen: set = set()
     out: dict = {}
     for root in sorted(adj):
