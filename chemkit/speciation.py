@@ -16,9 +16,10 @@ from __future__ import annotations
 import heapq
 import os
 from math import log10, sqrt
-from .core import pKw_of, _vant, charge_of
+from .core import pKw_of, _vant, charge_of, PKW_298
 from .data import Tables
 from .candidates import (Cand, logK_T, build_derived, WATER, H_ION, X_MIN,
+                         ANN_MIN_EXTENT,
                          _STRONG_ACID, _ksp_xy, STRONG_MOLECULAR_ACIDS)
 from .normalize import _mol_fraction
 from .acidbase import build_families, charge_pH
@@ -276,6 +277,52 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             acids.append((e1["pka"], dH_pp, acid, e1["base"]))
         acids.sort(key=lambda x: x[0])
         beta_pka = []
+        # **OH 梯配离子的储备必须"逐级（终止于固相）"，不是"一步脱光"**
+        # （第 276 轮）。`beta_pka:` 派生条目一律是
+        #   `[M(OH)_k] + k·H⁺ -> M^{z+} + k·H₂O`（k = 梯级、z = 中心电荷），
+        # 于是滴定器**无法在中途停在氢氧化物固相上**。实测
+        # `H45 Na[Al(OH)4]+HCl 半量`（`tools/ph_path.py`）：传入 He = +0.3747，
+        # `_buffer_titration` 把 `[Al(OH)₄]⁻ −0.09368 / Al³⁺ +0.09368`
+        # —— 0.3747 / 0.09368 = **4.000** ⟹ 按 4 个 H⁺/铝酸根吸收，`He_res = 0`。
+        # 而化学上第一步是 **1 个 H⁺**：`[Al(OH)₄]⁻ + H⁺ -> Al(OH)₃(s) + H₂O`
+        # ⟹ 0.3747 mol H⁺ 把 0.3747 mol 铝酸根变固相 ⟹ 铝酸根 0.5 / 固相 0.5
+        # （与手算电荷平衡 + `K = β₄·Ksp` **逐位一致**）。
+        # 错法还把账本留成"0.78 M 铝酸根 + 0.094 M Al³⁺"这种**不可能共存**的
+        # 混合态，随后分支 4/pinned 给出 pH 12.185，让那 0.375 mol 游离强酸
+        # 在走步眼里**彻底隐形**（引擎呈现 pH 12.19，而账本自洽解是 **0.426**）。
+        #
+        # 逐级反应与 logK 全部由库内数据推出（`tools/ladder_reserve_census.py`
+        # 普查 **11 个**配离子）：
+        #   `[M(OH)_k] + (k−z)·H⁺ -> M(OH)_z(s) + (k−z)·H₂O`
+        #   logK = (k−z)·pKw + pKsp − logβ_k
+        # 校验 `[Al(OH)_4]^-`：1×14 + 33 − 34.5 = **12.5**
+        # ⟹ `Al(OH)₃(s) + OH⁻ -> [Al(OH)₄]⁻` 的 logK = 14 − 12.5 = **+1.5**
+        # （与该 beta 条目自己的 `calibrated` 注记逐位一致）。
+        _ksp_oh = {}
+        for _e in T.ksp:
+            _c0, _a0 = _e["pair"]
+            if _a0 == "OH^-" and _c0 not in _ksp_oh:
+                _ksp_oh[_c0] = _e
+        _step = {}
+        for _b in T.beta:
+            if _b["ligand"] != "OH^-" or _b.get("m", 1) != 1:
+                continue
+            _k = _b.get("nu", 1)
+            _z = charge_of(_b["center"])
+            _e = _ksp_oh.get(_b["center"])
+            if _k <= _z or _e is None:
+                continue
+            _n = _k - _z
+            _lg = _n * PKW_298 + _e["pKsp"] - _b["logb"]
+            # dH：逐级式是本文件上方 `ksp_beta`（solid + ligand -> complex）的
+            # **逆向**，故取其反号（`_hess_dH(k·b.dH, m·e.dH)` = b.dH − e.dH）。
+            # 水电离那一份由 `pkw_coeff = n` 通道承载，不并入 dH。
+            _dh = (_e["dH"] - _b["dH"]
+                   if ("dH" in _e and "dH" in _b) else None)
+            _step[_b["complex"]] = Cand(
+                "derived", {_b["complex"]: 1, H_ION: _n},
+                {_e["solid"]: 1, WATER: _n}, _lg, float(_n), dH=_dh,
+                meta={"src": f"beta_step:{_e['solid']}/{_b['complex']}"})
         for dc in build_derived(T):
             if not dc.meta.get("src", "").startswith("beta_pka:"):
                 continue
@@ -285,7 +332,11 @@ def _buffer_titration(ledger: dict, H_excess: float, V: float, T, pKw: float,
             comps = [s for s in dc.r if s not in (H_ION, WATER)]
             if len(comps) != 1:
                 continue
-            beta_pka.append((comps[0], dc, nu_h))
+            _rep = _step.get(comps[0])
+            if _rep is not None:
+                beta_pka.append((comps[0], _rep, float(_rep.r[H_ION])))
+            else:
+                beta_pka.append((comps[0], dc, nu_h))
         # 堆构建角色表：物种 -> ('b', 共轭酸) 或 ('c', dc, νH+)；
         # 碱储备优先（与原分支顺序一致：先查 bases 再查 complexes）
         _heap_role = {}
@@ -712,7 +763,20 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # 否则早退会**独占** pH：M01 实测 He = −1e-3 直读 11.000，而同一账本的
     # Al³⁺ 水解给 1.85e-3（pH 2.73）；x 再走 1e-7 就翻到 2.73 ⟹ 7.5 单位的
     # 悬崖、S 由 +23.5 翻 −1.3 ⟹ solve_extent 无过零点、通道被判"零推进"。
-    _role_free = not any(sp in _role_union(T) for sp in ledger)
+    # **"显著"而不是"在场"**（第 276 轮）：原判据是"账本里**出现**任何角色
+    # 物种"，而痕量也会命中。实测 `H45 Na[Al(OH)4]+HCl 半量` 终态——
+    #   `Na⁺ 1 / Cl⁻ 0.5 / [Al(OH)₄]⁻ 0.874721 / Al(OH)₃ 0.125279 / He = +0.374721`
+    # 电荷平衡 `1 + 0.374721 = 1.374721 = 0.5 + 0.874721` **逐位成立**
+    # ⟹ 自洽 pH = −log10(0.374721) = **0.426**。但账本里还有**痕量** `Al³⁺`
+    # ⟹ 旧判据 `_role_free = False` ⟹ 直读早退被挡 ⟹ 落到 pinned 精确解得
+    # **12.185**（`tools/ph_path.py` 实测 tags = `['电荷平衡精确解(pinned)']`）
+    # —— 那 0.375 mol 游离强酸在走步眼里**彻底隐形**，于是 `[Al(OH)₄]⁻ +
+    # 4H⁺ -> Al³⁺` 再也走不动、账本停在"0.87 M 铝酸根 + 0.37 M 强酸"这种
+    # **化学上不可能共存**的态上。
+    # 显著性用引擎**同一把尺子** `ANN_MIN_EXTENT`（mol；`resid_live_ok`/
+    # 慢标注同用），不引入新常数。
+    _role_free = not any(sp in _role_union(T) and m > ANN_MIN_EXTENT
+                         for sp, m in ledger.items())
     if _role_free:
         if He >= 1e-3:
             _tag("H⁺直读")
@@ -792,8 +856,50 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             e1s = [e for e in entries if e["n"] == 1] or entries
             pka = max(_pkapp(e, T_K) for e in e1s)           # 最强一级共轭酸
             bases_map[base] = 10.0 ** (pka - pKw)
-        # **两性金属的含氧酸根：先不改 `bases_map`**（第 275 轮否证，见下）
+        # **两性金属的含氧酸根 → 碱侧角色**（第 276 轮，**在第 275 轮的否证 A
+        # 之上重做**）。Kb 完全由库内数据推出，无新数据、无阈值：
+        #   `[M(OH)_k] ⇌ [M(OH)_{k-1}] + OH⁻` ⟹ Kb = β_{k-1}/β_k（β₀ ≡ 1）
+        # 中间级缺数据（`Al³⁺` 恰缺 ν=3）时**终止于固相**：
+        #   `[M(OH)_k] ⇌ M(OH)_z(s) + (k−z)·OH⁻` ⟹ Kb = 10^(pKsp − logβ_k)/(k−z)…
+        # 取值见 `tools/ladder_base_census.py`（11 个物种，`[Al(OH)_4]^-`
+        # 得 `Al(OH)₃ + OH⁻ -> [Al(OH)₄]⁻` 的 logK = **+1.5**，与该 beta 条目
+        # 自己的 `calibrated` 注记逐位一致）。
         #
+        # **为什么第 275 轮的否证 A 现在可以重做**：那次失败的直接原因是
+        # `_buffer_titration` 用"一步脱光"（4 H⁺/铝酸根）把账本留成
+        # **0.78 M 铝酸根 + 0.094 M Al³⁺** 这种不可能共存的混合态，再给它
+        # 一个碱角色，`o_c` 就被那个虚高的浓度撑爆（教科书例
+        # `16 AlCl3+3NaOH` 从 Al(OH)₃ 变成纯铝酸根）。本轮先把储备改成
+        # **逐级（终止于固相）**（见 `_buffer_titration` 的 `_step`），
+        # 滴定后的铝酸根回到它应有的量，角色才有意义。
+        _ksp_oh = {}
+        for _e in T.ksp:
+            _c0, _a0 = _e["pair"]
+            if _a0 == "OH^-" and _c0 not in _ksp_oh:
+                _ksp_oh[_c0] = _e
+        _lad: dict = {}
+        for b in T.beta:
+            if b["ligand"] != "OH^-" or b.get("m", 1) != 1:
+                continue
+            cx = b.get("complex")
+            if not cx or cx in bases_map or cx in T.solids:
+                continue
+            if charge_of(cx) >= 0:
+                continue                      # 只收含氧酸根（净负电）
+            _lad[(b["center"], b.get("nu", 1))] = (cx, float(b["logb"]))
+        for (_ctr, _k), (cx, _logbk) in _lad.items():
+            _e = _ksp_oh.get(_ctr)
+            _z = charge_of(_ctr)
+            if _e is None:
+                continue                      # 无 Ksp ⟹ 这条梯没有固相终点
+            # **一律以固相为终点**（与滴定储备同一口径）：`k − z` 个 OH⁻
+            _n = _k - _z
+            if _n <= 0:
+                continue
+            kb = 10.0 ** ((_pksp(_e, T_K) - _logbk) / _n)
+            if kb > 0.0:
+                bases_map[cx] = kb
+
         # 实测（`tools/branch4_src.py H43`）：`H43 AlCl3+NaOH 1:3.5` 的**呈现
         # pH = 3.26**，而同一账本的电荷平衡精确解（引擎自己的 `pH_solver`）
         # 是 **12.037**，与手算 12.03 逐位吻合。成因：分支 4 的 `o_c` 扫的是
@@ -1064,7 +1170,18 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # `bases_map` 上方注释）：Kb 可精确推出，但 `o_c` 是"游离 [OH⁻]"的
     # 代理量，补角色会把它算成 0.148 而真值 0.011 ⟹ 通过 1208→1179、
     # 教科书例 `16 AlCl3+3NaOH`（恰好 3 当量）从 Al(OH)₃ 变成纯铝酸根。
-    _blind_dom = _blind > max(h_c, o_c)
+    #
+    # ⚠️ **只在启发式用的是"软估计"时才推翻它**（第 276 轮补的第二个前提）：
+    # `h_c`/`o_c` 有两个来源 —— **残余游离强酸/碱池**（`He_res/V`，
+    # **精确记账**，不是估计）与**角色表派生的弱酸/弱碱估计**。前者是硬量，
+    # 由它选出的支**可信**；只有后者才可能因为"看不见某个物种"而选错。
+    # 实测 `H45 Na[Al(OH)4]+HCl 半量`：终态账本 `Na⁺ 1 / Cl⁻ 0.5 /
+    # [Al(OH)₄]⁻ 0.874721 / Al(OH)₃ 0.125279 / He = 0.374721`
+    # —— 电荷平衡 `1 + 0.374721 = 1.374721 = 0.5 + 0.874721` **逐位成立**
+    # ⟹ 自洽 pH = −log10(0.374721) = **0.426**；而 `_blind_dom` 不设此闸时
+    # 会推翻它、改走精确解给 **12.19**（差 11.8 个单位，且让那 0.375 mol
+    # 游离强酸在走步眼里彻底隐形）。
+    _blind_dom = _blind > max(h_c, o_c) and _free_side == 0
     _deg = (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c)
     if _deg or pin_mode or _blind_dom:
         # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198/199 轮）：
