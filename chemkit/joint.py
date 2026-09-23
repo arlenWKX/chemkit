@@ -41,8 +41,13 @@ from .speciation import estimate_pH, estimate_state
 _JTRACE = bool(_os.environ.get("CHEM_TRACE_JOINT"))
 
 # 联立解参数（改动前先跑 converg dump 基线差分）
-JOINT_TOL = 0.05        # 收敛阈：max|F| < 0.05（log 单位；J06 欠收敛 0.59）
-JOINT_MAX_ITER = 14     # Newton 迭代上限（失败体系停滞早中止，见 _stagn）
+JOINT_TOL = float(_os.environ.get("CHEMKIT_JOINT_TOL", "0.05"))
+# 收敛阈：max|F| < 0.05（log 单位；J06 欠收敛 0.59）
+# **第 239 轮：两个参数改为可用环境变量覆盖**，用于回答"B 组是欠迭代
+# 还是根本不可解"——`joint_solve` 在 B 组停滞态上返回 `fail, resid≈12`，
+# 而迭代上限只有 14 次。先量"给足迭代/放宽阈值能否解开"，再决定
+# 是扩参数还是需要重写求解器（初值/缩放/阻尼/固相显式化）。
+JOINT_MAX_ITER = int(_os.environ.get("CHEMKIT_JOINT_MAX_ITER", "14"))
 JOINT_MAX_M = 12        # 联立维度上限（超出取 |S| 最大者；数值 Jacobian O(m²) 求值）
 JOINT_MIN_M = 2         # 维度下限（单平衡 solve_extent 已一步到位）
 JOINT_EPS = 1e-9        # 程度显著阈（|x| 全在此下 = 原地，按无操作处理）
