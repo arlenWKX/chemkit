@@ -130,6 +130,20 @@ def build() -> list[dict]:
                 "与 `HN5`（0.0095，下沿）一起把坏档**夹住**。"
                 "引擎实测 pH **9.250**（= pKa）、resid **0**。"),
         },
+        {
+            "name": "HN7 NH4Cl 0.02+NaOH 0.01 半中和（账本组成锚）",
+            "subs": [["NH_4Cl", 0.02], ["NaOH", 0.01]],
+            "has_range": {"NH_3": [0.008, 0.012], "NH_4^+": [0.008, 0.012]},
+            "note": (
+                _TAG + "**锁的不是 pH，而是账本的组成** —— 半中和的定义就是"
+                "「`n(NH₃) = n(NH₄⁺) = c/2`」，所以 `NH₃` 与 `NH₄⁺` 都必须"
+                "落在 **[0.008, 0.012]**（c = 0.02）。"
+                "**为什么这条对本轮重要**：第 278–285 轮那条线反复撞到的都是"
+                "「**pH 对、账本没落实**」——`TE1`（0.01/0.005）实测 `NH₃` 只"
+                "有 **0.000131**（应为 0.005）、`He` 停在 −0.004869（未中和）；"
+                "而`scale = 2` 这一档引擎**完全中和**（`He = 0`）⟹ 账本是对的。"
+                "本条把「**组成也要对**」钉成断言，而不只是 pH。"),
+        },
     ]
 
 
@@ -142,7 +156,9 @@ def main(argv: list[str]) -> int:
         db = json.load(fh)
     have = {c["name"] for c in db}
     for c in new:
-        print(f"{c['name'][:46]:<46} ph={str(c['ph']):>14}  "
+        _spec = ({"ph": c["ph"]} if "ph" in c
+                 else (c.get("has_range") or c.get("has") or {}))
+        print(f"{c['name'][:46]:<46} {str(_spec)[:14]:>14}  "
               f"{'已存在' if c['name'] in have else '新增'}")
 
     if "--check" in argv:
@@ -154,7 +170,13 @@ def main(argv: list[str]) -> int:
             r = judge([{"name": s[0], "mol": float(s[1])} for s in c["subs"]],
                       c.get("cond") or {}, T, _probe=pr)
             ph = r.get("final_pH")
-            ok = c["ph"][0] <= (ph if ph is not None else -99) <= c["ph"][1]
+            ok = True
+            if "ph" in c:
+                ok = c["ph"][0] <= (ph if ph is not None else -99) <= c["ph"][1]
+            if c.get("has_range"):
+                fin0 = {e["name"]: e["mol"] for e in (r.get("final") or [])}
+                for sp, (lo, hi) in c["has_range"].items():
+                    ok = ok and lo <= fin0.get(sp, 0.0) <= hi
             print(f"{c['name'][:46]:<46} {ph:>9.3f} "
                   f"{abs(_live(pr.get('active') or [])):>8.4f} "
                   f"{'✓' if ok else '✗':>4}")

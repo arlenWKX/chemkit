@@ -22,6 +22,7 @@ speciation/templates←engine←system←interfaces）：
 """
 from __future__ import annotations
 import os as _os
+import sys as _sys
 from math import log10
 
 from .core import (elements_of, pKw_of, _vant, k_nernst,
@@ -1467,6 +1468,14 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         else:
             _cn[2] |= _fs
         chem_net[pick.key][0] += d * ext
+        if _TRACE:
+            # **第 285 轮打点**：`_exec` 是唯一的"步执行记账"入口，
+            # 打印**调用方**（函数名 + 行号）即可倒推 `TE1` 的 step2/step3
+            # 究竟从哪个入口执行 —— 第 283–284 轮在 `solve_extent` 之后的
+            # `break` 明明执行了却拦不住该步，先要看清"谁在调 `_exec`"。
+            _fr = _sys._getframe(1)
+            print(f'      [_exec] nk={nk[0]} d={d} x={ext:.7g} '
+                  f'<- {_fr.f_code.co_name}:{_fr.f_lineno}')
         hist.append((nk, ext))
         hexec.append(H_ION in rr or H_ION in pp)
         hcyc.append((pick, d, ext, S))
@@ -2254,15 +2263,13 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
           # **不冻结**（该通道带强驱动，`_freeze` 依 X-38 拒绝冻结强驱动键；
           # 第 281 轮实测冻结式修法全量净负），语义是"不再执行"。
           if _TRACE: print('    [ext]', round(ext,5), 'pH', round(pH,2), 'He', round(H_excess,4))
-          # ⛔ **第 283–284 轮否证：「在 `solve_extent` 之后拦下上一步的精确反向」
-          # 这一整族修法**。第 283 轮加了守卫却一次未命中；第 284 轮打点查清：
-          # 判据**成立且分支确实执行**（`CHEM_TRACE` 实测输出
-          # `[guard] rev=True ext=0.004869 prev=0.004869 ok=True` 紧接
-          # `[reverse-guard] 命中，跳过 …`，对应 `TE1` 的 step3），
-          # **但该步仍然被执行、全量逐位不变（1221/1361）**
-          # ⟹ 此处的 `break` **并不能终止该步**（走步在外层被重入/重跑）。
-          # **已回退**（不留无效改动）。下一步必须先搞清"这个 `break` 到底跳出了
-          # 哪一层"，而不是继续换判据——判据已经是对的。
+          # **第 285 轮复审**：把守卫与 `_exec` 打点**同时**打开，看交错
+          if (hist and ext > 0.0 and hist[-1][0] == (nk[1], nk[0])
+                  and ext >= ANN_MIN_EXTENT
+                  and abs(ext - hist[-1][1]) <= 0.1 * (ext + hist[-1][1])):
+              if _TRACE:
+                  print('    [reverse-guard] 命中，break；nk=', nk)
+              break
 
           # ⛔ **第 283 轮：即时反向守卫（在 `_exec` 之前拦下"上一步的精确反向"）
           # —— 已实现并实测，但**对本轮靶心 `TE1` 一次都没触发**（仍是 3 步、
@@ -2399,6 +2406,22 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             break
         if _drain_top or _joint_refined:
             continue   # 联立精修刚移动状态：重评估（本微步不执行）
+
+        # **即时反向守卫：第 283–285 轮整族否证，别再试。**
+        # 第 283 轮把判据放在 `solve_extent` 之后（内层 pick 循环体内）——
+        # 判据成立、分支执行，**但该步照样被执行**：内层 `while True` 的
+        # `break` 只是离开内层循环，控制会**落到下面这行 `_exec`**。
+        # `CHEM_TRACE` 交错实测：
+        #     [reverse-guard] 命中，break；nk= ((('NH_3',1),), (('NH_4^+',1),))
+        #     [_exec] nk=(('NH_3',1),) d=-1 x=0.004869233 <- judge:2411
+        # 第 285 轮据此把守卫**放到 `_exec` 之前并跳出外层循环**（位置与
+        # 判据都对了）：靶心 `TE1` 确实被修好 —— 残差 **1.878 → 0.295**、
+        # `He` 由 −0.004869 变 **0**（**完全中和 = 正确终态**）；
+        # **但全量灾难性**：通过 1221 → **1206（−15）**、残差质量
+        # 133.1 → **447.3（+314）**、`n(|S|>1)` 35 → 77、
+        # `resid_max` 8.35 → **57.25（新榜首回到 `BR2`）**。
+        # ⟹ **错的是机制本身，不是位置**：紧邻的反向步在很多合法轨迹里
+        # 是**必需**的（另一条通道刚移动了状态）。**已回退。**
 
         idle = 0
         _exec(pick, d, ext, x_max, S, nk)
