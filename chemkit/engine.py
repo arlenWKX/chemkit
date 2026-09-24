@@ -133,6 +133,11 @@ ROOT_AUDIT: dict | None = None
 # 走步全局化（联立不动点）才谈落地。本钩子只**普查规模**，不改任何行为。
 SELFBUF_AUDIT: list | None = None
 
+# ---- 净质子循环的处置普查钩子（仅 tools/ 诊断启用；生产路径恒为 None）-----
+# 第 289 轮：EU01 型空转的循环被触发点④反复识别却不处置（s0≈0 而各腿 |S|
+# 很大 = 张力，还是真平衡？）。每次 _cycle_jump 命中循环记一条 {hist, s0, legs}。
+CYCLE_AUDIT: list | None = None
+
 # ---- 走步残差轨迹（仅 tools/ 诊断启用；生产路径恒为 None）---------
 # 每次评估集构建后记录 (迭代号, 可执行候选数, Σ|S|)：残差驱动的条件
 # 阻尼（§7 X-35）要先验证"Σ|S| 未下降"能不能把震荡与正常推进分开。
@@ -1356,6 +1361,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # 阻断浓酸体系中同一反应因 H+ 挂侧不同生成多个配平形式互相逆转净零
     hist: list = []   # 已执行净反应键序列（用于循环震荡检测）
     frozen_perm: set = set()   # 实测/极限环/短周期震荡判定后永久冻结的净反应键
+    _tension: set = set()   # 第 289 轮：张力冻结的规范净键（_try_revive 豁免）
     # 诊断（X-38 续）：冻结发生时的步序号（`len(hist)`）。用途：区分两种病根——
     # ① 冻结时该通道就在错处（|S| 大）；② 冻结时它确实近平衡，但**后续步把状态
     # 带走了**而冻结是永久的 ⟹ 宣告失效。只写不读（除探针导出），零行为影响。
@@ -1757,11 +1763,16 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         而不是由"整条走步最多解冻几次"承担；后者只会让状态长出强驱动
         之后**永久失明**（`H35` 的 |S| = 11.094 即此，X-38 病根一）。
         返回实际解冻的键数（0 = 本次无可解冻）。
-        """
+
+        **张力键豁免**（第 289 轮）：`_tension` 里的键是**已被联立证明无解**
+        之后由 `_freeze(tension=True)` 冻上的强驱动键——它们的"强驱动"正是
+        张力本身，解冻只会重现冻↔解活锁（§1.20 实测）。其余冻结键照原规则：
+        状态移动使它们重新长出强驱动时，宣告失效、立即作废。"""
         nonlocal _revive
         if not frozen_perm:
             return 0
-        hit = [k for k in _strong_keys() if k in frozen_perm]
+        hit = [k for k in _strong_keys()
+               if k in frozen_perm and k not in _tension]
         if not hit:
             return 0
         _revive += 1
@@ -1776,23 +1787,34 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                   f'（第 {_revive} 次）')
         return len(hit)
 
-    def _freeze(keys, why: str) -> int:
+    def _freeze(keys, why: str, tension: bool = False) -> int:
         """**唯一冻结入口**（X-38 病根二）：强驱动键不冻，且记录冻结时刻。
 
         返回实际冻结的键数。跳过强驱动键是本节的核心修正——冻结的语义是
         "在当前状态宣告该平衡已达成"，而 |S| > FREEZE_MAX_S 就是它没达成的
         明证；把它们一起冻掉等于引擎自己撒谎（U11 的 `[ZnCl_4]^{2-}` 1.385、
         N30/D32 的 `[Fe(SCN)_3]` 3.53 被冻成"已平衡"）。留下的强驱动键交给
-        联立（已在检测命中时先问过）或如实计入残差。"""
+        联立（已在检测命中时先问过）或如实计入残差。
+
+        **`tension=True`（第 289 轮，方向 (b)：冻结豁免 × 张力分类）**：
+        仅当调用方持有**张力证据**（同一循环被反复识别且联立解不出
+        内点不动点）时，允许冻结强驱动键——此时"强驱动"不是"还能解"，
+        而是**张力本身**（Ag32 型：数据张力无联立不动点，走步 freeze 是
+        引擎对该族的既定正解）。**不违反 X-38 的诚实性**：质量口径
+        `resid_live_ok` 对 |S| > 0.1 的冻结键**照计残差**，冻结不改变
+        指标、只停止空转；键同时入 `_tension`，`_try_revive` 不再解冻
+        （防 §1.20 实测的冻↔解活锁）。"""
         strong = _strong_keys()
         stamp = len(hist)
         n = 0
         for k in keys:
-            if k in frozen_perm or k in strong:
+            if k in frozen_perm or (k in strong and not tension):
                 continue
             frozen_perm.add(k)
             frozen_perm.add((k[1], k[0]))
             _frozen_at[k] = _frozen_at[(k[1], k[0])] = stamp
+            if tension:
+                _tension.add(k if k <= (k[1], k[0]) else (k[1], k[0]))
             n += 1
         if n:
             _diag["freeze_events"] += 1
@@ -1862,6 +1884,12 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     _CYC_MAX = 0.02      # 微步上限（大步推进不受此机制管辖）
     _CYC_LEG_MAX = 4     # 腿数上限（>4 条不是'一个循环'，是微步捆）
     _CYC_SHARE = 0.15    # 每腿最小份额（占窗口总 extent）——紧耦合判据
+    # 第 289 轮：循环被识别却**连续**未处置（不跳不冻）的次数。EU01 实测
+    # 触发点④把同一个穿梭循环识别了 2730 次，其中 2729 次落在
+    # "有利到限（hi 被穿梭物种的瞬时量封在 1e-4 量级）→ 交给走步逐步吃"
+    # ——而走步每步只能吃 ~1e-5 ⟹ 空转 2815 步。连续未处置达阈值
+    # （与 idle>=8 同一把"走步宣告没进展"的尺子）即构成**张力证据**。
+    _cyc_noact = 0
 
     def _cycle_nuH(c, d) -> float:
         rr = c.r if d > 0 else c.pr
@@ -1958,18 +1986,27 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     if s not in (WATER, H_ION) and nu > 0
                     and ledger.get(s, 0.0) > 0.0), default=0.0)
 
-    def _cycle_jump() -> bool:
-        """近窗质子中性循环 → 沿净反应跳到 S_net = 0；S_net(0) ≤ 0 → 冻结。"""
+    def _cycle_disposition():
+        """近窗质子中性循环 → 沿净反应跳到 S_net = 0；S_net(0) ≤ 0 → 冻结。
+
+        返回 (status, legs, wts)：status ∈ none（无循环）/ jump（已跳步）/
+        freeze（已冻结）/ noact（识别了循环但本迭代不处置）。"""
         got = _cycle_legs()
         if got is None:
-            return False
+            return "none", None, None
         legs, wts = got
         s0 = _cycle_Snet(legs, wts, 0.0)
+        if CYCLE_AUDIT is not None:
+            # 第 289 轮诊断：循环被识别后各分支的走向与各腿 S（s0≈0 而腿强 = 张力）
+            CYCLE_AUDIT.append({
+                "hist": len(hist), "s0": round(s0, 4), "out": "?",
+                "legs": [(str(k)[-40:], round(s, 3))
+                         for k, s in zip(legs, _cycle_leg_S(legs, wts, 0.0))]})
         if abs(s0) <= JOINT_TOL:
             # 引擎自身的平衡容差（|S| < 0.05 视为已平衡）：既非跳也非冻。
             # RX13 实测：S_net = −0.009/−0.251/−1.353 被误冻结，把仍在工作的
             # 通道锁死（Ag 产率 0.15+ → 0.127）。
-            return False
+            return "noact", legs, wts
         if s0 < 0.0:
             # 循环已达/越过自身平衡：冻结（与既有 freeze 同"宣告平衡"语义）
             win = {k for k in legs if k not in frozen_perm}
@@ -1979,12 +2016,15 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 _diag["cycle_freeze"] += 1
                 if _TRACE:
                     print(f'  [cycle-freeze] {len(win)} keys S_net={s0:+.3f}')
-            return False
+            return "freeze", legs, wts
         hi = min((_cycle_leg_max(legs, k) / wts[k] for k in legs), default=0.0)
         if hi <= 0.0:
-            return False
+            return "noact", legs, wts
         if _cycle_Snet(legs, wts, hi) > 0.0:
-            return False        # 到物料上限仍有利：交给走步逐步吃（不越界）
+            if CYCLE_AUDIT is not None:
+                CYCLE_AUDIT[-1]["out"] = f"有利到限 hi={hi:.3g}"
+                CYCLE_AUDIT[-1]["s_hi"] = round(_cycle_Snet(legs, wts, hi), 4)
+            return "noact", legs, wts   # 到物料上限仍有利：交给走步逐步吃（不越界）
         lo, hi_f = 0.0, hi
         while hi_f > 1e-12:     # 找括号（左端 S_net > 0 已知）
             mid = 0.5 * hi_f
@@ -1993,7 +2033,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 break
             hi_f = mid
         if lo <= 0.0:
-            return False        # 极近平衡（S_net 立刻转负）：留给走步微调
+            if CYCLE_AUDIT is not None:
+                CYCLE_AUDIT[-1]["out"] = "极近平衡"
+            return "noact", legs, wts   # 极近平衡（S_net 立刻转负）：留给走步微调
         for _ in range(60):     # 二分
             mid = 0.5 * (lo + hi_f)
             if _cycle_Snet(legs, wts, mid) > 0.0:
@@ -2004,7 +2046,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 break
         frac = 0.5 * (lo + hi_f)
         if frac < X_MIN:
-            return False
+            if CYCLE_AUDIT is not None:
+                CYCLE_AUDIT[-1]["out"] = "跳量过小"
+            return "noact", legs, wts
         leg_S = _cycle_leg_S(legs, wts, 0.0)     # 步表 S 用跳步前状态的各腿值
         keys = list(legs)
         for k, Sj in zip(keys, leg_S):
@@ -2013,10 +2057,42 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                   _netkey(c, d))
         _diag["cycle_jumps"] += 1
         _diag["cycle_dx"] += frac
+        if CYCLE_AUDIT is not None:
+            CYCLE_AUDIT[-1]["out"] = f"跳 dx={frac:.3g}"
         disabled.clear(); dis_why.clear()   # 状态实质移动：全量解禁自校正（同 joint）
         if _TRACE:
             print(f'  [cycle-jump] {len(legs)} legs S0={s0:+.3f} dx={frac:.5g} mol')
-        return True
+        return "jump", legs, wts
+
+    def _cycle_jump() -> bool:
+        """触发点④入口：跳步/冻结判定（`_cycle_disposition`）+ **张力触发**
+        （第 289 轮）。
+
+        背景（`tools/cycle_audit.py EU01` 实测）：触发点④把同一个穿梭循环
+        识别了 **2730** 次，其中 **2729** 次落在"有利到限"（S_net 到物料上限
+        仍为正，但上限被穿梭物种的瞬时量封在 1e-4 量级）⟹ 每次都不处置、
+        "交给走步逐步吃"，而走步每步只吃 ~1e-5 ⟹ 2815 步空转。
+        循环被**连续**识别却连续未处置 ≥ 8 次（与 `idle >= 8` 同一把
+        "走步自己宣告没进展"的尺子），且至少一条腿 |S| > FREEZE_MAX_S
+        （RX13 保护：腿都弱的近平衡循环不算），即构成**张力证据**：
+        先问联立（X-38 同序），联立解不出 ⟹ `_freeze(tension=True)`
+        冻结循环腿——|S| 照计残差（`resid_live_ok` 对冻结强驱动键不豁免），
+        只是停止空转。"""
+        nonlocal _cyc_noact
+        st, legs, wts = _cycle_disposition()
+        if st != "noact":
+            _cyc_noact = 0
+            return st == "jump"
+        _cyc_noact += 1
+        if _cyc_noact >= 8:
+            _cyc_noact = 0
+            _ls = _cycle_leg_S(legs, wts, 0.0)
+            if max(abs(_s) for _s in _ls) > FREEZE_MAX_S:
+                keys = {(k if k <= (k[1], k[0]) else (k[1], k[0]))
+                        for k in legs}
+                if not _settle_cycle(keys):   # 先问联立（X-38）
+                    _freeze(keys, "cycle-tension n=8", tension=True)
+        return False
 
     for _sweep_round in range(20):
       seen_sig: dict = {}
