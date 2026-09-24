@@ -41,7 +41,7 @@ from .interfaces import (
     FormulaError, balance,
 )
 
-__version__ = "0.5.49"
+__version__ = "0.5.50"
 __all__ = ["Tables", "load_tables", "Engine",
            "Reaction", "System", "react", "default_tables",
            "TABLES", "FormulaError", "balance", "__version__"]
