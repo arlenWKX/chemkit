@@ -1256,6 +1256,11 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 # 故：**整步冻结为 True 时不受此闸限制**（前提仍由固相在场把关）；
                 # 逐点自判定（`pin_mode is None`）与显式弃用（`False`）时
                 # 行为**逐位不变**。
+                # ⛔ **第 279 轮否证**：再加一个豁免口 `not _pin_pair`
+                # （理由是"固相 + 其含氧酸根同时在账 ⟹ 固相就是储库"）——
+                # 实测 `H45` **仍是 13.045 / 0 步**（没修好），而 `H43`
+                # 12.185 → **13.045**、残差 0.147 → **0.984**（打坏了）
+                # ⟹ 已回退。`_pin_pair` 进不去 pinned 块**不是**卡在这一行。
                 if ledger.get(_cat, 0.0) <= 0.0 and pin_mode is not True:
                     continue
                 _seen.add(_cat)

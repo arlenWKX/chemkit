@@ -112,12 +112,17 @@ def main(argv: list[str]) -> int:
         print(f"     虚拟账本变化: {ch}")
 
     # ② charge_pH 两档
-    for pin in (None, True):
+    # ⚠️ 签名是 `charge_pH(ledger, V, T, T_K, …, c_H=…)` —— **V 在 c_H 之前**，
+    # 与 `estimate_pH(ledger, He, V, T, T_K, …)` **相反**（同类口径坑第 N 次）。
+    for pin in ((), None):
         try:
-            p_c = charge_pH(dict(led), He, V, T, T_K, pinned=pin)
+            if pin == ():
+                p_c = charge_pH(dict(led), V, T, T_K, c_H=He)
+            else:
+                p_c = charge_pH(dict(led), V, T, T_K, c_H=He, pinned=pin)
         except Exception as exc:                            # noqa: BLE001
             p_c = f"EXC {exc!r}"
-        print(f"② charge_pH(pinned={pin}) = {p_c}")
+        print(f"② charge_pH(pinned={pin!r}) = {p_c}")
     return 0
 
 
