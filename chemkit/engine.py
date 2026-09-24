@@ -2245,6 +2245,12 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
           ext, x_max = solve_extent(pick, d, ledger, H_excess, V, T_K, T, gsup,
                                     p_ext_kpa=p_ext_kpa, micro_rel=_micro_rel)
           if _TRACE: print('    [ext]', round(ext,5), 'pH', round(pH,2), 'He', round(H_excess,4))
+          # ⛔ **第 283 轮：即时反向守卫（在 `_exec` 之前拦下"上一步的精确反向"）
+          # —— 已实现并实测，但**对本轮靶心 `TE1` 一次都没触发**（仍是 3 步、
+          # 残差 1.878）⟹ **该步根本不经过这个执行点**（走步还有别的执行入口，
+          # 例如 `water_c` 分支 / 联立跳步 / 微步通道）。**已回退**（不留未验证的
+          # 引擎改动）。下一步要先用 `--trace`/打点确认 `TE1` 的 step2/step3
+          # **究竟从哪个入口执行**，再决定守卫放在哪里。
           bext, film_ps = (blocked_extent(pick, d, evals, T_K, T, ledger, H_excess, V,
                                           x_max, pH, p_ext_kpa=p_ext_kpa)
                            if kinetics else (None, []))
