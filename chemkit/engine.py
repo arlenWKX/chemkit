@@ -385,12 +385,27 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
             # 活度 a = c/c°（饱和时 c = H(T)·p_ext，等价 p/p° = p_ext/p°），
             # 下限 A_GAS 为惰性环境残余分压约定（避免浓度地板制造虚假驱动）；
             # 无 Henry 数据的物种回退固定 A_GAS（视为全逸出）
+            #
+            # **第 286 轮修正：`A_GAS` 只能当"不在账"时的回退，不能抬高真实溶解量。**
+            # 原式 `a = max(min(c_g, H·p_ext), A_GAS)` 里的 `max(·, A_GAS)` 会在
+            # `c_g < A_GAS` 时**把活度抬到 A_GAS**（= 1e-2 M 量级！），而 `A_GAS`
+            # 的本意是"惰性环境的残余分压"，只该用于**溶质不在账**的场合。
+            # 实测（`tools/sprobe.py`，1:1 缓冲态 `NH4^+ = NH3 = 0.005`、pH 9.25、
+            # `He = 0`）：
+            #   `A_GAS = 0.0098692` ⟹ `log10 = −2.00579`；`log10(0.005) = −2.30103`
+            #   ⟹ 差 **+0.29524** —— 与 `S_of` 实测的 **±0.2953** 逐位吻合。
+            # 后果是**同一条净反应的两个书写向给出不同的 S**（`NH3` 作**产物**时走
+            # 本支、被抬到 A_GAS；作**反应物**时走 `_logc_of`、用真实浓度）：
+            #   引擎自己的两个 Cand：`NH_3 + H^+ -> NH_4^+`（logK +9.25）S = **0.0000**
+            #                         `NH_4^+ -> NH_3 + H^+`（logK −9.25）S = **−0.2953**
+            # 这正是 `TE1`（`NH4Cl 0.01+NaOH 0.005`）在"账本已中和到正确终态"之后
+            # 仍留 **0.2950** 残差的原因（第 285 轮实测）。
             H = henry_of(T, s, T_K)
             c_g = ledger.get(s, 0.0) / V
-            if H is not None:
-                a = max(min(c_g, H * p_ext_kpa), A_GAS)
+            if H is not None and c_g > X_MIN:
+                a = min(c_g, H * p_ext_kpa)   # 真实溶解量（泡点以上已被扫气）
             else:
-                a = A_GAS
+                a = A_GAS                     # 不在账/痕量 或 无 Henry 数据
             logQ += nu * log10(a)
         else:
             # H+ 项之外的兜底（gas_escape=False 的气体 / 持续供给气体）：
