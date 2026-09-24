@@ -93,28 +93,39 @@ def main(argv: list[str]) -> int:
         print(f"   最终选支：{picks[-1][1]}  值 {picks[-1][2]:.6g}")
 
     # ② 账本里的显著物种，哪些**没有角色**（选支盲区）
+    # ⚠️ 必须读**引擎真正的 `rolemap`**（从 `T._est_static[T_K]` 取），
+    # 而不是 `T.pka_acid`/`T.pka_base` —— 第 276 轮起含氧酸根等角色的来源
+    # 还包括 `_first_k`（β 一级水解）、`hyd_map`（Ksp 水解）与
+    # **含氧酸根碱侧角色**（由 β/Ksp 推出），只看 pKa 表会漏报。
+    _sc = (getattr(T, "_est_static", None) or {}).get(298.15)
+    _rolemap = _sc[6] if _sc else {}
     led = dict(pr.get("ledger") or {})
     if not led:
         for e in (r.get("final") or []):
             led[e["name"]] = e["mol"]
-    print(f"\n② 账本显著物种（≥ {thresh:g} M）的角色状态：")
-    print(f"   {'物种':<18}{'M':>12}  {'pka_acid':<10}{'pka_base':<10}"
-          f"{'ksp':<6}{'beta':<6} 判定")
+    print(f"\n② 账本显著物种（≥ {thresh:g} M）的角色状态"
+          f"（rolemap 共 {len(_rolemap)} 项）：")
+    print(f"   {'物种':<18}{'M':>12}  {'in rolemap':<11}角色明细")
     blind = []
     for sp, m in sorted(led.items(), key=lambda kv: -kv[1]):
         if sp == "H_2O" or m / V < thresh:
             continue
-        pa = bool(T.pka_acid.get(sp))
-        pb = bool(T.pka_base.get(sp))
-        ksp = any(e["pair"].count(sp) for e in T.ksp)
-        bet = any(b["center"] == sp or sp in b.get("ligands", ())
-                  for b in T.beta)
-        has_role = pa or pb
-        tag = "" if has_role else "**无角色（选支盲区）**"
-        if not has_role:
+        role = _rolemap.get(sp)
+        tags = []
+        if role:
+            Ka, Kb, conj_p, Kh_qc, amph_v = role
+            if Ka is not None:
+                tags.append("Ka")
+            if Kb is not None:
+                tags.append(f"Kb={Kb:.4g}")
+            if Kh_qc is not None:
+                tags.append("Kh")
+            if amph_v is not None:
+                tags.append("amph")
+        tag = "  ".join(tags) if tags else "**无角色（选支盲区）**"
+        if role is None:
             blind.append((sp, m))
-        print(f"   {sp:<18}{m / V:>12.5g}  {str(pa):<10}{str(pb):<10}"
-              f"{str(ksp):<6}{str(bet):<6} {tag}")
+        print(f"   {sp:<18}{m / V:>12.5g}  {str(bool(role)):<11}{tag}")
     if blind:
         print(f"\n   ⟹ {len(blind)} 个显著物种没有酸碱角色："
               f"{', '.join(sp for sp, _ in blind)}")

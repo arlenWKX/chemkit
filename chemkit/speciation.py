@@ -922,16 +922,12 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         #   `E55 明矾+适量NaOH`、`E41/E43/N18/N19/N20` 同形。
         # ⟹ **"角色表缺谁"与"该用多大浓度"是两件事**：补角色会把启发式的
         # 代理量算错。正确的方向见下面 `_blind` 的**前提判据**。
-        _ladder_cx = {b["complex"] for b in T.beta
-                      if b["ligand"] == "OH^-" and b.get("m", 1) == 1
-                      and b.get("complex")}
-        bases_map: dict = {}   # base -> Kb
-        for base, entries in T.pka_base.items():
-            if base in T.solids or base == WATER or base in amph_eligible:
-                continue
-            e1s = [e for e in entries if e["n"] == 1] or entries
-            pka = max(_pkapp(e, T_K) for e in e1s)           # 最强一级共轭酸
-            bases_map[base] = 10.0 ** (pka - pKw)
+        # ⚠️ 第 277 轮删掉了此处**重复的一份** `bases_map` 定义与一份过期的
+        # `_ladder_cx`：第 275/276 轮两次插入把"pKa 碱储备 + 含氧酸根碱侧角色"
+        # 写成了**两遍**，后一遍 `bases_map: dict = {}` 把前一遍**整块清掉**
+        # ⟹ 含氧酸根的角色一条也没生效（`tools/branch4_src.py` 实测
+        # `[Al(OH)_4]^-` 不在 182 项的 `rolemap` 里 ⟹ 分支 4 给 H45 pH 7.0）。
+        # 教训：**同一名字的 `x = {}` 出现两次就是静默清空**，见 lessons。
         hyd_map: dict = {}    # cat -> (Kh 每阳离子, qc)
         for e in T.ksp:
             cat, an = e["pair"]
