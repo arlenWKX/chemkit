@@ -2244,7 +2244,26 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 _micro_rel = 1e-4
           ext, x_max = solve_extent(pick, d, ledger, H_excess, V, T_K, T, gsup,
                                     p_ext_kpa=p_ext_kpa, micro_rel=_micro_rel)
+          # **即时反向守卫**（第 284 轮重做）：紧邻上一步是**精确反向键**、
+          # 量级相当、且都够显著 ⟹ 上一步已把该轴走到平衡点，本步只会把它
+          # 原样拆回来。`TE1` 实测（`tools/tcmp.py` + `CHEM_TRACE`）：
+          #   step2 `NH4^+ -> NH3 + H^+` x=0.004869（**恰是游离 OH⁻ 全量**，
+          #         He→0 = 正确终态）
+          #   step3 反向同键**同量** x=0.004869 拆掉 ⟹ 残差 1.878
+          # 打点实测 step3 处 `prev_is_rev=True`、`hist_len=2` ⟹ 判据成立。
+          # **不冻结**（该通道带强驱动，`_freeze` 依 X-38 拒绝冻结强驱动键；
+          # 第 281 轮实测冻结式修法全量净负），语义是"不再执行"。
           if _TRACE: print('    [ext]', round(ext,5), 'pH', round(pH,2), 'He', round(H_excess,4))
+          # ⛔ **第 283–284 轮否证：「在 `solve_extent` 之后拦下上一步的精确反向」
+          # 这一整族修法**。第 283 轮加了守卫却一次未命中；第 284 轮打点查清：
+          # 判据**成立且分支确实执行**（`CHEM_TRACE` 实测输出
+          # `[guard] rev=True ext=0.004869 prev=0.004869 ok=True` 紧接
+          # `[reverse-guard] 命中，跳过 …`，对应 `TE1` 的 step3），
+          # **但该步仍然被执行、全量逐位不变（1221/1361）**
+          # ⟹ 此处的 `break` **并不能终止该步**（走步在外层被重入/重跑）。
+          # **已回退**（不留无效改动）。下一步必须先搞清"这个 `break` 到底跳出了
+          # 哪一层"，而不是继续换判据——判据已经是对的。
+
           # ⛔ **第 283 轮：即时反向守卫（在 `_exec` 之前拦下"上一步的精确反向"）
           # —— 已实现并实测，但**对本轮靶心 `TE1` 一次都没触发**（仍是 3 步、
           # 残差 1.878）⟹ **该步根本不经过这个执行点**（走步还有别的执行入口，
