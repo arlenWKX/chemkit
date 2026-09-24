@@ -79,6 +79,11 @@ _NO_DRAIN = bool(_os.environ.get("CHEM_NO_DRAIN"))
 _NO_FORM_REBUILD = bool(_os.environ.get("CHEM_NO_FORM_REBUILD"))
 # 第 274 轮实验开关：关掉"周期解冻复核"（只保留退出闸解冻）。
 _PERIODIC_REVIVE = _os.environ.get("CHEM_NO_PERIODIC_REVIVE", "1") != "0"
+# **第 278 轮否证**：把非 redox 分支的 `f` 改成"用滴定后的虚拟账本求 S"
+# （与 `pH_x` 同态）—— 全量实测**灾难性**：通过 1212 → **1028（−184）**、
+# 残差质量 133.836 → **932.319**、`n(|S|>1)` 35 → 165。**别再试。**
+# ⟹ `estimate_pH`（滴定后账本）与 `S_of`（未滴定账本）不同态**是既成事实**，
+# 但"统一到虚拟账本"这条路被封死；真正的接口在"滴定账本要不要被落实"。
 
 # ---- 共轭形态重建的起火普查（仅 tools/ 诊断启用；生产路径恒为 None）------
 # 每次重建记一条 {s, p, ka, base, pH, tot, c, eq, floor_logc}。用途：把
@@ -910,6 +915,11 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
         if _ph_closed is not None:
             pH_x = _ph_closed(H_excess + nu_H * x)
         else:
+            # **口径不在这里改**（第 278 轮否证，数字见 `_F_LEDV` 的定义处）：
+            # `estimate_pH` 与 `S_of` 的账本不同态（pH 在**滴定后**的虚拟账本
+            # 上算、`S_of` 用未滴定的 `led_work`）**是既成事实**，但把它改成
+            # `estimate_state` + `led_v` 会让全库崩掉（通过 1212 → **1028**、
+            # 质量 133.8 → **932.3**）⟹ 真正的接口不在这里。
             pH_x = estimate_pH(led_work, H_excess + nu_H * x, V, T, T_K,
                                _bt_cache, _touch, _no_base, _no_acid,
                                pin_mode=_pin_mode)

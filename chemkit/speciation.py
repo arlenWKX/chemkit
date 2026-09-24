@@ -990,11 +990,20 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         _ladder_cx = {b["complex"] for b in T.beta
                       if b["ligand"] == "OH^-" and b.get("m", 1) == 1
                       and b.get("complex") and charge_of(b["complex"]) < 0}
+        # 配离子 -> 其中心的氢氧化物固相（"固相 + 该固相溶出的含氧酸根"
+        # 同时在账时，自由配离子**被固相钉住**，见下方 `_pin_pair`）
+        _cx_solid = {}
+        for b in T.beta:
+            if b["ligand"] != "OH^-":
+                continue
+            _e0 = _ksp_oh.get(b["center"])
+            if _e0 is not None and b.get("complex") in _ladder_cx:
+                _cx_solid[b["complex"]] = _e0["solid"]
         sc = (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj,
-              rolemap, amph_partner, _ladder_cx)
+              rolemap, amph_partner, _ladder_cx, _cx_solid)
         est_cache[T_K] = sc
     (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj, rolemap,
-     amph_partner, _ladder_cx) = sc
+     amph_partner, _ladder_cx, _cx_solid) = sc
     # 单遍扫描在账物种：合并原 acids_l/bases_l/hyd_l/amph/buf 五个独立循环。
     # max/sum 可换序，h_c/o_c/amph/buf 的最终值与原实现等价。
     amph: list = []
@@ -1178,8 +1187,22 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # 会推翻它、改走精确解给 **12.19**（差 11.8 个单位，且让那 0.375 mol
     # 游离强酸在走步眼里彻底隐形）。
     _blind_dom = _blind > max(h_c, o_c) and _free_side == 0
+    # **固相 + 其含氧酸根同时在账 ⟹ 自由配离子被固相钉住**（第 278 轮）：
+    # 分支 4 的弱碱式 `[OH⁻] = (−Kb+√(Kb²+4Kb·c))/2` 假设"该碱是溶液里
+    # 唯一的碱"，而固相在场时自由配离子由 `[M(OH)_k]/[OH⁻]^{k−z} = K` 钉死，
+    # 还与账本电荷平衡耦合 ⟹ 启发式不成立，应交精确解。
+    # 实测 `H45 Na[Al(OH)4]+HCl 半量`：滴定后虚拟账本
+    # `[Al(OH)₄]⁻ 0.5 / Al(OH)₃(s) 0.5 / Na⁺ 1 / Cl⁻ 0.5`，
+    # 启发式给 **13.045**，而精确解（电荷平衡 `a + oh = 0.5` 与
+    # `a/[OH⁻] = 10^1.5`）是 **12.19**。
+    _pin_pair = False
+    for _cx, _sd in _cx_solid.items():
+        if (ledger.get(_cx, 0.0) > _floor_V
+                and ledger.get(_sd, 0.0) > X_MIN):
+            _pin_pair = True
+            break
     _deg = (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c)
-    if _deg or pin_mode or _blind_dom:
+    if _deg or pin_mode or _blind_dom or _pin_pair:
         # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198/199 轮）：
         # 第 197 轮查明，E55 这类病灶的 `h_c ≈ o_c`（触发条件本就满足），
         # 被挡是因为"排除固相储库"那条闸——而 `charge_pH` 的 `pinned` 参数
@@ -1204,10 +1227,18 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
             _seen = set()
             for _e in T.ksp:
                 _cat, _an = _e["pair"]
-                if _an != "OH^-" or _cat in _seen or _cat not in ledger:
+                if _an != "OH^-" or _cat in _seen:
                     continue
-                if ledger.get(_cat, 0.0) <= 0.0:
-                    continue
+                # **第 278 轮：不再要求该阳离子在账本里"是键"**。
+                # 第 267 轮已把"游离阳离子量 > 0"这一条放宽（`pin_mode is True`
+                # 时不受限），但保留了一道更外层的闸 —— `_cat not in ledger`
+                # （键都不在就直接跳过）。实测 `H45 Na[Al(OH)4]+HCl 半量`：
+                # 滴定把 0.5 mol H⁺ 吸收成 `[Al(OH)₄]⁻ 0.5 / Al(OH)₃(s) 0.5`，
+                # 虚拟账本里**没有 `Al^{3+}` 这个键**（它的量由 Ksp 给出）
+                # ⟹ 整个 pinned 块从不进入 ⟹ 退回分支 4 的弱碱启发式
+                # **13.045**，而该态电荷平衡 + `a/[OH⁻] = 10^1.5` 的精确解是
+                # **12.19**。**固相在场才是钉住的前提**（下一道闸已把关），
+                # 键在不在不是前提。
                 # 固相必须真的在场（账本里有该固相且量显著）
                 _solid = _e["solid"]
                 _ns = ledger.get(_solid, 0.0)
