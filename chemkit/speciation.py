@@ -990,13 +990,41 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
         _ladder_cx = {b["complex"] for b in T.beta
                       if b["ligand"] == "OH^-" and b.get("m", 1) == 1
                       and b.get("complex") and charge_of(b["complex"]) < 0}
-        # 配离子 -> 其中心的氢氧化物固相：**第 280 轮已删除**（`_pin_pair`
-        # 判据连同它的 `_cx_solid` 表一起回退，见下方 `_blind_dom` 处的否证记录）
+        # **固相钉住的含氧酸根**（第 290 轮）：cx -> (solid, lgA, n, z, dzc, rxn_species)。
+        # 固相与其含氧酸根**同时显著在账**时，酸根的游离浓度不取账本量，
+        # 而被固相钉死在 [A] = β_k·Ksp^(1/x)·oh^n（n = ν − y/x > 0、
+        # lgA = logβ − pKsp/x；校验 Al³⁺：34.5 − 33 = **+1.5** ⟹
+        # a = 31.6·oh，与该 beta 条目自己的 calibrated 注记逐位一致）。
+        # **lgA 要过 SIT 才与 S_of 同尺**（第 290 轮实测）：S_of 的物种项
+        # 用浓度、离子强度修正全在 `logK_T` 上（`Δz²·DH + ε·I`），故钉住
+        # 系数的引擎口径是 lgA_eff = lgA + dzc·DH(I)，dzc = z²+n（中和方向
+        # `A + n·H⁺ → 固相` 的 −Δz²）。I 取与 S_of 同一函数
+        # （`sit_fixpoint` 于该反应物种）。浓度级求解会差一个 DH 项
+        # （H45 实测 −0.28 pH ⟹ S(0) = −0.05 ⟹ 仍 0 步）。
+        _pin_ox = {}
+        for b in T.beta:
+            if b["ligand"] != "OH^-" or b.get("m", 1) != 1:
+                continue
+            _cx2 = b.get("complex")
+            if not _cx2 or _cx2 in T.solids or charge_of(_cx2) >= 0:
+                continue
+            _e2 = _ksp_oh.get(b["center"])
+            if _e2 is None:
+                continue
+            _x2, _y2 = _ksp_xy(_e2)
+            _n2 = b.get("nu", 1) - _y2 / _x2
+            if _n2 <= 0:
+                continue
+            _z2 = charge_of(_cx2)
+            _pin_ox[_cx2] = (_e2["solid"],
+                             float(b["logb"]) - _pksp(_e2, T_K) / _x2,
+                             _n2, _z2, _z2 * _z2 + _n2,
+                             (_cx2, H_ION, _e2["solid"], WATER))
         sc = (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj,
-              rolemap, amph_partner, _ladder_cx)
+              rolemap, amph_partner, _ladder_cx, _pin_ox)
         est_cache[T_K] = sc
     (amph_eligible, amph_pH, acids_map, bases_map, hyd_map, conj, rolemap,
-     amph_partner, _ladder_cx) = sc
+     amph_partner, _ladder_cx, _pin_ox) = sc
     # 单遍扫描在账物种：合并原 acids_l/bases_l/hyd_l/amph/buf 五个独立循环。
     # max/sum 可换序，h_c/o_c/amph/buf 的最终值与原实现等价。
     amph: list = []
@@ -1007,9 +1035,17 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # **被角色表忽略的羟合梯配合物**（第 275 轮）：账本里存在、但 `rolemap`
     # 没有它的酸碱角色 ⟹ 分支 4 的 `h_c`/`o_c` 对它**完全盲**。
     _blind = 0.0
+    # **固相钉住的含氧酸根**（第 290 轮）：扫描时收集"酸根与其固相同时显著
+    # 在账"的物种，循环后联立电荷平衡（接管支路在 `if amph:` 之前）。
+    _pinned: list = []
+    _pin_ox_get = _pin_ox.get
     for sp, m in ledger.items():
         if m <= _floor_V:
             continue
+        _px = _pin_ox_get(sp)
+        if (_px is not None and m > ANN_MIN_EXTENT
+                and ledger.get(_px[0], 0.0) > ANN_MIN_EXTENT):
+            _pinned.append((sp, _px))
         c = m / V
         role = _role_get(sp)
         if role is None:
@@ -1075,6 +1111,57 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 (_pa is not None and ledger.get(_pa, 0.0) > _floor_V)
                 or (_pb is not None and ledger.get(_pb, 0.0) > _floor_V))
             amph.append((c, amph_v, _has_pair))
+    # **固相钉住接管**（第 290 轮，§1.22）：固相与其含氧酸根**同时显著在账**
+    # 时，分支 4 弱碱式的前提（"该碱是溶液里唯一的碱、游离量 = 账本量"）
+    # 不成立——游离酸根被固相钉死在 `[A] = β_k·Ksp^(1/x)·oh^n`。修法不是
+    # 借道 pinned 精确解机器（`_pin_pair`，第 278–280 轮三版全否：它删物种、
+    # 冻梯子、配平配体返还，`16 AlCl3+3NaOH` 6.26 → 7.0 被毁、`H45` 依旧
+    # 13.045 / 0 步），而是**只把该酸根自己的那一项**换成钉住值，与账本
+    # 电荷平衡联立成**单未知量**方程：
+    #   f(oh) = C_fix + h − oh + Σ z·a(oh) = 0     （单调降，二分即根）
+    # C_fix = 钉住酸根之外的**账本物种**净电荷浓度——**不含 He_res**。
+    # （第 290 轮修正：引擎不变量 `Σ_账本电荷 + He_res = 0` 与电中性
+    # `Σ_账本 + (h−oh)·V = 0` 联立 ⟹ `He_res ≡ (h−oh)·V`，即 He_res 与
+    # f(u) 里的 `h − oh` 项是**同一池游离质子的两套记账**（质子簿记口径
+    # vs 浓度口径）——X-45 在通用分支早已确立"两套记账只能竞争、不能
+    # 相加"（见下方 1155 行段）。初版把 He_res/V 加进 C_fix 是双重计数：
+    # H45 类 He_res=0 时错误隐形；W10（Zn(OH)₂+浓氨水）走步中途
+    # He_res=−0.079（氨合步按"消耗 2H⁺"口径簿记）与氨合电荷 +0.081
+    # 对消成 C_fix=0.002，真实 oh≈0.08 被压没 ⟹ 钉住 pH 11.29 ⟹
+    # 锌酸根被判过饱和、前进根=0 ⟹ 走步 5 步停摆（resid 1.596）。
+    # 去掉 He_res 后 W10 的 C_fix=+0.081 ⟹ pH 12.9，与求解器自洽。）
+    # 实测（`tools/ph_path.py H45` / `tools/pinox_census.py` 普查 82 例）：
+    # `H45 Na[Al(OH)4]+HCl 半量` 滴定后虚拟账本 = 铝酸根 0.5 + Al(OH)₃(s)
+    # 0.5，弱碱式给 **13.045** ⟹ `H⁺+[Al(OH)₄]⁻→Al(OH)₃+H₂O`（logK 12.5）
+    # 的 S = **−0.91** ⟹ 走步 **0 步**、0.5 mol 游离强酸在 He 里闲置；
+    # 联立解给 **12.186**（手算 a+oh=0.5 ∧ a=31.6·oh 逐位一致）⟹
+    # S = **+0.31** ⟹ 走步启动。共存区内 pH 被固相**钉平**（不随酸根量
+    # 漂移）——这正是缓冲类比：固相是无限储库，只要两侧都在，组成不变。
+    # 判据只用"固相与酸根同时 ≥ ANN_MIN_EXTENT（引擎自己的显著性尺子，
+    # mol）"，无新常数。
+    if _pinned:
+        _pset = frozenset(_sp2 for _sp2, _ in _pinned)
+        _Cfix = 0.0
+        for _s2, _m2 in ledger.items():
+            if (_m2 <= 0.0 or _s2 is WATER or _s2 in _pset
+                    or _s2.startswith("__")):
+                continue
+            _Cfix += charge_of(_s2) * _m2 / V
+        # lgA 过 SIT 到 S_of 同尺（见 `_pin_ox` 表构建处的口径说明）；
+        # I 取 S_of 同一函数（sit_fixpoint 于该中和反应的物种）。
+        _I0 = ionic_strength(ledger, V) if SIT_ALL else 0.0
+        _terms = []
+        for _sp2, _px in _pinned:
+            _lgA = _px[1]
+            if _I0 > 0.0:
+                _Ie = sit_fixpoint(ledger, V, _px[5], _I0)
+                if _Ie > 0.0:
+                    _lgA = sit_logK(_lgA, _px[4], None, _Ie)
+            _terms.append((_lgA, _px[2], _px[3]))
+        _tag("固相钉住")
+        return min(max(_pin_ox_pH(_Cfix, tuple(_terms), pKw), -1.0),
+                   pKw + 1.0), ledger, He_res
+
     # **X-45 的两种判据均被实测否掉**（第 151/152 轮），当前**不修**，只留标签
     # `_free_side`（标记 h_c/o_c 的哪一侧来自游离质子池 `He_res/V`）：
     #   · 判据 A（按数值相当去重，1e-2 相对容差）：D47 悬崖消除、iters −0.33%，
@@ -1203,6 +1290,8 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
     # `a + oh = 0.5` 且 `a = 31.6·oh` ⟹ `oh = 0.01534` ⟹ pH **12.186**）。
     # 需先查 `_pin_ladders(T)` 对 `Al³⁺` 的梯（ν=1,2,**4**，ν=3 是已知数据
     # 缺口）是否按"相邻 ν"处理 —— 这很可能是 pinned 口径在此失准的原因。
+    # ⟹ **第 290 轮已落地**：扫描循环后的"固相钉住"支路（`_pin_ox` 表 +
+    # `_pin_ox_pH` 单未知量解），不经过 `_pin_ladders` 与 pinned 机器。
     _deg = (h_c > 0.0 and o_c > 0.0 and 0.1 * o_c <= h_c <= 10.0 * o_c)
     if _deg or pin_mode or _blind_dom:
         # **固相在场时用 `pinned` 把储库自由度写进同一个方程**（第 198/199 轮）：
@@ -1379,6 +1468,37 @@ def _nth_root_h(Kh: float, c: float, n: float) -> float:
         else:
             lo = mid
     return 0.5 * (lo + hi)
+
+
+def _pin_ox_pH(C: float, terms: tuple, pKw: float) -> float:
+    """固相钉住含氧酸根的电荷平衡**单未知量**解（第 290 轮）：
+
+        f(u) = C + 10^(−pKw−u) − 10^u + Σ z·10^(lg + n·u) = 0
+
+    `u = log10[OH⁻]`；`C` = 钉住酸根之外的**账本物种**净电荷浓度（不含
+    He_res——它 ≡ (h−oh)·V，与 f 的 `h − oh` 项是同一池子的两套记账，
+    见调用处注释）；
+    每项 `(lg, n, z)` 是被固相钉住的酸根 `[A] = 10^(lg)·oh^n`（z < 0 为其
+    电荷）。h 项与 −oh 项随 u 单调不升、钉住项系数 z < 0 且 n > 0 ⟹
+    **f 对 u 单调降、根唯一**，二分 60 次。 bracket 端点未夹住时钳到端点
+    （调用方再钳 pH 域 [−1, pKw+1]）。"""
+    def f(u: float) -> float:
+        v = C + 10.0 ** (-pKw - u) - 10.0 ** u
+        for lg, n, z in terms:
+            v += z * 10.0 ** (lg + n * u)
+        return v
+    lo, hi = -pKw - 6.0, 2.0
+    if f(lo) <= 0.0:
+        return pKw + lo
+    if f(hi) >= 0.0:
+        return pKw + hi
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        if f(mid) > 0.0:
+            lo = mid
+        else:
+            hi = mid
+    return pKw + 0.5 * (lo + hi)
 
 
 def _respeciate_strong_acids(ledger: dict, H_excess: float, V: float, T) -> float:
