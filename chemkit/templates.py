@@ -639,11 +639,20 @@ def _build_static_cands(T_K: float, T, pKw: float) -> list:
                              nu * PKW_298 - b["logb"], nu, dH=dH_nb),
                         frozenset((comp,))))
         else:
+            # **SIT ε 元数据必须随平衡走**（第 291 轮）：ε_rxn 属于 β 条目
+            # 描述的**平衡本身**，不是某个候选风味的私有修正。这里漏挂时，
+            # candidates.beta_direct 派生的同一净反应带 ε 而本候选不带，
+            # 两个候选的零点相差整整 ε·I（E25 实测 0.33×6.0=1.98）⟹
+            # max(S) 拾取在两者各自的平衡态之间来回大摆锤（0.6 mol 级），
+            # 残差与净方程呈现全被这条幻象驱动污染。
+            _eps = b.get("eps_rxn")
+            _mc = {"eps": _eps} if _eps is not None else {}
+            _md = {"eps": -_eps} if _eps is not None else {}
             out.append((Cand("complex", {center: 1, lig: nu}, {comp: 1},
-                             b["logb"], dH=dH_b),
+                             b["logb"], dH=dH_b, meta=_mc),
                         frozenset((center, lig))))
             out.append((Cand("decomplex", {comp: 1}, {center: 1, lig: nu},
-                             -b["logb"], dH=dH_nb),
+                             -b["logb"], dH=dH_nb, meta=_md),
                         frozenset((comp,))))
     return out
 
