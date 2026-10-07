@@ -41,10 +41,10 @@ sys.add("NaOH", 0.1); sys.add("HCl", 0.15)
 | `V` | `float` | `1.0` | 溶液体积（L） |
 | `T` | `float` | `298.15` | 温度（K） |
 | `T_C` | `float \| None` | `None` | 温度（°C）；给了就覆盖 `T` |
-| `p` | `float` | `101.3` | 外界气压（kPa），影响气体逸出阈值 |
+| `p` | `float` | `101.3` | 外界气压（kPa），决定泡点 `c_sat = H(T)·p_ext`（气液相界） |
 | `isothermal` | `bool` | `True` | `False` = 绝热耦合（温度不动点迭代） |
 | `kinetics` | `bool` | `True` | `False` = 纯热力学基线（无限时间） |
-| `gas_escape` | `bool` | `True` | `False` = 闭口体系（自产气体不逸出） |
+| `gas_escape` | `bool` | `True` | `False` = 闭口体系（不建气相库，自产气体全部留在溶液） |
 | `tables` | `Tables \| None` | `None` | 临时换表（`System` 亦可） |
 
 **`System` 追加**：
@@ -85,9 +85,9 @@ sys.add("NaOH", 0.1); sys.add("HCl", 0.15)
 |---|---|---|
 | `consumption` / `production` | `dict[str, float]` | 净消耗 / 净生成 `{化学式: mol}` |
 | `initial` | `dict[str, float]` | 初态组成（post-normalize：强电解质已电离、SO₃ 等已水合、酸碱中和已记账、H₂O 溶剂不入） |
-| `final` | `dict[str, float]` | 终态组成（H₂O 不入；`H_excess` 已还原为 H⁺ 或 OH⁻） |
+| `final` | `dict[str, float]` | 终态组成（H₂O 不入；`H_excess` 已还原为 H⁺ 或 OH⁻；**总量口径 = 溶解态 + 气相**） |
 | `pH` | `float \| None` | 终态 pH（OVERRIDE 路径为 `None`） |
-| `escaped` | `dict[str, float]` | 逸出气相（自产气体超过 `H(T)·p_ext` 溶解上限即逸出；投料气体按持续供给处理，不逸出） |
+| `gas` | `dict[str, float]` | 气相（第二相）存量 `{化学式: mol}`——恒压气相库。有气相在场时溶解态钉在泡点 `H(T)·p_ext`；进出双向可逆（超泡点鼓泡进入、低于泡点回溶补充），**不销毁物质**。`final`/`production`/`consumption` 均为**总量口径 = 溶解态 + 气相**（v0.6.0 起取代旧的 `escaped`） |
 
 ### 方程式层
 

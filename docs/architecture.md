@@ -289,30 +289,42 @@ k(T) 缩放（ΔS≈0 近似）。
   单项开销。redox 即使无 H⁺ 也必须走 estimate_state，因为其副产物账本
   要做强酸形态重排（NO₃⁻/HNO₃ 等），影响 S。
 
-### 3.6 气体逸出模型
+### 3.6 气液两相模型（第 300 轮重写：与固相严格同构）
 
-外界气相：恒压（`p_kpa`，默认 101.3 kPa）惰性环境，产物气体分压按 0 计。
+外界气相：恒压（`p_kpa`，默认 101.3 kPa）惰性环境。气体有**恒压气相库**
+`gas_phase`，进出双向可逆（等压膨胀），与"固相 ⇄ 溶解态"完全对称：
 
-- 自产气体的活度 `a = max(min(c_g, H(T)·p_ext), A_GAS)`：超过亨利溶解
-  上限的部分对 Q 的贡献封顶（多余气体不在溶液里）；
+| | 固相 | 气相 |
+|---|---|---|
+| 相界常数 | `Ksp` | `c_sat = H(T)·p_ext`（泡点） |
+| 有第二相 ⟹ 液相钉在 | Ksp 饱和浓度 | 泡点浓度 |
+| 存量容器 | `ledger[X(s)]` | `gas_phase`（恒压气相库，mol） |
+| 进出 | dissolve / precip | 鼓泡 / 回溶 |
+
 - `H(T)` 由 298 K 亨利常数经 van't Hoff 修正（`henry_dH` 表，
-  `henry_of(T, gas, T_K)`）；
-- **扫气在主循环不动点之后**：收敛后 `_sweep_gases` 把超过溶解上限的
-  气体移入 `escaped`（逸出即消失，永不回反应），若产生新逸出则重新
-  迭代至新不动点。中途不扫气——瞬时生成的 CO₂ 可能在后续步骤被重新
-  吸收（碳酸氢盐路径），只有最终平衡态才谈得上"溢出"；
-- 投料气体（gsup）视为持续供给，不扫。
+  `henry_of(T, gas, T_K)`）；无 Henry 数据的气体用 `A_GAS` 作等效饱和浓度；
+- **相转移由 `_equil_gas_phase` 做**：溶解量 > `cap` ⟹ 超额鼓泡进入气相库；
+  溶解量 < `cap` 且气相库非空 ⟹ 回溶补充。**逸出不再销毁物质**
+  （旧 `escaped` 是永久删除，已废除）；
+- **`S_of` 无气体专属分支**：气体与所有溶质一样按真实溶解浓度计。
+  泡点是**相界**（由气相库承载），不是活度修正 ⟹ 互逆反应
+  `S_f + S_r = 0` 天然成立；
+- **泡点只约束自产气体**：投料量用 `cap_eff = max(c_sat·V, 投料量)`
+  ——投料气体是真实投进体系的量，不预先锁进气相（把投料也锁进去会让
+  依赖溶解态驱动的反应全线崩：实测 −73）。
+- `gas_escape=False` = 闭口体系：不建气相库，自产气体全部留在溶液。
 
-`escaped` 计入 produced（反应事实）但不计入 final（溶液里只剩溶解态）。
+呈现层 `final` / `production` / `consumption` 一律**总量口径 = 溶解态 + 气相**
+（用户关心的是摩尔数总量）；`gas` 单列气相存量。
 
 ### 3.7 主循环（judge）
 
 ```
-规范化 → [不动点迭代 → 扫气]× 至无新逸出：
+规范化 → [不动点迭代 → 气液两相平衡]× 至无新相转移：
   每轮：强酸形态重排 → pH 估计 → （必要时虚拟全形态分布落实）
        → 枚举候选 → 过滤（disabled/slow/膜封锁）→ 算 S → 取最大
        → solve_extent 执行 → 记录 step
-收敛 → 输出 changed/reacted/degree/consumption/production/final/steps/escaped/annotations/ionize
+收敛 → 输出 changed/reacted/degree/consumption/production/final/gas/steps/annotations/ionize
 ```
 
 - `slow` 候选（恒慢/方向慢）不执行，可达显著程度时标注
@@ -407,9 +419,9 @@ Yb²⁺）价态化学、铂族钝化、锕系（U 溶解/Th 钝化）、镭、�
 system.Reaction 包装层（isothermal=False 时）。thermo 延迟 import
 engine（无环）。
 
-**事后分析（analyze）**：净变换 net = production − consumption（逸出
-气体留在 net——它们是携带 ΔHf(g) 离开体系的产物；v0.3.3.0 曾减去
-escaped，产气体系既丢焓又使 H/O 原子平衡必不闭合）+ H_excess 初/终
+**事后分析（analyze）**：净变换 net = production − consumption（气相
+存量留在 net——它们是携带 ΔHf(g) 的产物；production 已是总量口径；
+v0.3.3.0 曾减去 escaped，产气体系既丢焓又使 H/O 原子平衡必不闭合）+ H_excess 初/终
 账户差 + 规范化中和步的 H⁺/OH⁻（v0.3.3.0 遗漏 → 纯中和体系净变换恒空、
 报零热）。水量由 H/O 原子平衡双路重构校验（不一致即拒绝，宁缺毋假）。
 ΔH = Σ net·ΔHf° + Δn(H₂O)·ΔHf°(H₂O,l)；ΔT 按水比热容（V×1000 g）。
@@ -434,9 +446,9 @@ SO₃ 类规范化阶段转变的投料 H/O 不闭合（heat=None；CaO 等氧�
 **ΔHf 单一事实源（v0.3.5）**：thermo.py 曾自带一份硬编码 DHF 副本，与
 data/thermo.json 双源冲突（CO₂ 气相/水溶两套值混用）——已删除，统一走
 `data.dhf_of`：thermo.json 裸名 = 引擎账本态（水溶/凝聚），"X(g)" 后缀
-键 = 逸出气相态（CO₂/SO₂/H₂S/NH₃）。热分析对净变换按账本态计价，
-逸出部分再按气相键校正（溶解→逸出焓差如实入账：CaCO₃+HCl 的残留溶解
-CO₂ 不再多计 20 kJ/mol 溶解热）。
+键 = 气相态（CO₂/SO₂/H₂S/NH₃）。热分析对净变换按账本态计价，
+气相部分（结果键 `gas`）再按气相键校正（溶解→气相焓差如实入账：CaCO₃+HCl
+的残留溶解 CO₂ 不再多计 20 kJ/mol 溶解热）。
 
 ## 7. 工程日志
 
