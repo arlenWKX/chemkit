@@ -157,7 +157,7 @@ def _solve_ls(J: list, b: list) -> list:
 
 
 def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
-                T_K: float, T, gsup, p_ext_kpa: float, gas_escape: bool,
+                T_K: float, T, p_ext_kpa: float, gas_escape: bool,
                 S_of, H_ION: str, WATER: str) -> tuple[str, list, float]:
     """联立解耦合平衡集。actives = [(Cand, direction), ...]（已去重过滤）。
 
@@ -187,13 +187,13 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
             if c.kind == "redox":
                 if led_v is None:
                     _, led_v, _ = estimate_state(led, He, V, T, T_K)
-                out.append(S_of(c, led_v, V, pH_x, T_K, T, gsup,
+                out.append(S_of(c, led_v, V, pH_x, T_K, T,
                                 p_ext_kpa, gas_escape))
             elif H_ION in c.r or H_ION in c.pr:
-                out.append(S_of(c, led, V, pH_x, T_K, T, gsup,
+                out.append(S_of(c, led, V, pH_x, T_K, T,
                                 p_ext_kpa, gas_escape))
             else:
-                out.append(S_of(c, led, V, 7.0, T_K, T, gsup,
+                out.append(S_of(c, led, V, 7.0, T_K, T,
                                 p_ext_kpa, gas_escape))
         return out
 
@@ -326,7 +326,7 @@ JOINT_PH_PQ = 0.2      # pH 闭合行软容差（pH 单位；Henderson 近似精
 
 
 def _solve_ph(ledger: dict, H_excess: float, actives: list, V: float,
-              T_K: float, T, gsup, p_ext_kpa: float, gas_escape: bool,
+              T_K: float, T, p_ext_kpa: float, gas_escape: bool,
               S_of, H_ION: str, WATER: str) -> tuple[str, list, float]:
     """pH 一致化联立（社区级"一步数学"）。
 
@@ -362,13 +362,13 @@ def _solve_ph(ledger: dict, H_excess: float, actives: list, V: float,
             if c.kind == "redox":
                 if led_v is None:
                     _, led_v, _ = estimate_state(led, He, V, T, T_K)
-                out.append(S_of(c, led_v, V, ph, T_K, T, gsup,
+                out.append(S_of(c, led_v, V, ph, T_K, T,
                                 p_ext_kpa, gas_escape))
             elif H_ION in c.r or H_ION in c.pr:
-                out.append(S_of(c, led, V, ph, T_K, T, gsup,
+                out.append(S_of(c, led, V, ph, T_K, T,
                                 p_ext_kpa, gas_escape))
             else:
-                out.append(S_of(c, led, V, 7.0, T_K, T, gsup,
+                out.append(S_of(c, led, V, 7.0, T_K, T,
                                 p_ext_kpa, gas_escape))
         # ---- pH 闭合行（**保持启发式**，第 220/237 轮两次验证后决定）----
         # `estimate_pH(led, He) − ph`：把联立 pH 锚在 pH 机器的读数上。

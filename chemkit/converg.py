@@ -40,7 +40,7 @@ def _result_digest(r: dict) -> str:
     """结果字典的语义摘要（量值与判定维度；steps 计数入摘要、轨迹不入
     ——轨迹是求解过程自由度，摘要锁的是对外呈现语义）。"""
     keys = ("changed", "reacted", "degree", "annotations", "consumption",
-            "production", "final", "escaped", "ionize", "net_equation",
+            "production", "final", "gas", "ionize", "net_equation",
             "equations", "final_pH", "unknown")
     core = {k: r.get(k) for k in keys if k in r}
     blob = json.dumps(core, sort_keys=True, ensure_ascii=False,

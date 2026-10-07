@@ -8,7 +8,7 @@
 
 方法（焓是状态函数，无需逐步反应热）：
     1. 净变换 net[物种] = production − consumption（production 已含逸出
-       气体——它们是携带 ΔHf(g) 离开体系的真实产物，不减去 escaped；
+       气体——它们是携带 ΔHf(g) 离开体系的真实产物，不减去气相存量 gas；
        否则产气体系丢焓且 H/O 原子平衡必不闭合）+ H⁺/OH⁻ 账户差
        （H_excess 初/终值展开 + 规范化中和步的消耗——中和发生在初态
        快照之前，其 H⁺/OH⁻ 必须显式计入 net，否则纯中和体系报零热）
@@ -43,7 +43,7 @@
     · ΔCp≈0（Kirchhoff）近似：反应焓不随 T 变；热容只计水的 m·c_p。
     · T_final 超出 273.15–373.15 K 时给出 boils/freezes 标志——线性外推
       未计汽化/凝固潜热，仅提示物理上已达相变。
-    · 逸出气相态拆分：escaped 部分按 "X(g)" 键计价（CO₂/SO₂/H₂S/
+    · 气相态拆分：gas（气相存量）部分按 "X(g)" 键计价（CO₂/SO₂/H₂S/
        NH₃ 有数据；无键的气体如 H₂/NO 本就同值或元素零），残留溶解
       态按水溶值——两者焓差即溶解热如实入账。
 """
@@ -174,9 +174,9 @@ def analyze(res: dict, T) -> dict | None:
     # 以下，略去对热值无可见影响。判别与求和**必须同一个集合**（第 147 轮
     # 实测：原先判别只看 ≥TRACE_MOL、求和却遍历全体 ⟹ TypeError 整条降级）。
     accounted = {s: v for s, v in net.items() if dhf_of(T, s) is not None}
-    # 逸出气相拆分校正：escaped ⊆ production；gas 键存在时逸出部分按
-    # ΔHf(g) 计价（账本态基线 + (g−aq)·esc）
-    esc = {e["name"]: e["mol"] for e in res.get("escaped", [])}
+    # 气相拆分校正：gas ⊆ production（二者同为总量口径的气相部分）；
+    # "X(g)" 键存在时气相部分按 ΔHf(g) 计价（账本态基线 + (g−aq)·gas）
+    esc = {e["name"]: e["mol"] for e in res.get("gas", [])}
     dH = 0.0
     for s, v in accounted.items():
         dH += v * dhf_of(T, s)

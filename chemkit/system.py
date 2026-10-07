@@ -49,9 +49,11 @@ class Reaction:
         equations      多步离子方程式列表（Equation 结构，按贡献降序）
         annotations    标注列表（slow / blocked 等）
         override       命中的 OVERRIDE id（或 None）
-        escaped        逸出气相 {化学式: mol}（泡点扫气：超过 H(T)·p_ext
-                       溶解上限的自产气体，逸出即消失，不再参与反应；
-                       final 中同种气体只剩溶解态，production 含逸出部分）
+        gas            气相（第二相）存量 {化学式: mol}——恒压气相库。
+                       有气相在场时溶解态被钉在泡点 c_sat = H(T)·p_ext
+                       （与固相在场时钉在 Ksp 饱和浓度同构）；进出双向可逆
+                       （超泡点鼓泡进入、低于泡点回溶补充），不销毁物质。
+                       final / production 均为"溶解态 + 气相"的总量口径。
 
     raw 属性（引擎原始记账，H2O 不入账、H+/OH- 合记为 H_excess）：
         consumption_raw  消耗 {化学式: mol}
@@ -80,7 +82,7 @@ class Reaction:
         "changed", "reacted", "degree",
         "consumption", "production", "initial", "final",
         "pH", "net_equation", "net_equation_raw", "equations",
-        "annotations", "override", "escaped",
+        "annotations", "override", "gas",
         # 热效应层（独立温度模块）
         "heat_kJ", "dT_K", "T_final_K", "thermal",
         # 引擎记账层（raw）
@@ -101,8 +103,8 @@ class Reaction:
         self.pH: float | None = r["final_pH"]
         self.annotations: list[str] = list(r["annotations"])
         self.override: str | None = r.get("override")
-        self.escaped: dict[str, float] = {e["name"]: e["mol"]
-                                          for e in r.get("escaped", [])}
+        self.gas: dict[str, float] = {e["name"]: e["mol"]
+                                      for e in r.get("gas", [])}
 
         # ---- raw（引擎记账）----
         self.consumption_raw: dict[str, float] = {e["name"]: e["mol"]
@@ -315,8 +317,8 @@ class System:
         kinetics    动力学层开关（bool，默认 True）。False = 纯热力学基线
                     （无限时间）：slow/gate/膜封锁等动力学标记一律不生效
         gas_escape  自产气体逸出开关（bool，默认 True）。False = 闭口体系：
-                    反应产生的气体不逸出（保留在溶液账本参与平衡，
-                    相当于密闭容器；逸出账户 escaped 为空）
+                    反应产生的气体不进入气相库（全部保留在溶液账本参与
+                    平衡，相当于密闭容器；gas 为空）
 
     建立时（若给了 substances）与每次 add() 自动触发反应——按累计投入量
     重新平衡（化学上等价于连续投料的再平衡），返回本次 Reaction。

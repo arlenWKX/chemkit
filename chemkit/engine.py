@@ -310,7 +310,7 @@ def _logc_form(s: str, ledger: dict, V: float, pH: float, T,
 
 
 def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
-         gsup: frozenset = frozenset(), p_ext_kpa: float = P_EXT_KPA,
+         p_ext_kpa: float = P_EXT_KPA,
          gas_escape: bool = True, logc: dict | None = None) -> float:
     """计算候选反应的亲和势 S = logK − logQ。
 
@@ -695,7 +695,7 @@ def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
 
 def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
                  V: float, T_K: float, T,
-                 gsup: frozenset = frozenset(), iters: int = 60,
+                 iters: int = 60,
                  p_ext_kpa: float = P_EXT_KPA,
                  gas_escape: bool = True,
                  micro_rel: float | None = None) -> tuple[float, float]:
@@ -940,7 +940,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
         if not _need_ph:
             if _atrace is not None:
                 _atrace.append((x, None, False, "与 pH 无关"))
-            return direction * S_of(c, led_work, V, 7.0, T_K, T, gsup,
+            return direction * S_of(c, led_work, V, 7.0, T_K, T,
                                     p_ext_kpa, gas_escape, _logc)
         if c.kind == "redox":
             if _atrace is not None:
@@ -966,7 +966,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             # 但 I24/KIN02/KIN06 三例真回退——强酸/强碱下的自由形态参与
             # 氧化还原竞争正是虚拟账本的设计意图，故**保持现状**，
             # 一致化留待"哪个账本对redox有权威"的设计决定（§7 X-8）。
-            return direction * S_of(c, led_v, V, pH_x, T_K, T, gsup,
+            return direction * S_of(c, led_v, V, pH_x, T_K, T,
                                     p_ext_kpa, gas_escape,
                                     _logc if led_v is led_work else None)
         if _atrace is not None:
@@ -988,7 +988,7 @@ def solve_extent(c: Cand, direction: int, ledger: dict, H_excess: float,
             _atrace.append((x, pH_x, _sol(x), _tags[-1] if _tags else "闭式",
                             _ledger_charge(led_work) + _he))
             _speciation.PH_TAGS = None
-        return direction * S_of(c, led_work, V, pH_x, T_K, T, gsup,
+        return direction * S_of(c, led_work, V, pH_x, T_K, T,
                                 p_ext_kpa, gas_escape, _logc)
 
     f_hi = f(x_max)
@@ -1390,7 +1390,6 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     # `gsup` 退役：气相库已统一承载投料与自产气体，无处再需要"免扫气集合"。
     # 保留同名空集只为兼容既有签名（`_probe_exit` / `S_of` / `solve_extent`
     # 的参数），避免一次性改穿十几个调用点。
-    gsup: frozenset = frozenset()
     chem_net: dict = {}   # key -> [净程度, kind, 投料来源集]（reacted 判据）
     annotations: list[str] = []
     blocked_solids: dict[str, list] = {}   # 被膜封锁的金属 -> 膜固相列表
@@ -1602,7 +1601,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             ps = c.pres_specs
             if not all(ledger.get(s, 0.0) > X_MIN for s in ps[0] + ps[1]):
                 continue
-            S_f = S_of(c, ledger, V, pH, T_K, T, gsup, p_ext_kpa, gas_escape)
+            S_f = S_of(c, ledger, V, pH, T_K, T, p_ext_kpa, gas_escape)
             prev = seen.get(nk_c)
             if prev is None or abs(S_f) > abs(prev[1]):
                 seen[nk_c] = (c, S_f)
@@ -1621,7 +1620,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             return False   # 无驱动者（全近平衡）：无事可做
         status, x, _res = joint_solve(ledger, H_excess,
                                       [(c, d) for c, d, _S in actives],
-                                      V, T_K, T, gsup, p_ext_kpa, gas_escape,
+                                      V, T_K, T, p_ext_kpa, gas_escape,
                                       S_of, H_ION, WATER)
         _diag["joint_tries"] += 1
         if status == "boundary":
@@ -1774,7 +1773,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     continue
                 _any_dir = True
                 if S_f is None:
-                    S_f = S_of(c, ledger, V, pH, T_K, T, gsup, p_ext_kpa,
+                    S_f = S_of(c, ledger, V, pH, T_K, T, p_ext_kpa,
                                gas_escape, logc)
                 Sd = S_f if dd > 0 else -S_f
                 # 速率维度豁免（X-37）：限速通道的"强驱动"是**故意的慢**
@@ -1902,7 +1901,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             return False
         status, x, _res = _solve_ph(ledger, H_excess,
                                     [(c, d) for c, d, _S in actives],
-                                    V, T_K, T, gsup, p_ext_kpa, gas_escape,
+                                    V, T_K, T, p_ext_kpa, gas_escape,
                                     S_of, H_ION, WATER)
         _diag["joint_tries"] += 1
         if _TRACE and status != "ok":
@@ -2023,11 +2022,11 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             if c.kind == "redox":
                 if led_v is None:
                     _, led_v, _ = estimate_state(led, He, V, T, T_K)
-                Sj = S_of(c, led_v, V, pH_x, T_K, T, gsup, p_ext_kpa, gas_escape)
+                Sj = S_of(c, led_v, V, pH_x, T_K, T, p_ext_kpa, gas_escape)
             elif H_ION in c.r or H_ION in c.pr:
-                Sj = S_of(c, led, V, pH_x, T_K, T, gsup, p_ext_kpa, gas_escape)
+                Sj = S_of(c, led, V, pH_x, T_K, T, p_ext_kpa, gas_escape)
             else:
-                Sj = S_of(c, led, V, 7.0, T_K, T, gsup, p_ext_kpa, gas_escape)
+                Sj = S_of(c, led, V, 7.0, T_K, T, p_ext_kpa, gas_escape)
             out.append(Sj if d > 0 else -Sj)
         return out
 
@@ -2226,7 +2225,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             if not pres_r and not pres_p:
                 continue
             _led_s = _virt_led if c.kind == "redox" else ledger
-            S_fwd = S_of(c, _led_s, V, pH, T_K, T, gsup, p_ext_kpa,
+            S_fwd = S_of(c, _led_s, V, pH, T_K, T, p_ext_kpa,
                          gas_escape, logc if _led_s is ledger else None)
             if pres_r and S_fwd > 0 and (c.key, 1) not in disabled:
                 d, S = 1, S_fwd
@@ -2245,7 +2244,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                     pos = slow_ann.get((c.key, d))
                     if (pos is None or len(hist) - pos >= 32
                             or _last_mat_step >= pos):
-                        ext_s, _ = solve_extent(c, d, ledger, H_excess, V, T_K, T, gsup,
+                        ext_s, _ = solve_extent(c, d, ledger, H_excess, V, T_K, T,
                                                 iters=12, p_ext_kpa=p_ext_kpa)
                         if ext_s >= ANN_MIN_EXTENT:
                             slow_now = True
@@ -2291,14 +2290,14 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                             side = _ps2[0] if d2 > 0 else _ps2[1]
                             if not side or not all(ledger.get(s, 0.0) > X_MIN for s in side):
                                 continue
-                            S2f = S_of(c2, ledger, V, pH, T_K, T, gsup,
+                            S2f = S_of(c2, ledger, V, pH, T_K, T,
                                        p_ext_kpa, gas_escape, logc)
                             if d2 > 0 and S2f <= 0:
                                 continue
                             if d2 < 0 and S2f >= 0:
                                 continue
                             ext_s, _ = solve_extent(c2, d2, ledger, H_excess, V,
-                                                    T_K, T, gsup, iters=12,
+                                                    T_K, T, iters=12,
                                                     p_ext_kpa=p_ext_kpa)
                             if ext_s >= ANN_MIN_EXTENT:
                                 slow_seen = True
@@ -2366,7 +2365,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
                 reactants2 = c2.r if d2 > 0 else c2.pr
                 targets = [fp for fp in alive if fp in reactants2]
                 if S2 > 0 and targets:
-                    ext_c, _ = solve_extent(c2, d2, ledger, H_excess, V, T_K, T, gsup,
+                    ext_c, _ = solve_extent(c2, d2, ledger, H_excess, V, T_K, T,
                                             p_ext_kpa=p_ext_kpa)
                     if ext_c >= min(ledger.get(fp, 0.0) for fp in targets):
                         del blocked_solids[m]
@@ -2401,7 +2400,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             if (1e-4 * _xm < BLOCKED_EXTENT
                     and nk not in {k for k, _e in hist[-12:]}):
                 _micro_rel = 1e-4
-          ext, x_max = solve_extent(pick, d, ledger, H_excess, V, T_K, T, gsup,
+          ext, x_max = solve_extent(pick, d, ledger, H_excess, V, T_K, T,
                                     p_ext_kpa=p_ext_kpa, micro_rel=_micro_rel)
           # **即时反向守卫**（第 284 轮重做）：紧邻上一步是**精确反向键**、
           # 量级相当、且都够显著 ⟹ 上一步已把该轴走到平衡点，本步只会把它
@@ -2784,7 +2783,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
 
     if _probe is not None:
         _probe["gas_phase"] = dict(gas_phase)
-        _probe_exit(_probe, ledger, H_excess, gas_phase, gsup, V, T_K, T,
+        _probe_exit(_probe, ledger, H_excess, gas_phase, V, T_K, T,
                     kinetics, gas_escape, p_ext_kpa, disabled, frozen_perm,
                     _exit_reason, _it_total, len(hist), len(steps),
                     blocked_solids, dis_why)
@@ -2872,7 +2871,7 @@ def presentation_pH(ledger: dict, H_excess: float, V: float, T,
 
 
 def _probe_exit(probe: dict, ledger: dict, H_excess: float, gas_phase: dict,
-                gsup: frozenset, V: float, T_K: float, T, kinetics: bool,
+                V: float, T_K: float, T, kinetics: bool,
                 gas_escape: bool, p_ext_kpa: float, disabled: dict,
                 frozen_perm: set, exit_reason: str, it_total: int,
                 hist_len: int, steps_len: int,
@@ -2923,10 +2922,10 @@ def _probe_exit(probe: dict, ledger: dict, H_excess: float, gas_phase: dict,
         pres_p = all(led.get(s, 0.0) > X_MIN for s in ps[1])
         if not (pres_r or pres_p):
             continue
-        S_f = S_of(c, led, V, pH_solver, T_K, T, gsup, p_ext_kpa,
+        S_f = S_of(c, led, V, pH_solver, T_K, T, p_ext_kpa,
                    gas_escape, logc)
         S_pres = (S_f if pH_f == pH_solver else
-                  S_of(c, led, V, pH_f, T_K, T, gsup, p_ext_kpa,
+                  S_of(c, led, V, pH_f, T_K, T, p_ext_kpa,
                        gas_escape, logc_p))
         # 逐方向 disabled：walk 的评估循环按"该方向未禁用"才入选
         # （engine L903/905），只看双向同时禁用会漏报——TS04 的三条

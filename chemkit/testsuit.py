@@ -690,11 +690,11 @@ def case_api() -> None:
     ok15 = (rzc.heat_kJ is not None and -2.2 <= rzc.heat_kJ <= -1.4
             and rzc.dT_K is not None and -5.5 <= rzc.dT_K <= -3.5
             and rzc.thermal.get("converged") is True)
-    # CaCO3+HCl 逸出气体气相拆分：escaped CO2 按气相 ΔHf 计价、残留溶解态
+    # CaCO3+HCl 气液两相拆分：气相 CO2（gas）按 ΔHf(g) 计价、残留溶解态
     # 按水溶值（比 v0.3.4 全气相口径更准 0.07 kJ 量级）
     rcc = chemkit.react({"CaCO_3": 0.05, "HCl": 0.1}, V=0.1, isothermal=False)
     ok16 = (rcc.heat_kJ is not None and 0.6 <= rcc.heat_kJ <= 1.0
-            and rcc.escaped.get("CO_2", 0.0) >= 0.04
+            and rcc.gas.get("CO_2", 0.0) >= 0.04
             and rcc.thermal.get("converged") is True
             and rcc.dT_K is not None and 1.5 <= rcc.dT_K <= 2.5)
     # v0.3.6 Engine 对象：三个层级是平级方法，与函数式入口同语义
