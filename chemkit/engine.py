@@ -363,8 +363,18 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
                 terms.append((1, s, nu, None))
             elif s == WATER or s in T.solids:
                 pass
-            elif s in T.gases:
-                terms.append((4, s, nu, _alt(s)))
+            # **第 300 轮：气体不再有专属项类型（原 `typ=4`）**。原实现只在
+            # **产物侧**给气体套泡点封顶 `min(c_g, H·p)`，反应物侧走真实浓度
+            # ⟹ 同一 `CO_2` 的两个书写向读到两个不同物理量 ⟹ 互逆反应
+            # `S_f + S_r ≠ 0`（`15` 实测 +1.4629），冻↔解冻活锁由此而来。
+            # 而"单侧封顶"在结构上无法修（第 299 轮 300 例普查：超泡点气体
+            # 「只作产物」0 例、「只作反应物」0 例、「两侧都有」35 例全部）。
+            #
+            # 正确模型是**两相共存**（与固体同构）：气体有自己的**恒压气相库**
+            # （见 `_equil_gas_phase`），有气相在场时溶解态被**钉在泡点**
+            # `c_sat = H·p_ext`（正如固相在场时溶解态被钉在 Ksp 饱和浓度）。
+            # 于是**两侧读到的本来就是同一个数**——不需要在 `S_of` 里分侧，
+            # 一律按真实浓度读即可。`typ=4` 整支删除。
             else:
                 terms.append((3, s, nu, _alt(s)))
         plan = tuple(terms)
@@ -383,39 +393,18 @@ def S_of(c: Cand, ledger: dict, V: float, pH: float, T_K: float, T,
             logQ += nu * pH
         elif typ == 1:
             logQ -= nu * pH
-        elif gas_escape and s not in gsup:
-            # 气体产物活度：外加供给的气体按账本浓度（持续供给维持）；
-            # 自产气体超过泡点（c > H(T)·p_ext）的部分已被扫气移入账本
-            # （见 _sweep_gases，逸出即消失），账上浓度恒 ≤ 饱和浓度，
-            # 活度 a = c/c°（饱和时 c = H(T)·p_ext，等价 p/p° = p_ext/p°），
-            # 下限 A_GAS 为惰性环境残余分压约定（避免浓度地板制造虚假驱动）；
-            # 无 Henry 数据的物种回退固定 A_GAS（视为全逸出）
-            #
-            # **第 286 轮修正：`A_GAS` 只能当"不在账"时的回退，不能抬高真实溶解量。**
-            # 原式 `a = max(min(c_g, H·p_ext), A_GAS)` 里的 `max(·, A_GAS)` 会在
-            # `c_g < A_GAS` 时**把活度抬到 A_GAS**（= 1e-2 M 量级！），而 `A_GAS`
-            # 的本意是"惰性环境的残余分压"，只该用于**溶质不在账**的场合。
-            # 实测（`tools/sprobe.py`，1:1 缓冲态 `NH4^+ = NH3 = 0.005`、pH 9.25、
-            # `He = 0`）：
-            #   `A_GAS = 0.0098692` ⟹ `log10 = −2.00579`；`log10(0.005) = −2.30103`
-            #   ⟹ 差 **+0.29524** —— 与 `S_of` 实测的 **±0.2953** 逐位吻合。
-            # 后果是**同一条净反应的两个书写向给出不同的 S**（`NH3` 作**产物**时走
-            # 本支、被抬到 A_GAS；作**反应物**时走 `_logc_of`、用真实浓度）：
-            #   引擎自己的两个 Cand：`NH_3 + H^+ -> NH_4^+`（logK +9.25）S = **0.0000**
-            #                         `NH_4^+ -> NH_3 + H^+`（logK −9.25）S = **−0.2953**
-            # 这正是 `TE1`（`NH4Cl 0.01+NaOH 0.005`）在"账本已中和到正确终态"之后
-            # 仍留 **0.2950** 残差的原因（第 285 轮实测）。
-            H = henry_of(T, s, T_K)
-            c_g = ledger.get(s, 0.0) / V
-            if H is not None and c_g > X_MIN:
-                a = min(c_g, H * p_ext_kpa)   # 真实溶解量（泡点以上已被扫气）
-            else:
-                a = A_GAS                     # 不在账/痕量 或 无 Henry 数据
-            logQ += nu * log10(a)
         else:
-            # H+ 项之外的兜底（gas_escape=False 的气体 / 持续供给气体）：
-            # 活度一律按溶解态浓度计
-            logQ += nu * _logc_of(s, ledger, V, logc)
+            # **第 300 轮：气体不再走专属活度分支**。原 `typ=4` 只在产物侧把
+            # 活度封顶到泡点（`min(c_g, H·p_ext)`）甚至回退成常数 `A_GAS`
+            # （`≈9.87e-3`），反应物侧却读真实浓度 ⟹ 同一物种两个书写向读到
+            # **两个不同的物理量**，互逆反应 `S_f + S_r ≠ 0`（`15` 实测
+            # +1.4629；`TE1` 的 ±0.2953 同源于 `A_GAS` 回退）。
+            #
+            # 泡点是**相界**（与 Ksp 同构），不是活度修正：有气相在场时溶解态
+            # 被 `_equil_gas_phase` 钉在 `c_sat`，两侧因此**本来就读到同一个
+            # 数**——不需要在 `S_of` 里分侧。所有物种（含气体）一律按真实
+            # 溶解浓度计，模型对称性在此恢复。
+            logQ += nu * _logc_form(s, ledger, V, pH, T, logc, alt)
     # **反应相关离子强度 + 阻尼不动点**（第 192 轮）：
     # 只用**参与本反应的物种**贡献 I ⟹ 切断"旁观强电解质 ⟹ 总 I ⟹ 本反应 logK
     # ⟹ 本反应推进"的正反馈环（第 191 轮实测：总 I 口径下 iters ×2.2、
@@ -563,33 +552,82 @@ def resid_live_ok(a: dict) -> bool:
 
 # ========================================================== ④ 平衡程度求解
 
-def _sweep_gases(ledger: dict, escaped: dict, gsup: frozenset,
-                 V: float, T_K: float, p_ext_kpa: float, T,
-                 gas_escape: bool = True) -> None:
-    """泡点扫气：自产气体（非持续供给）溶解浓度超过 c_sat = H(T)·p_ext 时，
-    超额部分鼓泡逸出，移入 escaped 账户——逸出即消失，不再参与任何后续
-    反应（取代旧设计"只压活度不离账"导致的隔空反应与 rev_gate 补丁）。
-    低于泡点的气体保持溶解（惰性环境下不强制脱气）。无 Henry 数据的物种
-    不扫（由 S_of 的 A_GAS 回退承载其逸出驱动）。"""
+def gas_cap(T, g: str, T_K: float, p_ext_kpa: float, V: float) -> float:
+    """气相/液相共存线：气相在场时溶解态被钉住的**量**（mol）——与固相
+    的"Ksp 饱和量"同构。
+
+    有 Henry 数据 ⟹ `H(T)·p_ext·V`（亨 law：溶解浓度 = H·分压）。
+    无 Henry 数据 ⟹ `A_GAS·V`（残余分压约定 `P_RES_KPA` 折算的等效溶解
+    浓度，第 286 轮起仅作**等效饱和量**使用，不再当活度地板抬高真实值）。
+    """
+    Hh = henry_of(T, g, T_K)
+    c_sat = (Hh * p_ext_kpa) if Hh is not None else A_GAS
+    return c_sat * V
+
+
+def _equil_gas_phase(ledger: dict, gas_phase: dict, V: float, T_K: float,
+                     p_ext_kpa: float, T, gas_escape: bool = True,
+                     fed: dict | None = None) -> bool:
+    """**气液两相平衡（双向、可逆）**——取代旧的单向"泡点扫气"。
+
+    第 300 轮重写，动机是模型对称性：泡点是**相界**（与 `Ksp` 同构），不是
+    "逸出阈值"。旧实现把超泡点部分**永久删除**（进 `escaped` 账户后不再
+    参与任何反应），这使 (a) 物质不守恒，(b) 两侧读数不同源（见 `S_of`），
+    (c) `for it` 循环内不能扫气（删了就补不回来）⟹ 活锁。
+
+    新语义：气体有一个**恒压气相库** `gas_phase`（mol，等压膨胀——进出都
+    在 `p_ext` 下发生），与固相完全对称：
+
+      · 溶解量 > `cap` ⟹ 超额鼓泡进入气相库（液相降到 `cap`）；
+      · 溶解量 < `cap` 且气相库非空 ⟹ 回溶补充到 `cap`（库空则自由未饱和）；
+      · 气相库空且溶解量 < `cap` ⟹ 无第二相，液相自由（不强制脱气）。
+
+    **泡点约束谁（第 300 轮实测定论）**：泡点是**自产气体鼓泡的界**，
+    不是"投料气体在液相的上限"。投料气体是**真实投进去的量**（用户约束
+    "持续通入不等于可以超过泡点"说的是**自产**气体不得靠虚构通入无限
+    溶解）。故 `cap` 只约束**超出投料量的部分**：
+
+        `cap_eff = max(cap, fed[g])`
+
+    `fed` = 投料量（mol）。投料 0.1 mol `CO_2` 时 `cap_eff = 0.1` ⟹ 全部
+    留在液相参与反应（实测：把投料气体当自产扫泡 ⟹ `NR72` pH 3.93 而应为
+    3.0–3.4、`NR127 H2+NaOH` 把投料 H₂ 的 99% 送进气相 ⟹ changed 假阳性）。
+
+    封闭体系（`gas_escape=False`）不建气相库：自产气体全部留在溶液
+    （勒沙特列抑制），与投料气体同待遇——旧语义一致。
+
+    返回 True = 本次发生了实质相转移（调用方可据此判定需重跑不动点）。
+
+    注意：**依赖形态**，必须在酸碱已平衡的账本上做（第 298 轮教训：
+    中间态里 pH 12.37 的 `CO_2` 尚未转成 `CO_3^2-`，此时扫气会造出
+    强碱逸出 CO₂ 的荒谬结果）。
+    """
     if not gas_escape:
-        return    # 闭口体系：不扫气，自产气体保留在溶液账本
-    # sorted：T.gases 是 set，迭代序随 PYTHONHASHSEED 变化——各气体扫气
-    # 相互独立（量值与序无关），但 escaped 字典的插入序（及下游 esc_list/
-    # production 呈现序）会跨进程翻转（N08/H25 的 SO2/CO2 顺序掷骰子）。
-    # 固定字典序后结果呈现跨进程确定
+        return False
+    moved = False
+    # sorted：T.gases 是 set，迭代序随 PYTHONHASHSEED 变化——各气体相互
+    # 独立（量值与序无关），但 gas_phase/下游呈现的字典插入序会跨进程
+    # 翻转（N08/H25 的 SO2/CO2 顺序掷骰子）。固定序后呈现跨进程确定。
     for g in sorted(T.gases):
-        if g in gsup:
-            continue
         m = ledger.get(g, 0.0)
-        if m <= X_MIN:
+        gp = gas_phase.get(g, 0.0)
+        if m <= X_MIN and gp <= X_MIN:
             continue
-        H = henry_of(T, g, T_K)
-        if H is None:
-            continue
-        cap = H * p_ext_kpa * V
-        if m > cap:
-            escaped[g] = escaped.get(g, 0.0) + (m - cap)
+        cap = gas_cap(T, g, T_K, p_ext_kpa, V)
+        if fed:
+            cap = max(cap, fed.get(g, 0.0))   # 投料量不受泡点约束
+        if m > cap:                       # 超泡点 ⟹ 鼓泡进入气相库
+            gas_phase[g] = gp + (m - cap)
             ledger[g] = cap
+            moved = True
+        elif gp > X_MIN and m < cap:      # 低于泡点 ⟹ 气相库回溶补充
+            back = min(gp, cap - m)
+            gas_phase[g] = gp - back
+            ledger[g] = m + back
+            moved = True
+        if gas_phase.get(g, 0.0) <= X_MIN:
+            gas_phase.pop(g, None)
+    return moved
 
 
 def _audit_bracket(f, c, direction: int, x_max: float, x_bis: float,
@@ -1329,9 +1367,30 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
     ledger, H_excess, steps, unknown = normalize(substances, cond, T, origins)
     H_excess0 = H_excess   # 初始质子账本（净离子方程式的 H+/OH- 净差来源）
     initial = dict(ledger)
-    # 初始投料中的气体 = 持续供给（按账本活度）；反应自产气体按 A_GAS 逸出
-    gsup = frozenset(sp for sp in initial if sp in T.gases and initial[sp] > X_MIN)
-    escaped: dict[str, float] = {}   # 逸出气相账户（泡点扫气，逸出即消失）
+    # **第 300 轮：气体不再分"投料(gsup) / 自产"两个物种**。
+    # 旧 `gsup`（投料气体免扫气、免泡点封顶）与 `S_of` 的 `typ=4`（只在
+    # 产物侧封顶）是**同一处不对称的两个面**：同一个 `CO_2` 投料时按真实
+    # 浓度、自产时按泡点封顶 ⟹ 互逆反应 `S_f + S_r ≠ 0`（`15` 实测 +1.4629）。
+    # 新模型里两者**都是同一个物种**，只是各自与气相库交换。
+    #
+    # **泡点约束谁**（第 300 轮实测定论，勿再反向）：
+    #   · **投料气体**：按投料量进入体系，**不**预先送进气相库 —— 用户约束
+    #     "持续通入不等于可以超过泡点"说的是**自产**气体不得靠虚构通入
+    #     无限溶解；投料气体是**真实投进去的量**，必须留在液相参与反应。
+    #     实测把投料气体注入气相（字面"等压膨胀"）⟹ 全库 **−71 → −73**
+    #     单调恶化（`E01 SO2+2H2S` 投料 2 mol H₂S 被卡成"溶解 0.1013 +
+    #     气相 1.7974"，而它必须溶着才能归中 ⟹ S 0.468 vs 应 2.7）。
+    #   · **自产气体**：超过泡点的部分鼓泡进入气相库（逸出不再销毁物质，
+    #     而是换相，可回溶）。
+    gas_phase: dict[str, float] = {}     # 恒压气相库 {化学式: mol}（第二相存量）
+    # 投料气体量（mol）：泡点只约束**自产**气体，投料量不受限（见
+    # `_equil_gas_phase` 的 `fed` 参数）。用"投料快照"而非 `initial` 的现值。
+    fed_gas: dict[str, float] = {
+        g: m for g, m in ledger.items() if g in T.gases and m > X_MIN}
+    # `gsup` 退役：气相库已统一承载投料与自产气体，无处再需要"免扫气集合"。
+    # 保留同名空集只为兼容既有签名（`_probe_exit` / `S_of` / `solve_extent`
+    # 的参数），避免一次性改穿十几个调用点。
+    gsup: frozenset = frozenset()
     chem_net: dict = {}   # key -> [净程度, kind, 投料来源集]（reacted 判据）
     annotations: list[str] = []
     blocked_solids: dict[str, list] = {}   # 被膜封锁的金属 -> 膜固相列表
@@ -2711,15 +2770,21 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         # 的大步，近窗随即不再满足微步条件。
         _cycle_jump()
 
-      # 不动点收敛后扫气一轮：逸出离账会移动平衡（Le Chatelier），
-      # 有新增逸出则再跑一轮不动点；无新增即全局收敛
-      _n0 = sum(escaped.values())
-      _sweep_gases(ledger, escaped, gsup, V, T_K, p_ext_kpa, T)
-      if sum(escaped.values()) - _n0 <= 1e-9:
+      # 不动点收敛后做一轮气液两相平衡：相转移会移动平衡（Le Chatelier），
+      # 有实质相转移则再跑一轮不动点；无即全局收敛。
+      # **第 300 轮**：相转移已是**双向可逆**（回溶路径存在），故"有转移 ⟹
+      # 重跑"的循环不再可能因单向删除而抖动；同时 `for it` 内部也做同样的
+      # 平衡（见循环内的 `_equil_gas_phase`），这里只负责终局收敛确认。
+      _gsum0 = sum(gas_phase.values())
+      if not _equil_gas_phase(ledger, gas_phase, V, T_K, p_ext_kpa, T,
+                              gas_escape, fed_gas):
+        break
+      if abs(sum(gas_phase.values()) - _gsum0) <= 1e-9:
         break
 
     if _probe is not None:
-        _probe_exit(_probe, ledger, H_excess, escaped, gsup, V, T_K, T,
+        _probe["gas_phase"] = dict(gas_phase)
+        _probe_exit(_probe, ledger, H_excess, gas_phase, gsup, V, T_K, T,
                     kinetics, gas_escape, p_ext_kpa, disabled, frozen_perm,
                     _exit_reason, _it_total, len(hist), len(steps),
                     blocked_solids, dis_why)
@@ -2739,7 +2804,7 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
             _probe["windows"] = _diag["windows"]
     if slow_seen:
         annotations.append("slow")
-    return _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
+    return _finalize_result(ledger, initial, H_excess, H_excess0, gas_phase, steps,
                             chem_net, annotations, unknown, cond, V, T_K, T)
 
 
@@ -2806,7 +2871,7 @@ def presentation_pH(ledger: dict, H_excess: float, V: float, T,
     return estimate_pH(ledger, H_excess, V, T, T_K) if p is None else p
 
 
-def _probe_exit(probe: dict, ledger: dict, H_excess: float, escaped: dict,
+def _probe_exit(probe: dict, ledger: dict, H_excess: float, gas_phase: dict,
                 gsup: frozenset, V: float, T_K: float, T, kinetics: bool,
                 gas_escape: bool, p_ext_kpa: float, disabled: dict,
                 frozen_perm: set, exit_reason: str, it_total: int,
@@ -2957,7 +3022,7 @@ def _apply_override(substances, cond, V, T_K, T, ov) -> dict:
     res["steps"] = []
     res["final"] = []
     res["unknown"] = []
-    res["escaped"] = []
+    res["gas"] = []
     res["override"] = ov["id"]
     # OVERRIDE 注册的是反应事实：真实转化的（如白磷歧化）reacted=True，
     # 钝化类（changed=False，仅成膜保护）无化学反应
@@ -2985,38 +3050,46 @@ def _apply_override(substances, cond, V, T_K, T, ov) -> dict:
     return res
 
 
-def _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
+def _finalize_result(ledger, initial, H_excess, H_excess0, gas_phase, steps,
                      chem_net, annotations, unknown, cond, V, T_K, T) -> dict:
     """judge() 收尾（v0.3.7 从 654 行单体中提出的纯后处理段）：
 
-    账本净差 → consumption/production/final/escaped 列表（1e-6 报告阈）、
+    账本净差 → consumption/production/final/gas 列表（1e-6 报告阈）、
     A1 changed 三通道事件判定、B4 reacted 狭义化学判定、degree 程度、
     初态重建与结果字典装配。只读输入状态，无走步副作用——判定语义的
     唯一居所（评审入口）。
+
+    **第 300 轮总量口径**：气体的"有多少"必须是**溶解态 + 气相**之和（用户
+    关心的是摩尔数总量，不是它此刻在哪个相）。`ledger` 里只有溶解态，故
+    `production/consumption` 一律按合计口径；`final` 保留溶解态分相展示，
+    `gas` 单列气相存量，二者相加 = 总量。
     """
     # 呈现层自洽闸（v0.4.1）：幻影碱不进 final_pH / H_excess 呈现
     # （阳离子-氢氧化物过饱和检查；方程构建器同吃这两个字段，
     # 净方程的 H⁺/OH⁻ 净差线随之自洽）
     H_excess = _presentation_He(ledger, H_excess, V, T, T_K)
-    consumption = [{"name": s, "mol": round(initial[s] - ledger.get(s, 0.0), 6)}
-                  for s in initial if s != WATER and not s.startswith("__")
-                  and initial[s] - ledger.get(s, 0.0) > 1e-6]
-    production = [{"name": s, "mol": round(ledger.get(s, 0.0) - initial.get(s, 0.0), 6)}
-                 for s in ledger if s != WATER and not s.startswith("__")
-                 and ledger.get(s, 0.0) - initial.get(s, 0.0) > 1e-6]
-    # 逸出气体计入 production（反应事实），但在 final 中只剩溶解态
-    esc_list = [{"name": s, "mol": round(m, 6)} for s, m in escaped.items() if m > 1e-6]
-    if esc_list:
-        have = {e["name"] for e in production}
-        for e in esc_list:
-            if e["name"] in have:
-                for pe in production:
-                    if pe["name"] == e["name"]:
-                        pe["mol"] = round(pe["mol"] + e["mol"], 6)
-            else:
-                production.append(dict(e))
-    final = [{"name": s, "mol": round(m, 6)} for s, m in ledger.items()
-             if s != WATER and not s.startswith("__") and m > 1e-6]
+
+    def _tot(s: str) -> float:
+        """物种总量（溶解态 + 气相）——"有多少"的判定一律用它。"""
+        return ledger.get(s, 0.0) + gas_phase.get(s, 0.0)
+
+    consumption = [{"name": s, "mol": round(initial[s] - _tot(s), 6)}
+                   for s in initial if s != WATER and not s.startswith("__")
+                   and initial[s] - _tot(s) > 1e-6]
+    production = [{"name": s, "mol": round(_tot(s) - initial.get(s, 0.0), 6)}
+                  for s in set(ledger) | set(gas_phase)
+                  if s != WATER and not s.startswith("__")
+                  and _tot(s) - initial.get(s, 0.0) > 1e-6]
+    # 气相存量（第二相；与 final 相加 = 该物种总量）
+    gas_list = [{"name": s, "mol": round(m, 6)} for s, m in gas_phase.items()
+                if m > 1e-6]
+    # **第 300 轮**：`final` 用**总量**口径（溶解态 + 气相）——用户关心的是
+    # "体系里有多少"，而不是"此刻溶着多少"。气体的气相与固体的固相都是
+    # 体系的一部分，把气相排除在 `final` 外会让投料 Cl₂ 看起来凭空消失
+    # （实测 `E14`：投料 0.5 mol Cl₂ 全进 `final` 之外 ⟹ 断言读到 0.0628）。
+    final = [{"name": s, "mol": round(_tot(s), 6)}
+             for s in set(ledger) | set(gas_phase)
+             if s != WATER and not s.startswith("__") and _tot(s) > 1e-6]
     main_steps = [st for st in steps if st.get("extent", 0) >= ANN_MIN_EXTENT
                   and st["kind"] != "neutralize"]
     # A1 净反应事件判定（v0.3.7）：changed = 存在显著净变化，按三条正交通道：
@@ -3074,7 +3147,7 @@ def _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
                       for e in production if e["name"] in T.solids)
                or any(st["kind"] == "neutralize" and st.get("extent", 0) >= ANN_MIN_EXTENT
                       for st in steps)
-               or any(e["mol"] >= ANN_MIN_EXTENT for e in esc_list))
+               or any(e["mol"] >= ANN_MIN_EXTENT for e in gas_list))
     # B4 狭义化学反应：净显著步骤中存在 redox/中和/非常规候选，或某净步骤的
     # 反应物横跨 ≥2 个投料来源（复分解、沉淀、配位溶解等）；纯溶解/电离/
     # 自互变（proton/dissolve/complex/decomplex 且单一来源）只是形态变化。
@@ -3133,15 +3206,13 @@ def _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
     # （NH₃ 4e-7）整块删掉 ⟹ 净差本身电荷不平 ⟹ **任何**呈现都无法配平，
     # 最后印出 `4H^+ + Fe(OH)_3 -> Fe^{3+}`（电荷 +4≠+3）这种伪方程。
     # 方程式是化学事实的呈现，必须吃精确量；目录式摘要才吃报告口径。
-    _nx_c = {s: initial[s] - ledger.get(s, 0.0) for s in initial
+    _nx_c = {s: initial[s] - _tot(s) for s in initial
              if s != WATER and not s.startswith("__")
-             and initial[s] - ledger.get(s, 0.0) > 0.0}
-    _nx_p = {s: ledger.get(s, 0.0) - initial.get(s, 0.0) for s in ledger
+             and initial[s] - _tot(s) > 0.0}
+    _nx_p = {s: _tot(s) - initial.get(s, 0.0)
+             for s in set(ledger) | set(gas_phase)
              if s != WATER and not s.startswith("__")
-             and ledger.get(s, 0.0) - initial.get(s, 0.0) > 0.0}
-    for s, m in escaped.items():          # 逸出气体计入净生成（同 esc_list 口径）
-        if m > 0.0:
-            _nx_p[s] = _nx_p.get(s, 0.0) + m
+             and _tot(s) - initial.get(s, 0.0) > 0.0}
     net_exact = {"c": _nx_c, "p": _nx_p, "He_i": H_excess0, "He_f": H_excess}
     return {
         "changed": changed, "reacted": chemical and changed,
@@ -3149,7 +3220,7 @@ def _finalize_result(ledger, initial, H_excess, H_excess0, escaped, steps,
         "consumption": consumption, "production": production, "final": final,
         "net_exact": net_exact,
         "initial": [{"name": s, "mol": m} for s, m in initial_dict.items()],
-        "escaped": esc_list,
+        "gas": gas_list,
         "ionize": _ionize_map(
             [e["name"] for e in consumption + production], T),
         "pool_map": dict(T.pools) if T.pools else {},
