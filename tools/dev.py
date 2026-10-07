@@ -126,25 +126,41 @@ def _banner(verb: str) -> None:
 
 
 # --------------------------------------------------------------- suite
-def cmd_suite(prefixes: list[str], keep: int = 40, jobs: int = 1) -> int:
+def cmd_suite(prefixes: list[str], keep: int = 40, jobs: int = 1,
+              shard: tuple[int, int] | None = None,
+              fresh: bool = False) -> int:
     _banner("suite" + (f" {' '.join(prefixes)}" if prefixes else "（全量）")
-            + (f"  jobs={jobs}" if jobs > 1 else ""))
+            + (f"  jobs={jobs}" if jobs > 1 else "")
+            + (f"  shard={shard[0]}/{shard[1]}" if shard else ""))
     from chemkit import testsuit
     tmp = None
-    if prefixes:
-        cases = [c for c in testsuit.load_cases(None)
-                 if c["name"].startswith(tuple(prefixes))]
+    cases = None
+    if prefixes or shard:
+        cases = testsuit.load_cases(None)
+        if prefixes:
+            cases = [c for c in cases if c["name"].startswith(tuple(prefixes))]
+        if shard:
+            i, n = shard
+            # **带上全局序号**（`__gidx`）：否则各分片的 `index` 都从 1 开始，
+            # 合并时无法归位（第 296 轮实测：344 个 index 重复）。直传对象，
+            # 不经临时 JSON —— 序列化会让分片各片局部编号。
+            for k, c in enumerate(cases):
+                c["__gidx"] = k + 1
+            cases = [c for k, c in enumerate(cases) if k % n == i]
         if not cases:
             print("!! 没有匹配的用例")
             return 2
-        tmp = _TMP + "suite.json"
-        with io.open(tmp, "w", encoding="utf-8") as f:
-            json.dump(cases, f, ensure_ascii=False)
-        print(f"[子集] {len(cases)} 例")
+        print(f"[子集] {len(cases)} 例"
+              + (f"（分片 {shard[0]}/{shard[1]}）" if shard else ""))
+    # **进度输出**：并行时每 10% 一档（`--fresh` 再加逐例明细）
     buf = io.StringIO()
-    with redirect_stdout(buf):
-        rc = testsuit.main(tmp, None, jobs=jobs)
-    out = buf.getvalue()
+    if fresh:
+        rc = testsuit.main(None, None, jobs=jobs, cases=cases)
+        out = ""
+    else:
+        with redirect_stdout(buf):
+            rc = testsuit.main(None, None, jobs=jobs, cases=cases)
+        out = buf.getvalue()
     lines = out.split("\n")
     for ln in lines:                      # 摘要 + 结论行（其余明细丢弃）
         if ln.startswith("=====") or ln.startswith("失败:") \
@@ -155,7 +171,10 @@ def cmd_suite(prefixes: list[str], keep: int = 40, jobs: int = 1) -> int:
     # **结构化留档**（第 146 轮）：一次运行把逐例结果全量落盘，后续用工具/程序
     # 反复读取（errors/note/pH/degree/annotations/净方程/耗时）——不要靠重跑套件
     # 换信息，也不要在生成端截断。
-    dump = _TMP + "results.json"
+    # **分片/子集不得覆盖全量留档**（第 296 轮）：否则并行分片会互相覆盖，
+    # `logs/suite-latest.json` 变成最后完成的那个分片 —— 这正是"套件写文件
+    # 导致不能并行"的根因。分片写自己的 `logs/suite-shard<i>-of<n>.json`。
+    dump = (_TMP + "results.json")
     with io.open(dump, "w", encoding="utf-8") as f:
         json.dump(testsuit.RESULTS, f, ensure_ascii=False)
     for r in bad[:12]:
@@ -163,6 +182,28 @@ def cmd_suite(prefixes: list[str], keep: int = 40, jobs: int = 1) -> int:
     if len(bad) > 12:
         print(f"  ... 另有 {len(bad) - 12} 例失败（明细见 {dump}）")
     print(f"[留档] {len(testsuit.RESULTS)} 例逐例结果 -> {dump}")
+    # **子集也不得覆盖全量留档**（第 296 轮踩到）：跑 `dev.py suite F49` 这种
+    # 1 例子集会写 logs/suite-latest.json，把 1378 例的留档冲掉 ⟹ 下游工具
+    # （perf_diff / readback / 归因脚本）读到的是 1 例。子集只写
+    # `logs/suite-subset.json`，`logs/suite-latest.json` 专属于全量。
+    is_subset = bool(prefixes) or bool(shard)
+    if is_subset and not shard:
+        sp = f"{_LOGDIR}/suite-subset.json"
+        with io.open(sp, "w", encoding="utf-8") as f:
+            json.dump(testsuit.RESULTS, f, ensure_ascii=False)
+        print(f"[子集留档] {sp}（**不动** logs/suite-latest.json）")
+        print(f"[日志] {_runlog('suite', out + chr(10))}（完整输出）")
+        if tmp and os.path.exists(tmp):
+            os.remove(tmp)
+        return rc
+    if shard:
+        sp = f"{_LOGDIR}/suite-shard{shard[0]}-of{shard[1]}.json"
+        with io.open(sp, "w", encoding="utf-8") as f:
+            json.dump(testsuit.RESULTS, f, ensure_ascii=False)
+        print(f"[分片留档] {sp}（合并用 tools/suite_merge.py）")
+        if tmp and os.path.exists(tmp):
+            os.remove(tmp)
+        return rc
     art = _artifact("suite", dump)
     if art:
         print(f"[产物] {art}（机读；tools/readback.py 默认读它）")
@@ -597,7 +638,19 @@ def main(argv: list[str]) -> int:
         # 故默认 = min(4, 物理核)；`--jobs=N` 可覆盖（6 可再快 ~10%）。
         if jobs == 0:
             jobs = min(4, max(1, (os.cpu_count() or 2) // 2))
-        return cmd_suite(args, jobs=jobs)
+        # `--shard=i/N`：把用例按序号切成 N 份、只跑第 i 份（0 基）。
+        # 目的是**让多个进程真正并行跑全量**：套件的写文件是共享资源，
+        # 分片各自写 `logs/suite-shard<i>-of<n>.json`，互不覆盖（第 296 轮）。
+        shard = None
+        for a in rest:
+            if a.startswith("--shard="):
+                body = a.split("=", 1)[1]
+                i_s, n_s = body.split("/", 1)
+                shard = (int(i_s), int(n_s))
+        if "--jobs=0" in rest:
+            jobs = 1                    # 供分片内部串行（外面再并行分片）
+        return cmd_suite(args, jobs=jobs, shard=shard,
+                         fresh="--fresh" in rest)
     if verb == "perf":
         base = (args[0] if args and args[0].endswith(".json")
                 else "converg-baseline.json")

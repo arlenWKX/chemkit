@@ -34,3 +34,7 @@ _DATA_EXTERNAL/
 
 # 绗笁鏂瑰彂琛屽寘锛堟湰鍦板弬鑰冿紝涓嶅叆搴擄級
 thirdparty/
+
+# 一次性临时脚本/探针（不入库）
+_scratch/
+

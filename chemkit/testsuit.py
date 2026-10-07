@@ -332,7 +332,8 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
         check_equations(c, Reaction(r), errs)
     if errs:
         FAILS.append(name)
-        RESULTS.append({"index": len(RESULTS) + 1, "name": name, "ok": False,
+        RESULTS.append({"index": c.get("__gidx") or (len(RESULTS) + 1),
+                        "name": name, "ok": False,
                         "ms": round((time.time() - t0) * 1000, 2), "errors": errs,
                         "note": c.get("note") or "",
                         "pH": r.get("final_pH"), "degree": r.get("degree"),
@@ -351,7 +352,8 @@ def run_case(c: dict, T: Tables, verbose: bool = True) -> bool:
                   "| ann:", r["annotations"])
         return False
     PASS_N += 1
-    RESULTS.append({"index": len(RESULTS) + 1, "name": name, "ok": True,
+    RESULTS.append({"index": c.get("__gidx") or (len(RESULTS) + 1),
+                    "name": name, "ok": True,
                     "ms": round((time.time() - t0) * 1000, 2), "errors": [],
                     "note": c.get("note") or "",
                     "pH": r.get("final_pH"), "degree": r.get("degree"),
@@ -919,11 +921,16 @@ def _par_run(case: dict):
     return (name, bool(ok), ms, errs, rec, _LAST_PROBE)
 
 
-def run_cases_parallel(cases: list[dict], jobs: int) -> tuple[int, float]:
+def run_cases_parallel(cases: list[dict], jobs: int,
+                       progress: bool = True) -> tuple[int, float]:
     """并行跑用例，把结果**按原顺序**填入 RESULTS/TIMES/FAILS/PASS_N。
 
     返回 (通过数, 墙钟秒)。用例之间互相独立（各跑自己的 judge），
     故并行安全；已实测**逐例结果（通过性 + 错误文本）与串行完全一致**。
+
+    `progress=True` 时**边完成边打进度**（每例一行 `[ok]/[FAIL]`，含累计
+    与预计剩余时间）—— 第 296 轮加：长跑时不再让人空等。
+    进度只写 **stderr**，保证 stdout 的摘要格式不被污染。
     """
     global PASS_N
     from concurrent.futures import ProcessPoolExecutor
@@ -938,12 +945,30 @@ def run_cases_parallel(cases: list[dict], jobs: int) -> tuple[int, float]:
         order.sort(key=lambda i: rank.get(cases[i]["name"], len(rank)))
     t0 = time.perf_counter()
     got: dict[int, tuple] = {}
+    n_done = n_ok_so_far = 0
+    total = len(cases)
+    _next_pct = 10               # **每 10% 报一次**（第 296 轮：不再让人空等）
     with ProcessPoolExecutor(max_workers=jobs,
                              initializer=_par_init) as ex:
         futs = {ex.submit(_par_run, cases[i]): i for i in order}
         from concurrent.futures import as_completed
         for fu in as_completed(futs):
             got[futs[fu]] = fu.result()
+            n_done += 1
+            _nm, _ok, _ms, _errs, _rec, _pr = got[futs[fu]]
+            n_ok_so_far += 1 if _ok else 0
+            pct = n_done * 100 // total
+            # **每跨过 10% 打一行进度**；失败例另外单打一行 ✗（不带计数，
+            # 免得看起来像多报了几次进度）。
+            if pct >= _next_pct:
+                el = time.perf_counter() - t0
+                eta = (el / n_done) * (total - n_done) if n_done else 0.0
+                print(f"  [{pct:3d}%] {n_done:>4}/{total}  通过 {n_ok_so_far}"
+                      f"  {el:6.1f}s  剩~{eta:4.0f}s", file=sys.stderr, flush=True)
+                _next_pct = (pct // 10 + 1) * 10
+            if not _ok:
+                print(f"    ✗ {_nm[:56]} -- {'; '.join(_errs or [])[:78]}",
+                      file=sys.stderr, flush=True)
     wall = time.perf_counter() - t0
     PASS_N = 0
     global _PROBES
@@ -958,6 +983,11 @@ def run_cases_parallel(cases: list[dict], jobs: int) -> tuple[int, float]:
                    "pH": None, "degree": None, "changed": None,
                    "annotations": [], "net_equation": None}
         rec["index"] = i + 1
+        # **分片要用全局序号**（第 296 轮）：分片跑时 `i` 是子集内的局部序号，
+        # 各片都从 1 开始 ⟹ 合并时大量 index 重复、无法归位。用例对象里带
+        # `__gidx`（由 dev.py 分片时写入）时以它为准。
+        if c.get("__gidx") is not None:
+            rec["index"] = c["__gidx"]
         RESULTS.append(rec)
         TIMES.append((ms / 1000.0, c["name"]))
         if ok:
@@ -1020,21 +1050,47 @@ def _enrich_results_with_probe(results: list, probes: dict) -> None:
 
 
 def main(cases_path: str | None = None, out_path: str | None = None,
-         jobs: int = 1) -> int:
+         jobs: int = 1, cases: list[dict] | None = None) -> int:
+    """跑套件。
+
+    `cases` 直接给用例列表（**分片用**）：走 `cases_path` 时用例要先序列化到
+    临时 JSON，而 `json.dump` 会丢掉引擎侧加的 `__gidx` 之类非 JSON 原生键的
+    语义（读回来是普通键，且分片各片局部编号）⟹ 合并时 index 重复。直接传对象
+    可保住全局序号（第 296 轮）。
+    """
     T = load_tables()
     judge([{"name": "NaCl", "mol": 0.1}], {"V_L": 1.0}, T)   # 预热：模板/缓存冷启动不计入首例
     TIMES.clear()
     RESULTS.clear()
     FAILS.clear()
-    _cases = load_cases(cases_path)
+    _cases = cases if cases is not None else load_cases(cases_path)
     if jobs and jobs > 1:
         global _PAR_T
         _PAR_T = T                       # 串行分支复用
         n_ok, wall = run_cases_parallel(_cases, jobs)
         print(f"[并行 {jobs} workers] 墙钟 {wall:.1f}s")
     else:
-        for c in _cases:
+        # 串行也报进度（**每 10% 一档**，失败例立即报）——第 296 轮：分片在
+        # 外层并行时，片内走的就是这条路径，没有进度就完全看不到动静。
+        _t0 = time.perf_counter()
+        _total = len(_cases)
+        _ok_n = 0
+        _next = 10
+        for _i, c in enumerate(_cases, 1):
             run_case(c, T)
+            if RESULTS and RESULTS[-1].get("ok"):
+                _ok_n += 1
+            _pct = _i * 100 // _total if _total else 100
+            if _pct >= _next:
+                _el = time.perf_counter() - _t0
+                _eta = (_el / _i) * (_total - _i) if _i else 0.0
+                print(f"  [{_pct:3d}%] {_i:>4}/{_total}  通过 {_ok_n}"
+                      f"  {_el:6.1f}s  剩~{_eta:4.0f}s", file=sys.stderr, flush=True)
+                _next = (_pct // 10 + 1) * 10
+            if RESULTS and not RESULTS[-1].get("ok"):
+                print(f"    ✗ {c['name'][:56]} -- "
+                      f"{'; '.join(RESULTS[-1].get('errors') or [])[:78]}",
+                      file=sys.stderr, flush=True)
     # ===== 质量口径富化（第 214 轮）：把探针带来的收敛残差并进逐例结果 =====
     # 放在 `main` 里（而不是只放 `write_report`）——`dev.py suite` 调用的是
     # `main(tmp, None)`，`out_path=None` 时 `write_report` 根本不执行，
