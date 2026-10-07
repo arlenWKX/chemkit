@@ -41,16 +41,38 @@ from .speciation import estimate_pH, estimate_state
 _JTRACE = bool(_os.environ.get("CHEM_TRACE_JOINT"))
 
 # 联立解参数（改动前先跑 converg dump 基线差分）
-JOINT_TOL = float(_os.environ.get("CHEMKIT_JOINT_TOL", "0.05"))
-# 收敛阈：max|F| < 0.05（log 单位；J06 欠收敛 0.59）
+#
+# **`JOINT_TOL` 必须 ≪ `FREEZE_MAX_S`（engine.py，0.5）**（第 297 轮根因修正）：
+# 两者是同一根轴上的两个判据——`|S| < JOINT_TOL` = "**已平衡**"、
+# `|S| > FREEZE_MAX_S` = "**仍强驱动**"。原值 0.05 与之只差 **10 倍**，中间
+# 形成一条"容差带"：联立收敛到带内（`|S| ≈ 0.03`）就返回 `ok` 交回走步，
+# 而走步一动 `|S|` 就涨过 0.5 ⟹ `_try_revive` 判定"仍强驱动"⟹ 解冻 ⟹ 再联立
+# ⟹ **冻↔解冻活锁**。实测（`15 CaCO3+HCl` / `44 Al2(SO4)3+Na2S`）：
+# `joint_ok ≈ freeze_events ≈ revive ≈ 1000`、iters 3002/3053；
+# 收紧到 0.01 后 `44` 3053→154、全库 iters **−14.6%**、通过 1280→1283（零翻红）。
+# 取 `FREEZE_MAX_S/50` 留足间隔：**联立判"已平衡"的状态，走步绝不能立刻
+# 又判"强驱动"**。
+JOINT_TOL = float(_os.environ.get("CHEMKIT_JOINT_TOL", "0.01"))
+# 收敛阈：max|F| < 0.01（log 单位；J06 欠收敛 0.59）
 # **第 239 轮：两个参数改为可用环境变量覆盖**，用于回答"B 组是欠迭代
 # 还是根本不可解"——`joint_solve` 在 B 组停滞态上返回 `fail, resid≈12`，
 # 而迭代上限只有 14 次。先量"给足迭代/放宽阈值能否解开"，再决定
 # 是扩参数还是需要重写求解器（初值/缩放/阻尼/固相显式化）。
+#
+# ⚠️ **第 297 轮实测：`JOINT_MAX_ITER` 在本轮这批 churn 例上不参与**
+# （14 → 30 → 60 三个档位的 iters **一个数字都没变**）——因为联立在
+# `stagn>=3` 或达标时就退出了，**根本没跑满 14 步**。故本次**不动它**；
+# 若将来要调，必须先用 `CHEMKIT_JOINT_MAX_ITER` 做全量扫描拿数据。
 JOINT_MAX_ITER = int(_os.environ.get("CHEMKIT_JOINT_MAX_ITER", "14"))
 JOINT_MAX_M = 12        # 联立维度上限（超出取 |S| 最大者；数值 Jacobian O(m²) 求值）
 JOINT_MIN_M = 2         # 维度下限（单平衡 solve_extent 已一步到位）
 JOINT_EPS = 1e-9        # 程度显著阈（|x| 全在此下 = 原地，按无操作处理）
+# **步长判据**（第 297 轮）：平衡的数学定义是"F = 0 **且 x 不再变**"，
+# 只判残差是半个判据。联立解出 x 后，若**每步增量**也已落到可忽略档
+# （`X_MIN = 1e-6` mol，与引擎的"可忽略程度"同一把尺子），则解落在
+# 平台上，报 `ok` 与报"原地"等价；但若 `|x|` 不小而**本轮 Δx 仍大**，
+# 说明还在移动，不该被当成"到位"。
+JOINT_DX_MIN = float(_os.environ.get("CHEMKIT_JOINT_DX_MIN", "1e-6"))
 
 
 def _state(ledger: dict, H_excess: float, actives: list, x: list,
@@ -160,6 +182,7 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
                 touched.add(s)
 
     x = [0.0] * m
+    _x_prev = x[:]          # 上一次接受的解向量（步长判据 `_dx` 用）
     led, He = _state(ledger, H_excess, actives, x, H_ION, WATER)
     F = _F(led, He)
     resid0 = max((abs(f) for f in F), default=0.0)
@@ -211,6 +234,7 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
             F_n = _F(led_n, He_n)
             Fn = max((abs(f) for f in F_n), default=0.0)
             if Fn < F0n * (1.0 - 1e-4 * lam) or Fn < JOINT_TOL:
+                _x_prev = x[:]          # 位移前快照（双判据用，见下方 `_dx`）
                 x, F, led = x_new, F_n, led_n
                 ok_step = True
                 break
@@ -237,8 +261,17 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
             if stagn >= 3:
                 return "fail", x, resid
         if resid < JOINT_TOL:
+            # **双判据**（第 297 轮）：平衡 = `F = 0` **且** `x` 不再变。
+            # `_dx` 取**本次迭代实际接受的位移** `|x_new − x_prev|`
+            # （= `lam·delta`，含行搜索的 λ 缩减），落到 `JOINT_DX_MIN`
+            # (1e-6 mol，与引擎"可忽略程度"同一把尺子) 以下 ⟹ 解在平台上，
+            # 与"原地无操作"等价：返回 `fail` 让调用方走既有"无操作"分支。
+            _dx = max((abs(_xn - _xo) for _xn, _xo in zip(x, _x_prev)),
+                      default=0.0)
             if max((abs(xj) for xj in x), default=0.0) < JOINT_EPS:
                 return "fail", x, resid   # 解 = 原地（无操作）
+            if _dx < JOINT_DX_MIN:
+                return "fail", x, resid   # 残差已达标但本次几乎没动：平台点
             return "ok", x, resid
     return "fail", x, max((abs(f) for f in F), default=0.0)
 

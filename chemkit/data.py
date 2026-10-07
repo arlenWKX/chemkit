@@ -273,17 +273,24 @@ def load_tables(data_dir: str | None = None) -> Tables:
         fam.setdefault((e["center"], e["ligand"]), []).append(e)
     _legacy = os.environ.get("CHEMKIT_POOL_LEGACY", "") not in ("", "0", "false")
     _T = float(os.environ.get("CHEMKIT_POOL_T", _POOL_LOG_BETA_SINGLE))
+    # **判据变体**（第 297 轮，供分进程对拍；默认 = 最小充分版 `any_lt1_or_single`）
+    # ⚠️ 必须分进程测：同进程会因为 `_TABLES_CACHE` 拿到同一张表（第 297 轮踩过）。
+    _VARIANT = os.environ.get("CHEMKIT_POOL_VARIANT", "any_lt1_or_single")
     for (center, ligand), members in sorted(fam.items()):
         _all_logb = [float(m["logb"]) for m in members]
         _max_nu = max(int(m.get("nu", 1)) for m in members)
+        _any_weak = any(v < _POOL_LOG_BETA for v in _all_logb)
         if _legacy:
             fold = (len(members) >= 2
                     and all(v < _POOL_LOG_BETA for v in _all_logb))
+        elif _VARIANT == "any_lt1":
+            fold = (len(members) >= 2 and _any_weak)
+        elif _VARIANT == "any_lt1_or_single":
+            fold = ((len(members) >= 2 and _any_weak)
+                    or (len(members) == 1 and _all_logb[0] <= _POOL_LOG_BETA))
         else:
-            # ① 族内**每一条**都够弱（≤ T）：没有"主导物种"⟹ 是形态分布；
-            # ② 结构上必须是"同一份盐"的形态谱：逐级梯（n≥2），或单条一级
-            #    络合（n==1 且 nu==1）。单条高配位（[AgI₂]⁻/[CuCl₄]²⁻ 类）
-            #    是浓介质/条件性事件，保持事件呈现。
+            # v0.6 初版（**过宽，已弃用**）：逐级谱一律折叠 ⟹ 池锚 3→35，
+            # 走步在池内再分布上空转（`15 CaCO3+HCl` 11→3002 步）。
             fold = (all(v <= _T for v in _all_logb)
                     and (len(members) >= 2
                          or (len(members) == 1 and _max_nu == 1)))
