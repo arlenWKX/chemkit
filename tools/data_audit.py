@@ -149,7 +149,10 @@ def audit_beta(rows, bad, dup, info) -> int:
     seen = defaultdict(list)
     for e in rows:
         c, cen, lig, nu = e["complex"], e["center"], e["ligand"], e["nu"]
-        seen[(cen, lig, nu)].append(c)
+        # **键要带 `m`（中心数）**：多核物种（如 `[Al_2(OH)_2]^{4+}` 与
+        # `[Al(OH)_2]^+`）与单核共享 `(center, ligand, nu)`，那不是重复而是
+        # 两个不同物种。第 294 轮补入铝多核后此规则报过一次假阳性。
+        seen[(cen, lig, nu, e.get("m", 1))].append(c)
         ec, en, el_ = _el(c), _el(cen), _el(lig)
         if not ec or not en or not el_:
             rep("解析失败", f"beta {c}", bad)

@@ -1,0 +1,7 @@
+44 Al2(SO4)3+Na2S
+E43 AlCl3+NaHCO3 泡沫灭火（合并T95）
+N34 明矾+适量Ba(OH)2
+44b Al2(SO4)3+Na2S 无铝酸根（X-33 哨兵）
+H32 AlCl3+Na2S 双水解
+H44 AlCl3+NaOH 过量
+K03 AlCl3+NaHCO3 泡沫灭火
