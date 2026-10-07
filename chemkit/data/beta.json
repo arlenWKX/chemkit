@@ -1315,20 +1315,20 @@
   "center": "Cu^{2+}",
   "ligand": "Cl^-",
   "nu": 3,
-  "logb": -0.15,
+  "logb": -0.08,
   "m": 1,
   "ref": "I0",
-  "calibrated": "ε(Na+,CuCl4^2-)≈-0.06（近似，NEA/IUPAC Pitzer 反演）；高配位 I->0 值不确定度大"
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；Meng & Bard 2015 实测 β₃=−0.082（sit.dat −1.28 疑误植）"
  },
  {
   "complex": "[CuCl_4]^{2-}",
   "center": "Cu^{2+}",
   "ligand": "Cl^-",
   "nu": 4,
-  "logb": -1.2,
+  "logb": -1.42,
   "m": 1,
   "ref": "I0",
-  "calibrated": "ε(Na+,CuCl4^2-)≈-0.06（近似）；本轮确认无更精确值",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；Meng & Bard 2015 β₄=−1.416",
   "eps_rxn": -0.06
  },
  {
@@ -1358,10 +1358,10 @@
   "center": "Zn^{2+}",
   "ligand": "Cl^-",
   "nu": 3,
-  "logb": 0.18,
+  "logb": 0.54,
   "m": 1,
   "ref": "I0",
-  "calibrated": "ε(Na+,ZnCl3-)≈-0.05（近似）；IUPAC Part 5",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；NIST46 I→0 ≈0.5–0.6",
   "eps_rxn": -0.05
  },
  {
@@ -1394,7 +1394,8 @@
   "logb": 2.0,
   "m": 1,
   "ref": "I0",
-  "calibrated": "Luo 2007 实测（tests.json DB11 note 在案，v0.3.7 曾恢复后遗失，第 292 轮补回）；ν=2/4 与 ε 缺数据，宁缺勿错（只施 DH 主项）"
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；logβ 维持；ε 为**估计值**",
+  "eps_rxn": 0.05
  },
  {
   "complex": "[CdCl]^+",
@@ -1415,7 +1416,8 @@
   "logb": 2.0,
   "m": 1,
   "ref": "I0",
-  "calibrated": "浓盐酸定性分析锚（tests.json I16/U06 note 在案：logβ4=2.0）；ν=2/3 与 ε 缺数据，宁缺勿错（只施 DH 主项）"
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；logβ 维持（NIST46/NEA 1.9–2.0）；ε 为**估计值**",
+  "eps_rxn": -0.22
  },
  {
   "complex": "[HgCl]^+",
@@ -1425,7 +1427,7 @@
   "logb": 6.72,
   "m": 1,
   "ref": "I0",
-  "calibrated": "IUPAC Part 1；ε(Hg2+,Cl-)=0.19±0.03",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；NEA-TDB 6.74 维持（sit.dat 7.31 为条件值）",
   "eps_rxn": 0.19
  },
  {
@@ -1433,10 +1435,10 @@
   "center": "In^{3+}",
   "ligand": "Cl^-",
   "nu": 1,
-  "logb": 2.58,
+  "logb": 2.75,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NEA-TDB；ε(In3+,Cl-)=0.33±0.02",
+  "calibrated": "用户数据批次9（Wood & Samson 2006, Ore Geol. Rev. 28, 57）；I→0 ±0.1（覆盖批次1的低置信估计 3.3）",
   "eps_rxn": 0.33
  },
  {
@@ -1444,10 +1446,10 @@
   "center": "In^{3+}",
   "ligand": "Cl^-",
   "nu": 2,
-  "logb": 3.84,
+  "logb": 4.37,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NEA-TDB；同上 ε",
+  "calibrated": "用户数据批次9（Wood & Samson 2006, Ore Geol. Rev. 28, 57）；I→0 ±0.3",
   "eps_rxn": 0.33
  },
  {
@@ -1455,21 +1457,10 @@
   "center": "In^{3+}",
   "ligand": "Cl^-",
   "nu": 3,
-  "logb": 4.2,
+  "logb": 5.0,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NEA-TDB；同上 ε",
-  "eps_rxn": 0.33
- },
- {
-  "complex": "[AlCl]^{2+}",
-  "center": "Al^{3+}",
-  "ligand": "Cl^-",
-  "nu": 1,
-  "logb": 1.33,
-  "m": 1,
-  "ref": "I0",
-  "calibrated": "文献；ε(Al3+,Cl-)=0.33",
+  "calibrated": "用户数据批次9（Wood & Samson 2006, Ore Geol. Rev. 28, 57）；I→0 ±0.3",
   "eps_rxn": 0.33
  },
  {
@@ -1477,10 +1468,10 @@
   "center": "Sn^{2+}",
   "ligand": "Cl^-",
   "nu": 1,
-  "logb": -0.15,
+  "logb": 1.42,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NAGRA；ε(Sn2+,Cl-)=0.14；ε(SnCl+,Cl-)=-0.15±0.05",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；Müller & Seward 2001（ΔG°=−8.10 kJ/mol）",
   "eps_rxn": 0.14
  },
  {
@@ -1488,10 +1479,10 @@
   "center": "Sn^{2+}",
   "ligand": "Cl^-",
   "nu": 2,
-  "logb": -0.26,
+  "logb": 0.76,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NAGRA；ε(SnCl+,Cl-) 沿用",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；同上（ε 对中性物种不适用，沿用库内）",
   "eps_rxn": -0.15
  },
  {
@@ -1499,21 +1490,21 @@
   "center": "Sn^{2+}",
   "ligand": "Cl^-",
   "nu": 3,
-  "logb": -0.25,
+  "logb": 0.15,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NAGRA；同上",
-  "eps_rxn": -0.15
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；Gamsjäger 2012（ε 低置信按 0.0）",
+  "eps_rxn": 0.0
  },
  {
   "complex": "[MnCl]^+",
   "center": "Mn^{2+}",
   "ligand": "Cl^-",
   "nu": 1,
-  "logb": 0.85,
+  "logb": 0.3,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NEA-TDB；ε(Mn2+,Cl-)=0.13±0.01",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；NIST46/sit.dat 族（原 0.85 为条件常数混入）",
   "eps_rxn": 0.13
  },
  {
@@ -1557,8 +1548,8 @@
   "logb": -0.4,
   "m": 1,
   "ref": "I0",
-  "calibrated": "NEA SIT 反推；ε(Cr3+,Cl-)≈0.32（**估计值**）",
-  "eps_rxn": 0.32
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；ε 取 sit.dat 权威行 0.300（覆盖库内自标估计的 0.32）",
+  "eps_rxn": 0.3
  },
  {
   "complex": "[ScCl]^{2+}",
@@ -1597,10 +1588,10 @@
   "center": "Tb^{3+}",
   "ligand": "Cl^-",
   "nu": 1,
-  "logb": -0.57,
+  "logb": 0.3,
   "m": 1,
   "ref": "I0",
-  "calibrated": "Lee & Byrne 1993c（**I=0.7 mol/kg 条件值**，非 I->0）；ε(Ln3+,Cl-)=0.32",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；同 Dy（低置信）",
   "eps_rxn": 0.32
  },
  {
@@ -1608,10 +1599,10 @@
   "center": "Dy^{3+}",
   "ligand": "Cl^-",
   "nu": 1,
-  "logb": -0.59,
+  "logb": 0.3,
   "m": 1,
   "ref": "I0",
-  "calibrated": "同上（I=0.7 条件值）",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；**低置信**：原 −0.59 疑与 Er/Tb 同列误抄，NIST46 约 +0.3~+0.5",
   "eps_rxn": 0.32
  },
  {
@@ -1619,10 +1610,527 @@
   "center": "Er^{3+}",
   "ligand": "Cl^-",
   "nu": 1,
-  "logb": -0.62,
+  "logb": 0.3,
   "m": 1,
   "ref": "I0",
-  "calibrated": "同上（I=0.7 条件值）",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；同 Dy（低置信）",
   "eps_rxn": 0.32
+ },
+ {
+  "complex": "[MnCl_2]",
+  "center": "Mn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 2,
+  "logb": 0.25,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；NIST46/sit.dat 族（**新增**：库内原只有一氯条）"
+ },
+ {
+  "complex": "[MnCl_3]^-",
+  "center": "Mn^{2+}",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": -0.31,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；同上（**新增**）"
+ },
+ {
+  "complex": "[CeCl]^{2+}",
+  "center": "Ce^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低置信）"
+ },
+ {
+  "complex": "[EuCl]^{2+}",
+  "center": "Eu^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低置信）"
+ },
+ {
+  "complex": "[GdCl]^{2+}",
+  "center": "Gd^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低置信）"
+ },
+ {
+  "complex": "[HoCl]^{2+}",
+  "center": "Ho^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低置信）"
+ },
+ {
+  "complex": "[LaCl]^{2+}",
+  "center": "La^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.3,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低置信）"
+ },
+ {
+  "complex": "[LuCl]^{2+}",
+  "center": "Lu^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.1,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低置信）"
+ },
+ {
+  "complex": "[TmCl]^{2+}",
+  "center": "Tm^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低置信）"
+ },
+ {
+  "complex": "[Cu(OH)_2]",
+  "center": "Cu^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 11.77,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；Powell 1997 精选 log*β₂=−16.23±0.15（中置信）"
+ },
+ {
+  "complex": "[Pb(OH)_2]",
+  "center": "Pb^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 10.9,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76 log*β₂=−17.1±0.5（**低置信，待核**）"
+ },
+ {
+  "complex": "[Ni(OH)_2]",
+  "center": "Ni^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 8.7,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76（**低置信，待核**）"
+ },
+ {
+  "complex": "[Co(OH)_2]",
+  "center": "Co^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 9.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76（**低置信，待核**）"
+ },
+ {
+  "complex": "[Mn(OH)_2]",
+  "center": "Mn^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 5.8,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76（**低置信，待核**）"
+ },
+ {
+  "complex": "[Fe(OH)_2]",
+  "center": "Fe^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 7.4,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76（**低置信，待核**）"
+ },
+ {
+  "complex": "[Sn(OH)_2]",
+  "center": "Sn^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 17.6,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；Gamsjäger 2012 SIT 综述 log*β₂=−10.4±0.5"
+ },
+ {
+  "complex": "[BaCl]^+",
+  "center": "Ba^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": -2.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；极弱络合（文献 −1.5~−2.5），ε 为**估计**",
+  "eps_rxn": 0.06
+ },
+ {
+  "complex": "[CaCl]^+",
+  "center": "Ca^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": -1.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46；ε 与 LLNL sit.dat 一致",
+  "eps_rxn": 0.07
+ },
+ {
+  "complex": "[CoCl]^+",
+  "center": "Co^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.05,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46；ε 为**估计**",
+  "eps_rxn": 0.1
+ },
+ {
+  "complex": "[FeCl]^+",
+  "center": "Fe^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": -0.1,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NEA-TDB Fe 13/1；ε 见 sit.dat（0.08）",
+  "eps_rxn": 0.08
+ },
+ {
+  "complex": "[MgCl]^+",
+  "center": "Mg^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": -1.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46；ε 见 sit.dat",
+  "eps_rxn": 0.19
+ },
+ {
+  "complex": "[NiCl]^+",
+  "center": "Ni^{2+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": -0.4,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（ε 估计）",
+  "eps_rxn": 0.17
+ },
+ {
+  "complex": "[PbCl_4]^{2-}",
+  "center": "Pb^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 1.6,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次1（Meng&Bard 2015 / Müller&Seward 2001 / Gamsjäger 2012 / NIST46 / NEA-TDB）；**恢复第 292 轮删掉的条目**（NIST46 I→0 1.6–2.0）；ε 为**估计值**",
+  "eps_rxn": -0.2
+ },
+ {
+  "complex": "[RhCl]^{2+}",
+  "center": "Rh^{3+}",
+  "ligand": "Cl^-",
+  "nu": 1,
+  "logb": 0.6,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；单来源老数据（**低置信**）"
+ },
+ {
+  "complex": "[Cd(OH)_2]",
+  "center": "Cd^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 7.81,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；IUPAC R 级 log*β₂=−20.19±0.13"
+ },
+ {
+  "complex": "[Cd(OH)_3]^-",
+  "center": "Cd^{2+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 8.5,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；IUPAC I 级 log*β₃=−33.5±0.5"
+ },
+ {
+  "complex": "[Zn(OH)_2]",
+  "center": "Zn^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 11.1,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；IUPAC P 级 log*β₂=−16.9±0.3"
+ },
+ {
+  "complex": "[Zn(OH)_3]^-",
+  "center": "Zn^{2+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 13.6,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；IUPAC I 级 log*β₃=−28.4±0.4"
+ },
+ {
+  "complex": "[Ga(OH)_2]^+",
+  "center": "Ga^{3+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 21.4,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76 log*β₂=−6.6±0.3"
+ },
+ {
+  "complex": "[Ga(OH)_3]",
+  "center": "Ga^{3+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 31.4,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次9（Wood & Samson 2006, Ore Geol. Rev. 28, 57）；**取批次9**（近期综述 −10.63）而非 BM76 的 −11.6"
+ },
+ {
+  "complex": "[In(OH)_2]^+",
+  "center": "In^{3+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 18.5,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76 log*β₂=−9.5±0.4"
+ },
+ {
+  "complex": "[In(OH)_3]",
+  "center": "In^{3+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 26.5,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76 log*β₃=−15.5±0.6（低置信）"
+ },
+ {
+  "complex": "[Cr(OH)_2]^+",
+  "center": "Cr^{3+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 18.8,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76/NEA log*β₂=−9.2±0.3"
+ },
+ {
+  "complex": "[Cr(OH)_3]",
+  "center": "Cr^{3+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 26.1,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；log*β₃=−15.9±0.6（低置信）"
+ },
+ {
+  "complex": "[Be(OH)_2]",
+  "center": "Be^{2+}",
+  "ligand": "OH^-",
+  "nu": 2,
+  "logb": 14.3,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76 log*β₂=−13.7±0.5（注意网络转载 −23.65 为排版错误）"
+ },
+ {
+  "complex": "[Be(OH)_3]^-",
+  "center": "Be^{2+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 18.8,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；BM76 log*β₃=−23.2±0.3"
+ },
+ {
+  "complex": "[Al(OH)_3]",
+  "center": "Al^{3+}",
+  "ligand": "OH^-",
+  "nu": 3,
+  "logb": 26.3,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次2（IUPAC Powell 2007/2009；Baes & Mesmer 1976）；关键汇编 −15.66±0.23（Al 补 ν=3）"
+ },
+ {
+  "complex": "[Bi(OH)]^{2+}",
+  "center": "Bi^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -1.1,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；BM76/NIST46 log*β₁=−1.1±0.3（**低置信**；Bi³⁺ 实以 Bi₆O₆(OH)₈⁶⁺ 多核为主）"
+ },
+ {
+  "complex": "[Dy(OH)]^{2+}",
+  "center": "Dy^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -8.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；BM76 + 镧系系列（中）"
+ },
+ {
+  "complex": "[Er(OH)]^{2+}",
+  "center": "Er^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -7.9,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；同上"
+ },
+ {
+  "complex": "[Hf(OH)]^{3+}",
+  "center": "Hf^{4+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -0.3,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；Norén 1973（低–中）"
+ },
+ {
+  "complex": "[Ir(OH)]^{2+}",
+  "center": "Ir^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -3.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46 单来源（低）"
+ },
+ {
+  "complex": "[Pd(OH)]^+",
+  "center": "Pd^{2+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -3.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；BM76（低）"
+ },
+ {
+  "complex": "[Pm(OH)]^{2+}",
+  "center": "Pm^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -8.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；**插值**（无实验值，按 La→Lu 趋势插值，如实标注）"
+ },
+ {
+  "complex": "[Pr(OH)]^{2+}",
+  "center": "Pr^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -8.3,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；2M NaClO₄ 文献 + BM76（中）"
+ },
+ {
+  "complex": "[Ru(OH)]^{2+}",
+  "center": "Ru^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -2.6,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46（低）"
+ },
+ {
+  "complex": "[Sc(OH)]^{2+}",
+  "center": "Sc^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -4.3,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NIST46 精选 −4.28（高）"
+ },
+ {
+  "complex": "[Sm(OH)]^{2+}",
+  "center": "Sm^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -8.2,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；BM76 + 镧系系列（中）"
+ },
+ {
+  "complex": "[Tb(OH)]^{2+}",
+  "center": "Tb^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -8.1,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；同上"
+ },
+ {
+  "complex": "[Yb(OH)]^{2+}",
+  "center": "Yb^{3+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -7.8,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；同上"
+ },
+ {
+  "complex": "[Zr(OH)]^{3+}",
+  "center": "Zr^{4+}",
+  "ligand": "OH^-",
+  "nu": 1,
+  "logb": -0.22,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "用户数据批次4（NIST46 / NEA-TDB Fe 13-1 / BM76）；NEA-TDB/Norén（中）"
  }
 ]

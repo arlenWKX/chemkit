@@ -88,7 +88,10 @@ def _load(name: str):
 
 
 _R_GAS = 8.314e-3   # kJ/(mol·K)
-_POOL_LOG_BETA = 1.0   # 弱配形态池阈值：族内累积 logβ 全部低于此值 ⟹ 池折叠
+_POOL_LOG_BETA = 1.0   # **旧判据**（v0.4.0~0.5.57）：族内 logβ 全 < 此值 ⟹ 池折叠
+# **新判据**（v0.5.58）只对"**单条且 nu==1**"的族用程度阈值：够弱才算形态分布。
+# 见 `_derive_pools` 顶部注释（阈值编码的是"当时数据有多烂"，数据一准就得改）。
+_POOL_LOG_BETA_SINGLE = 1.0
 
 
 def henry_of(T: "Tables", gas: str, T_K: float) -> float | None:
@@ -237,22 +240,54 @@ def load_tables(data_dir: str | None = None) -> Tables:
         (t.cations if charge_of(e["center"]) > 0 else t.anions).add(e["center"])
         (t.cations if charge_of(e["ligand"]) > 0 else t.anions).add(e["ligand"])
         (t.cations if charge_of(e["complex"]) > 0 else t.anions).add(e["complex"])
-    # ---- 弱配形态池派生（v0.4.0）----
-    # 折叠条件（两要件同时满足）：
-    #   ① 族内累积 logβ 全部 < 1.0（弱配 = 部分混合形态）；
-    #   ② 族条目数 ≥ 2（逐级 β 谱 = 形态分布族，"同一份溶解盐"语义成立）。
-    #   单条目族（Cu-Cl/Cu-Br 的 β4-only、PbCl₃⁻、[AgI₂]⁻）是条件性事件
-    #   配合物（浓介质生成/稀介质分解），教学口径锁定为事件呈现
-    #   （FeCl₃+Cu 刻蚀 → [CuCl₄]²⁻ 族六例），不折叠。
-    # 以 center 为锚（中心金属守恒），池成员 = center + 该 center 全部
-    # 弱族的 complexes。排序固定序（跨进程确定性纪律，v0.3.9 教训）。
-    # 边界例：Ni-SCN/Zn-Br/Zn-SCN 的 logβ4=1.0 恰在阈值上不折叠。
+    # ---- 弱配形态池派生（v0.4.0；判据 v0.5.58 重写）----
+    # **什么该折叠成"形态池"**：往水里溶解一份盐 M_aL_b 时，Mⁿ⁺ 与 L 之间
+    # **逐级络合**给出的那一组形态（ML、ML₂、…）——它们同属"这一份盐溶了
+    # 多少"的分布，池内再分布**不是化学事件**（`changed` 不该被它点亮）。
+    #
+    # **旧判据（v0.4.0 ~ 0.5.57）**：`族内累积 logβ 全部 < 1.0 且 族条目数 ≥ 2`。
+    # 第 295 轮实测该判据**在权威数据入库后失效**（两类错误方向同时出现）：
+    #   · **误判为事件**：`CaCl⁺(−1.0)` / `MgCl⁺(−1.0)` / `NiCl⁺(−0.4)` /
+    #     `FeCl⁺(−0.1)` 这些弱到看不见的单条络合，被当成"浓介质生成/稀介质
+    #     分解"的条件性事件 ⟹ 引擎对 `CaCl₂`/`MgCl₂`/`BaCl₂` 溶液报出净方程
+    #     `M²⁺ + Cl⁻ ⇌ [MCl]⁺`，15 例「不反应锚」翻红（NR11/12/13/20/24/52/
+    #     70/118/138/159/160、V22 等）。
+    #   · **误判为形态分布**：`[SnCl]⁺` 的 logβ₁ 由 −0.15 修正到 **+1.42**
+    #     （Müller & Seward 2001）后，Sn 族因"存在 ≥1.0 的项"**掉出池**，
+    #     第 292 轮已结案的 Sn 形态分布被推翻。
+    # 阈值编码的其实是"当时数据有多烂"——数据一准，阈值就错。
+    #
+    # **新判据（按化学语义，不再用 logβ 的绝对值）**：
+    #   ① **逐级形态谱**：族内出现 `nu ≥ 2` 的成员（有 ML₂ 及以上），说明这是
+    #      一份盐的逐级络合分布 ⟹ 折叠；
+    #   ② **单条弱络合**：族只有 `nu == 1` 一条时，只有当它**足够弱**
+    #      （`logβ ≤ _POOL_LOG_BETA_SINGLE`）才折叠——这正对"溶解 CaCl₂ 时
+    #      CaCl⁺ 只是形态分布的一部分，不是事件"的化学事实；
+    #   ③ **强单条**（`logβ > 阈值`，如 `[AgI₂]⁻`、`[HgCl]⁺` 6.72、
+    #      `[CuCl₄]²⁻` 这类条件性/浓介质物种）**保持事件呈现**——教学口径要求
+    #      它们能被断言看见（`FeCl₃+Cu` 刻蚀族的六例）。
+    # ②的阈值与①无关：①是**结构**判据（有没有高配位成员），②才是程度判据。
+    # `CHEMKIT_POOL_LEGACY=1` 回到旧判据（仅供对拍，不是推荐默认）。
     fam: dict[tuple[str, str], list[dict]] = {}
     for e in t.beta:
         fam.setdefault((e["center"], e["ligand"]), []).append(e)
+    _legacy = os.environ.get("CHEMKIT_POOL_LEGACY", "") not in ("", "0", "false")
+    _T = float(os.environ.get("CHEMKIT_POOL_T", _POOL_LOG_BETA_SINGLE))
     for (center, ligand), members in sorted(fam.items()):
-        if (len(members) >= 2
-                and all(float(m["logb"]) < _POOL_LOG_BETA for m in members)):
+        _all_logb = [float(m["logb"]) for m in members]
+        _max_nu = max(int(m.get("nu", 1)) for m in members)
+        if _legacy:
+            fold = (len(members) >= 2
+                    and all(v < _POOL_LOG_BETA for v in _all_logb))
+        else:
+            # ① 族内**每一条**都够弱（≤ T）：没有"主导物种"⟹ 是形态分布；
+            # ② 结构上必须是"同一份盐"的形态谱：逐级梯（n≥2），或单条一级
+            #    络合（n==1 且 nu==1）。单条高配位（[AgI₂]⁻/[CuCl₄]²⁻ 类）
+            #    是浓介质/条件性事件，保持事件呈现。
+            fold = (all(v <= _T for v in _all_logb)
+                    and (len(members) >= 2
+                         or (len(members) == 1 and _max_nu == 1)))
+        if fold:
             t.pool_members.setdefault(center, [center])
             t.pool_ligands.setdefault(center, set()).add(ligand)
             for m in members:
