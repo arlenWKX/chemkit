@@ -53,6 +53,28 @@ _JTRACE = bool(_os.environ.get("CHEM_TRACE_JOINT"))
 # 取 `FREEZE_MAX_S/50` 留足间隔：**联立判"已平衡"的状态，走步绝不能立刻
 # 又判"强驱动"**。
 JOINT_TOL = float(_os.environ.get("CHEMKIT_JOINT_TOL", "0.01"))
+
+# **联立解的规模出口**（第 299 轮，正式诊断设施，不再是临时插桩）：
+# `joint_solve` 返回的 `x` 有多大量级、覆盖几条腿、`status` 是什么，是判断
+# "这次联立到底解决了什么"的唯一依据。此前该信息无处可取，导致第 298 轮
+# 反复临时插桩且插桩在回退中丢失。`JOINT_AUDIT is None` 时零开销。
+JOINT_AUDIT: list | None = None
+
+
+def _audit(x: list, status: str, resid: float, m: int = 0,
+           touched=None, scale: float = 0.0) -> None:
+    """记录一次联立的规模（诊断用，生产路径 `JOINT_AUDIT is None` 零成本）。"""
+    if JOINT_AUDIT is None:
+        return
+    JOINT_AUDIT.append({
+        "m": m or len(x), "status": status, "resid": resid,
+        "max_x": max((abs(v) for v in x), default=0.0),
+        "n_nonzero": sum(1 for v in x if abs(v) > 1e-9),
+        "scale": scale,
+        "touched": sorted(touched) if touched else [],
+    })
+
+
 # 收敛阈：max|F| < 0.01（log 单位；J06 欠收敛 0.59）
 # **第 239 轮：两个参数改为可用环境变量覆盖**，用于回答"B 组是欠迭代
 # 还是根本不可解"——`joint_solve` 在 B 组停滞态上返回 `fail, resid≈12`，
@@ -153,6 +175,7 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
     """
     m = len(actives)
     if m < JOINT_MIN_M:
+        _audit([], "fail-m0", 0.0, m)
         return "fail", [], 0.0
 
     def _F(led: dict, He: float) -> list:
@@ -180,6 +203,11 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
         for s in list(c.r) + list(c.pr):
             if s not in (H_ION, WATER):
                 touched.add(s)
+    # 体系物料规模（mol）：诊断用相对基准（取非水非 H⁺ 物种的最大存量，
+    # 代表"这个体系里有多少东西可以动"）。
+    _scale = max((v for k, v in ledger.items()
+                  if k not in (WATER, H_ION) and isinstance(v, (int, float))),
+                 default=0.0)
 
     x = [0.0] * m
     _x_prev = x[:]          # 上一次接受的解向量（步长判据 `_dx` 用）
@@ -187,6 +215,7 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
     F = _F(led, He)
     resid0 = max((abs(f) for f in F), default=0.0)
     if resid0 < JOINT_TOL:
+        _audit(x, "fail", resid0, m, touched, _scale)
         return "fail", x, resid0   # 已在阈值内（不该发生——驱动者必有 |S|≥0.02）
     resid_best = resid0
     stagn = 0   # 停滞计数：残差 3 迭代无 30% 改善即中止（失败体系的
@@ -207,6 +236,7 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
         if delta is None:
             delta = _solve_ls(J, [-f for f in F])
         if delta is None or all(dd == 0.0 for dd in delta):
+            _audit(x, "fail", max((abs(f) for f in F), default=0.0), m, touched, _scale)
             return "fail", x, max((abs(f) for f in F), default=0.0)
 
         # 非负投影：在场物种沿 x+λΔ 不得穿零（状态线性 ⇒ λ 上界可解析）
@@ -250,7 +280,9 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
                 for s in touched)
             resid = max((abs(f) for f in F), default=0.0)
             if pinned and resid < 0.5 * resid0:
+                _audit(x, "boundary", resid, m, touched, _scale)
                 return "boundary", x, resid
+            _audit(x, "fail", resid, m, touched, _scale)
             return "fail", x, resid
         resid = max((abs(f) for f in F), default=0.0)
         if resid < 0.7 * resid_best:
@@ -259,6 +291,7 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
         else:
             stagn += 1
             if stagn >= 3:
+                _audit(x, "fail", resid, m, touched, _scale)
                 return "fail", x, resid
         if resid < JOINT_TOL:
             # **双判据**（第 297 轮）：平衡 = `F = 0` **且** `x` 不再变。
@@ -269,10 +302,21 @@ def joint_solve(ledger: dict, H_excess: float, actives: list, V: float,
             _dx = max((abs(_xn - _xo) for _xn, _xo in zip(x, _x_prev)),
                       default=0.0)
             if max((abs(xj) for xj in x), default=0.0) < JOINT_EPS:
+                _audit(x, "fail-eps", resid, m, touched, _scale)
                 return "fail", x, resid   # 解 = 原地（无操作）
             if _dx < JOINT_DX_MIN:
+                _audit(x, "fail-plateau", resid, m, touched, _scale)
                 return "fail", x, resid   # 残差已达标但本次几乎没动：平台点
+            # ⚠️ **已试并否证（第 299 轮）：逐腿自洽复核**。
+            # 假说：`resid = max|F|` 在多维里不是充分条件，联立靠其它腿
+            # "分摊"残差 ⟹ 单腿仍远离平衡。做法是在此重算落实后的各腿 S，
+            # 若 `max|F| ≥ JOINT_TOL` 则报 `fail`。
+            # **实测否证**：加入后 `15` 仍是 `996 次 ok`、iters 仍 3002
+            # ⟹ 落实后的 12 维联合残差**确实 < 0.01**，没有"分摊"。
+            # 该假说不再重试。
+            _audit(x, "ok", resid, m, touched, _scale)
             return "ok", x, resid
+    _audit(x, "fail", max((abs(f) for f in F), default=0.0), m, touched, _scale)
     return "fail", x, max((abs(f) for f in F), default=0.0)
 
 
