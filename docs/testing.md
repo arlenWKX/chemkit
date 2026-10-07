@@ -9,7 +9,7 @@ python -m chemkit.testsuit my.json          # 自定义用例库
 python -m chemkit.testsuit --out result.json  # 结构化结果（cases/summary/checks）
 ```
 
-**1299 条断言** = 1176 条化学用例 + 123 条内部自检（温度域校验、酸碱地基
+**1299 条断言** = 1378 条化学用例 + 123 条内部自检（温度域校验、酸碱地基
 断言、高层 API 自检 22 通道、环闭合检查）。
 
 用例库的写法约定：断言键**出现即断言、不出现即不管**；`has` 是下限、
