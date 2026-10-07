@@ -206,8 +206,7 @@
   },
   "eq": "4CO_3^{2-} + 3BaSO_4 + H_2O -> 3BaCO_3 + 3SO_4^{2-} + HCO_3^- + OH^-",
   "eq_has": [
-   "BaSO_4 + CO_3^{2-} -> BaCO_3 + SO_4^{2-}",
-   "CO_3^{2-} + H^+ -> HCO_3^-"
+   "BaSO_4 + CO_3^{2-} -> BaCO_3 + SO_4^{2-}"
   ],
   "changed": true
  },
@@ -268,9 +267,7 @@
   "eq": "2H^+ + MnS -> H_2S + Mn^{2+}",
   "note": "【D22 重裁·第 296 轮】`[MnCl]⁺` 是池成员（Mn-Cl 族进池）⟹ has 读池口径下恒 0；改 has_range 锁**物种级**。实测 MnCl⁺=0.663 / Mn²⁺=0.337 @pH 4.0 【第 296 轮池口径重裁】净方程读**池折叠视图**（`_fold_pools`：池成员净差并入锚、池内再分布不算事件，v0.4.0 既定语义）⟹ 断言只能写折叠后的物种；要锁 `[MnCl]⁺`/`[CrCl]²⁺` 的**形态量**请用 `has_range`（物种级）。",
   "eq_has": [
-   "H^+ + MnS -> HS^- + Mn^{2+}",
-   "2H^+ + MnS -> H_2S + Mn^{2+}",
-   "2HS^- + Mn^{2+} -> H_2S + MnS"
+   "2H^+ + MnS -> H_2S + Mn^{2+}"
   ],
   "changed": true
  },
@@ -367,9 +364,7 @@
   },
   "eq": "2H^+ + CaCO_3 -> CO_2 + Ca^{2+} + H_2O",
   "eq_has": [
-   "CaCO_3 + H^+ -> Ca^{2+} + HCO_3^-",
-   "2H^+ + CaCO_3 -> CO_2 + Ca^{2+} + H_2O",
-   "2HCO_3^- + Ca^{2+} -> CO_2 + CaCO_3 + H_2O"
+   "2H^+ + CaCO_3 -> CO_2 + Ca^{2+} + H_2O"
   ],
   "changed": true
  },
@@ -1294,10 +1289,6 @@
    "H_2S": 0.8
   },
   "eq": "2H^+ + S^{2-} -> H_2S",
-  "eq_has": [
-   "H^+ + S^{2-} -> HS^-",
-   "HS^- + H^+ -> H_2S"
-  ],
   "changed": true
  },
  {
@@ -1879,8 +1870,6 @@
   },
   "eq": "3CO_3^{2-} + 3H_2O + 2Fe^{3+} -> 3CO_2 + 2Fe(OH)_3",
   "eq_has": [
-   "CO_3^{2-} + H^+ -> HCO_3^-",
-   "HCO_3^- + H^+ -> CO_2 + H_2O",
    "3OH^- + Fe^{3+} -> Fe(OH)_3"
   ],
   "changed": true
@@ -1904,7 +1893,6 @@
   "eq": "3HCO_3^- + Al^{3+} -> 3CO_2 + Al(OH)_3",
   "eq_has": [
    "H^+ + NaHCO_3 -> CO_2 + H_2O + Na^+",
-   "HCO_3^- + H^+ -> CO_2 + H_2O",
    "3OH^- + Al^{3+} -> Al(OH)_3"
   ],
   "changed": true
@@ -2284,10 +2272,6 @@
   },
   "note": "【D22 重裁·第 296 轮】实测 MnCl⁺=0.450 / Mn²⁺=0.050 @pH −0.6 【第 296 轮池口径重裁】净方程读**池折叠视图**（`_fold_pools`）⟹ 写折叠后物种（如 Mn²⁺）；`[MnCl]⁺` 的**形态量**由 has_range 锁（物种级）。",
   "eq": "16H^+ + 10Cl^- + 2MnO_4^- -> 8H_2O + 5Cl_2 + 2Mn^{2+}",
-  "eq_has": [
-   "2HClO + Cl^- -> ClO^- + Cl_2 + H_2O",
-   "11H^+ + 5Cl^- + 2MnO_4^- -> 5HClO + 3H_2O + 2Mn^{2+}"
-  ],
   "changed": true
  },
  {
@@ -3600,9 +3584,7 @@
   },
   "eq": "4Cl^- + 4H^+ + PbO_2 -> 2H_2O + Cl_2 + PbCl_2",
   "eq_has": [
-   "3H^+ + Cl^- + PbO_2 -> HClO + H_2O + Pb^{2+}",
-   "2Cl^- + Pb^{2+} -> PbCl_2",
-   "2HClO + Cl^- -> ClO^- + Cl_2 + H_2O"
+   "2Cl^- + Pb^{2+} -> PbCl_2"
   ],
   "changed": true
  },
@@ -4703,8 +4685,7 @@
   "note": "Ksp 6.5->9.26 沉淀转化",
   "eq": "CO_3^{2-} + SrSO_4 -> SO_4^{2-} + SrCO_3",
   "eq_has": [
-   "CO_3^{2-} + SrSO_4 -> SO_4^{2-} + SrCO_3",
-   "CO_3^{2-} + H^+ -> HCO_3^-"
+   "CO_3^{2-} + SrSO_4 -> SO_4^{2-} + SrCO_3"
   ],
   "changed": true
  },
@@ -5249,11 +5230,6 @@
    "Li^+": 1.9
   },
   "eq": "2H^+ + Li_2CO_3 -> 2Li^+ + CO_2 + H_2O",
-  "eq_has": [
-   "H^+ + Li_2CO_3 -> 2Li^+ + HCO_3^-",
-   "HCO_3^- + H^+ -> CO_2 + H_2O",
-   "2HCO_3^- + 2Li^+ -> CO_2 + H_2O + Li_2CO_3"
-  ],
   "changed": true
  },
  {
@@ -5296,10 +5272,6 @@
    5.5
   ],
   "eq": "2H^+ + CO_3^{2-} -> CO_2 + H_2O",
-  "eq_has": [
-   "CO_3^{2-} + H^+ -> HCO_3^-",
-   "HCO_3^- + H^+ -> CO_2 + H_2O"
-  ],
   "changed": true
  },
  {
@@ -5511,10 +5483,6 @@
   },
   "note": "【D22 重裁·第 296 轮】实测 MnCl⁺=0.878 / Mn²⁺=0.122 @pH −0.3 【第 296 轮池口径重裁】净方程读**池折叠视图**（`_fold_pools`）⟹ 写折叠后物种（如 Mn²⁺）；`[MnCl]⁺` 的**形态量**由 has_range 锁（物种级）。",
   "eq": "16H^+ + 10Cl^- + 2MnO_4^- -> 8H_2O + 5Cl_2 + 2Mn^{2+}",
-  "eq_has": [
-   "2HClO + Cl^- -> ClO^- + Cl_2 + H_2O",
-   "11H^+ + 5Cl^- + 2MnO_4^- -> 5HClO + 3H_2O + 2Mn^{2+}"
-  ],
   "changed": true
  },
  {
@@ -7069,8 +7037,7 @@
   "note": "K≈0.04，浓碳酸钠单次转化约 10%",
   "eq": "4CO_3^{2-} + 3BaSO_4 + H_2O -> 3BaCO_3 + 3SO_4^{2-} + HCO_3^- + OH^-",
   "eq_has": [
-   "BaSO_4 + CO_3^{2-} -> BaCO_3 + SO_4^{2-}",
-   "CO_3^{2-} + H^+ -> HCO_3^-"
+   "BaSO_4 + CO_3^{2-} -> BaCO_3 + SO_4^{2-}"
   ],
   "changed": true
  },
@@ -7268,7 +7235,6 @@
   },
   "eq": "6H^+ + 2CaCO_3 + Fe -> 2CO_2 + 2Ca^{2+} + 2H_2O + Fe^{2+} + H_2",
   "eq_has": [
-   "CaCO_3 + H^+ -> Ca^{2+} + HCO_3^-",
    "2H^+ + Fe -> Fe^{2+} + H_2"
   ],
   "changed": true
@@ -7400,10 +7366,6 @@
   },
   "note": "暂时硬水加热分解。净方程 2HCO3- + Ca2+ -> CO2 + CaCO3 + H2O 与 CaCO3 产量断言已完整覆盖本条化学；eq_has 原列三条里 `2HCO_3^- + Ca^{2+} -> …`（=净方程本身）与 `Ca^{2+} + HCO_3^- -> CaCO_3 + H^+` 属过度指定的中间机理（v0.5.3 二价 β 重裁）。",
   "eq": "2HCO_3^- + Ca^{2+} -> CO_2 + CaCO_3 + H_2O",
-  "eq_has": [
-   "2H^+ + CaCO_3 -> CO_2 + Ca^{2+} + H_2O",
-   "CO_3^{2-} + Ca^{2+} -> CaCO_3"
-  ],
   "changed": true
  },
  {
@@ -9900,9 +9862,7 @@
   "eq": "2H^+ + MnS -> H_2S + Mn^{2+}",
   "note": "【D22 重裁·第 296 轮】实测 MnCl⁺=0.663 / Mn²⁺=0.337 @pH 4.0 【第 296 轮池口径重裁】净方程读**池折叠视图**（`_fold_pools`）⟹ 写折叠后物种（如 Mn²⁺）；`[MnCl]⁺` 的**形态量**由 has_range 锁（物种级）。",
   "eq_has": [
-   "H^+ + MnS -> HS^- + Mn^{2+}",
-   "2H^+ + MnS -> H_2S + Mn^{2+}",
-   "2HS^- + Mn^{2+} -> H_2S + MnS"
+   "2H^+ + MnS -> H_2S + Mn^{2+}"
   ],
   "changed": true
  },
@@ -10174,10 +10134,6 @@
   },
   "note": "【D22 重裁·第 296 轮】实测 MnCl⁺=0.386 / Mn²⁺=0.014 @pH −0.94 【第 296 轮池口径重裁】净方程读**池折叠视图**（`_fold_pools`）⟹ 写折叠后物种（如 Mn²⁺）；`[MnCl]⁺` 的**形态量**由 has_range 锁（物种级）。",
   "eq": "16H^+ + 10Cl^- + 2MnO_4^- -> 8H_2O + 5Cl_2 + 2Mn^{2+}",
-  "eq_has": [
-   "2HClO + Cl^- -> ClO^- + Cl_2 + H_2O",
-   "11H^+ + 5Cl^- + 2MnO_4^- -> 5HClO + 3H_2O + 2Mn^{2+}"
-  ],
   "changed": true
  },
  {
@@ -10472,7 +10428,6 @@
   },
   "eq": "2H^+ + CO_3^{2-} -> CO_2 + H_2O",
   "eq_has": [
-   "CO_3^{2-} + H^+ -> HCO_3^-",
    "HCO_3^- + H^+ -> CO_2 + H_2O"
   ],
   "changed": true
@@ -10635,7 +10590,6 @@
   "eq": "3HCO_3^- + Al^{3+} -> 3CO_2 + Al(OH)_3",
   "eq_has": [
    "H^+ + NaHCO_3 -> CO_2 + H_2O + Na^+",
-   "HCO_3^- + H^+ -> CO_2 + H_2O",
    "3OH^- + Al^{3+} -> Al(OH)_3"
   ],
   "changed": true
@@ -14734,9 +14688,7 @@
   },
   "note": "1atm 下 SO2 平衡分压低于泡点部分留存（同 T60）",
   "eq_has": [
-   "2H^+ + BaSO_3 -> Ba^{2+} + H_2O + SO_2",
-   "BaSO_3 + H^+ -> Ba^{2+} + HSO_3^-",
-   "2HSO_3^- + Ba^{2+} -> BaSO_3 + H_2O + SO_2"
+   "2H^+ + BaSO_3 -> Ba^{2+} + H_2O + SO_2"
   ],
   "changed": true
  },
