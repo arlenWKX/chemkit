@@ -936,7 +936,7 @@ def build_derived(T) -> list[Cand]:
         if lig == "OH^-" or lig in T.pka_base or lig in T.pka_acid:
             continue
         if not ENABLE_CL_BETA and lig == "Cl^-":
-            continue          # 氯络合默认关闭（见文件头 ENABLE_CL_BETA）
+            continue          # 氯络合可用 CHEMKIT_CL_BETA=0 关闭（默认开启）
         bal = _bal([b["complex"]], [b["center"], lig], [WATER, H_ION])
         if bal is None:
             continue

@@ -1387,6 +1387,16 @@
   "eps_rxn": 0.11
  },
  {
+  "complex": "[PbCl_3]^-",
+  "center": "Pb^{2+}",
+  "ligand": "Cl^-",
+  "nu": 3,
+  "logb": 2.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "Luo 2007 实测（tests.json DB11 note 在案，v0.3.7 曾恢复后遗失，第 292 轮补回）；ν=2/4 与 ε 缺数据，宁缺勿错（只施 DH 主项）"
+ },
+ {
   "complex": "[CdCl]^+",
   "center": "Cd^{2+}",
   "ligand": "Cl^-",
@@ -1396,6 +1406,16 @@
   "ref": "I0",
   "calibrated": "IUPAC Part 4；ε(Cd2+,Cl-)=0.15±0.01",
   "eps_rxn": 0.15
+ },
+ {
+  "complex": "[CdCl_4]^{2-}",
+  "center": "Cd^{2+}",
+  "ligand": "Cl^-",
+  "nu": 4,
+  "logb": 2.0,
+  "m": 1,
+  "ref": "I0",
+  "calibrated": "浓盐酸定性分析锚（tests.json I16/U06 note 在案：logβ4=2.0）；ν=2/3 与 ε 缺数据，宁缺勿错（只施 DH 主项）"
  },
  {
   "complex": "[HgCl]^+",
