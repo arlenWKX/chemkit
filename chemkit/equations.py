@@ -912,11 +912,6 @@ def _collect_steps(steps: list[dict]) -> list[tuple[dict, dict, float]]:
     - extent < STEP_MIN：噪声，跳过；
     - kind == 'dissolve'：物理溶解（NaHCO3 → Na+ + HCO3-），离子方程式
       不体现——真正参与反应的是溶解后的离子，由后续步骤表达；
-    - kind == 'gas'：气液**相转移**（CO2(aq) ⇌ CO2(g)），与溶解溶解
-      （dissolve）同属**物理相变而非化学反应**。离子方程式只叙述化学
-      反应，相变由 `gas` 存量键承载（第 301 轮：否则净方程会出现
-      `CO2(g) -> CO2` 这种非反应步，测试 `6 Ca(OH)2+CO2(少量)` 等
-      因此翻红）。
     - 同一净反应（含 H2O 挂侧差异）聚合：extent 求和；
     - 互为逆反应的对子在聚合时自然抵消（extent 相减）。
     - 瞬态中间体塌缩：复杂形成+解离对（如 Ag+ + 2I- → [AgI2]-,
@@ -927,7 +922,7 @@ def _collect_steps(steps: list[dict]) -> list[tuple[dict, dict, float]]:
     reps: dict[tuple, tuple[dict, dict]] = {}
     for st in steps:
         ext = st.get("extent", 0.0)
-        if ext < STEP_MIN or st.get("kind") in ("dissolve", "gas"):
+        if ext < STEP_MIN or st.get("kind") == "dissolve":
             continue
         eq = st.get("equation", "")
         if not eq:
