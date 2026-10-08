@@ -35,6 +35,7 @@ _DATA_EXTERNAL/
 # 第三方发行包（本地参考，不入库）
 thirdparty/
 
-# һ������ʱ�ű�/̽�루����⣩
+# 一次性临时脚本/探针目录（不入库）
 _scratch/
 
+.tmp_dev_results.json
