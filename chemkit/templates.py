@@ -622,6 +622,26 @@ def _build_static_cands(T_K: float, T, pKw: float) -> list:
                          meta={"solid": sp}),
                     frozenset((sp,))))
 
+    # ---- 4.3c 气液两相转移（第 301 轮，与 4.3 沉淀/溶解严格同构）----
+    # 溶解态气体 ⇌ 气相：X(aq) -> X(g)（逸出）/ X(g) -> X(aq)（回溶）。
+    # logK = −log10(H·p°)（亨利定律；已在 `_scratch/verify_logk.py` 逐位
+    # 验证：平衡时溶解态活度 = H·p_ext = 泡点浓度）。
+    #
+    # **为什么做成候选而不是事后夹子**：旧 `_equil_gas_phase` 在每轮末把
+    # 浓度"夹"到泡点，是**走步之外的第二套动力学**，与联立求解器、微步、
+    # 冻结机制全不通气 ⟹ 互逆 S 不反号、`15` 活锁、投料/自产两套语义。
+    # 做成候选后它与所有其他平衡**同一套机制**处理（走步/联立/联立触发点
+    # 全部自动覆盖），泡点只是这条反应的平衡结果，不再是外加约束。
+    from .data import henry_of as _henry_of
+    from .candidates import P_STD_KPA as _P_STD
+    for g in sorted(getattr(T, "gas_of", {}) or {}):
+        gp = T.gas_of[g]
+        lk = -__import__("math").log10(_henry_of(T, g, 298.15) * _P_STD)
+        out.append((Cand("gas", {g: 1}, {gp: 1}, lk, meta={"gas": g}),
+                    frozenset((g,))))
+        out.append((Cand("gas", {gp: 1}, {g: 1}, -lk, meta={"gas": g}),
+                    frozenset((gp,))))
+
     # ---- 4.4 配位 / 解离（OH- 配体正则化）
     for b in T.beta:
         center, lig, comp = b["center"], b["ligand"], b["complex"]
