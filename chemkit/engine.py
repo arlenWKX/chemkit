@@ -1584,6 +1584,9 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         # 三元组。cycle_keys 非空时仅收循环键匹配者（触发点①口径）
         seen: dict = {}
         for c in cands:
+            # 同 `_strong_keys`：只看配对级 `slow`/`deferred`。
+            # **不要加 `slow_dirs`**（第 301 轮实测否证，理由见 `_strong_keys`
+            # 处注释）：`slow_dirs` 是方向级事实，本循环下游有逐方向消费点。
             if kinetics and (c.meta.get("slow") or c.meta.get("deferred")):
                 continue
             if (c.kind == "redox" and c.meta.get("ox_couple") == H_ION
@@ -1743,6 +1746,13 @@ def judge(substances: list[dict], conditions: dict | None, T: Tables,
         # 守卫/复核/退出闸三处全盲，该通道被永久冻结，走步停在 FeOH²⁺ 占满
         # Fe(III)（偏离水解平衡 75 倍）而自报 max|S| = 0.001 的态上。
         for c in cands:
+            # 慢判定：只看**配对级** `slow`（两方向都慢）与 `deferred`。
+            # **不要在这里加 `slow_dirs`**（第 301 轮实测否证）：本函数下方
+            # （L1778 `for dd in (1, -1)`）是**逐方向**评估的，`slow_dirs` 是
+            # 方向级事实，必须留给逐方向的消费点（`_rate_eta` 与主 pick 的
+            # `d in slow_dirs`）。在方向未定前整条跳过会：
+            #   · 剥夺 `_strong_keys` 的逐方向能力（冻结/解冻判据失明）；
+            #   · 实测使 `NR56`/`V02`/`V06` 的 iters 由 5/6/6 涨到 54/55/55。
             if kinetics and (c.meta.get("slow") or c.meta.get("deferred")):
                 _skip(c, 0, "kinetics")
                 continue
