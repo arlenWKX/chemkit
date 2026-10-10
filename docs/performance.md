@@ -34,8 +34,8 @@
 
 ## 2. 当前基线
 
-权威来源是受版本控制的 `converg-baseline.json`（`python tools/dev.py perf --write`
-刷新，`python tools/dev.py perf` 与 HEAD 逐项对账）：
+权威来源是受版本控制的 `converg-baseline.json`（`python -m chemkit.testsuit perf --write`
+刷新，`python -m chemkit.testsuit perf` 与 HEAD 逐项对账）：
 
 | 指标 | 值 |
 |---|---|

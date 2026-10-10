@@ -75,7 +75,7 @@ python -m chemkit.testsuit anchor on  && python -m chemkit.testsuit suite
 | `python -m chemkit.testsuit`（环闭合段） | 全部环闭合检查通过 |
 
 > **入口说明**：`python -m chemkit.testsuit <verb>` 是**唯一测试入口**
-> （第 303 轮起）；`python tools/dev.py <verb>` 是等价的旧写法（薄转发）。
+> （第 303 轮起）；`python -m chemkit.testsuit <verb>` 是等价的旧写法（薄转发）。
 > 审计工具在 `chemkit/helper/`。
 
 ## 7. 收敛质量基线

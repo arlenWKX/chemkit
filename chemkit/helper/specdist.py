@@ -24,7 +24,7 @@
 
 用法：
 
-    python tools/specdist.py CD3 ZN6 [更多前缀…]
+    python chemkit/helper/specdist.py CD3 ZN6 [更多前缀…]
 """
 from __future__ import annotations
 

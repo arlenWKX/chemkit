@@ -23,7 +23,7 @@
 本工具对每个气体物种同时打印两种取值与 Δlog₁₀a，用来：
 ① 定位受影响的用例；② 核对新口径是否落在化学事实上；③ 事后复查（跑一次读多次）。
 
-用法：`python tools/gasrole.py Y09 Sn11 [更多前缀…]`
+用法：`python chemkit/helper/gasrole.py Y09 Sn11 [更多前缀…]`
 """
 from __future__ import annotations
 

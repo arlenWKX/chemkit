@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""tools/order_audit.py —— **执行顺序依赖审计**（§7 X-39 第 7 项）。
+"""chemkit/helper/order_audit.py —— **执行顺序依赖审计**（§7 X-39 第 7 项）。
 
 问题：结果是否依赖**用例执行顺序**（静态层/缓存/预热路径）？这类缺陷不会在
 单例复跑里显形，只在"换一个顺序"时冒出来。历史锚点：J14 `PbCl₂@363K` 曾冷启动
@@ -9,9 +9,9 @@
 指纹 = 每例的 (pH, degree, changed, reacted, 净方程, 步数, H_excess, 终态物种表)。
 三个顺序各在**独立进程**里跑（同一进程内逐例独立，跨进程换序才暴露路径依赖）：
 
-    python tools/order_audit.py                # 自跑 normal/reverse/shuffle 并比较
-    python tools/order_audit.py --dump ORD F   # 只落一份指纹（ORD: normal/reverse/shuffle）
-    python tools/order_audit.py --cmp A B      # 比较两份指纹
+    python chemkit/helper/order_audit.py                # 自跑 normal/reverse/shuffle 并比较
+    python chemkit/helper/order_audit.py --dump ORD F   # 只落一份指纹（ORD: normal/reverse/shuffle）
+    python chemkit/helper/order_audit.py --cmp A B      # 比较两份指纹
 
 退出码：0 = 无差异；1 = 有差异（明细打到 stdout）。
 """

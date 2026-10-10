@@ -30,11 +30,11 @@ logK 偏 +14。
 "整体不修正"口径产生上千条假阳性——首版即栽在此。
 
 用法：
-    python tools/hess_audit.py                       # 298.15 K，派生候选
-    python tools/hess_audit.py --T 363.15 --with-templates
-    python tools/hess_audit.py --T 363.15 --templates        # 只审静态模板族
-    python tools/hess_audit.py --T 363.15 --src Tl_2S --show # 逐条打印组合
-    python tools/hess_audit.py --exact                       # 有理精确复核（慢）
+    python chemkit/helper/hess_audit.py                       # 298.15 K，派生候选
+    python chemkit/helper/hess_audit.py --T 363.15 --with-templates
+    python chemkit/helper/hess_audit.py --T 363.15 --templates        # 只审静态模板族
+    python chemkit/helper/hess_audit.py --T 363.15 --src Tl_2S --show # 逐条打印组合
+    python chemkit/helper/hess_audit.py --exact                       # 有理精确复核（慢）
 """
 from __future__ import annotations
 

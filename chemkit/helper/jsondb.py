@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""`tools/jsondb.py` —— **标准化 JSON 读写**（数据表统一口径，第 147 轮）。
+"""`chemkit/helper/jsondb.py` —— **标准化 JSON 读写**（数据表统一口径，第 147 轮）。
 
 ## 为什么（历史痛点）
 `chemkit/data/*.json` 原先各自手工排版，`json.load → 改 → json.dump` 不能逐字节还原
@@ -26,10 +26,10 @@ doc.dump()                                # 落盘（写前 json.dumps 复验）
 
 ## CLI
 ```powershell
-python tools/jsondb.py normalize chemkit/data/*.json      # 统一格式化（可多文件）
-python tools/jsondb.py check chemkit/data/beta.json
-python tools/jsondb.py get chemkit/data/tests.json 12 ph
-python tools/jsondb.py set chemkit/data/tests.json 12 ph "[3.8, 5.5]"
+python chemkit/helper/jsondb.py normalize chemkit/data/*.json      # 统一格式化（可多文件）
+python chemkit/helper/jsondb.py check chemkit/data/beta.json
+python chemkit/helper/jsondb.py get chemkit/data/tests.json 12 ph
+python chemkit/helper/jsondb.py set chemkit/data/tests.json 12 ph "[3.8, 5.5]"
 ```
 """
 import argparse

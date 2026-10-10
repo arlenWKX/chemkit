@@ -33,11 +33,11 @@ chemkit（纯标准库 Python ≥3.12 的水溶液反应引擎，`__version__ = 
 ## 1. 怎么跑
 
 ```bash
-python tools/dev.py suite              # 全量套件（~2.5 min）
-python tools/dev.py perf               # 确定性与性能指标
-python tools/dev.py case <前缀> --all   # 单例深探（步表/账本/净方程/断言）
-python tools/dev.py anchor on|off       # pKw 约定切换（提交前两套都要跑）
-python tools/dev.py eqcheck             # 方程守恒（必须 0 违规）
+python -m chemkit.testsuit suite              # 全量套件（~2.5 min）
+python -m chemkit.testsuit perf               # 确定性与性能指标
+python -m chemkit.testsuit case <前缀> --all   # 单例深探（步表/账本/净方程/断言）
+python -m chemkit.testsuit anchor on|off       # pKw 约定切换（提交前两套都要跑）
+python -m chemkit.testsuit eqcheck             # 方程守恒（必须 0 违规）
 ```
 
 **提交门槛（硬性）**：两套 pKw 约定**都**要 `1299/1299`
@@ -1687,7 +1687,7 @@ pH 瓶颈可能同时解释"慢"与"错"）。
 
 - [ ] **压力维度**（`-Vm` 1791 条已在库；`(∂logK/∂P)_T = −ΔV°/(2.303RT)`）。
 - [ ] **多核羟合物**（`m` 字段已铺好；缺 In₄(OH)₆⁶⁺ 等 I→0 值，等数据）。
-- [ ] 其余缺口按 `tools/db_matrix.py` 清单推进（`mcl_no_beta` /
+- [ ] 其余缺口按 `chemkit/helper/db_matrix.py` 清单推进（`mcl_no_beta` /
       `solid_no_thermo` / `solid_unused` 等规则）。
 - [ ] **版本号**：达成"性能/鲁棒性质变跃升" ⟹ `0.(y+1).0`；否则 `0.y.(z+1)`。
       当前 **0.5.3**；**数据库扩充完成后**才谈 0.6.x（使用者既定）。
@@ -1727,7 +1727,7 @@ pH 瓶颈可能同时解释"慢"与"错"）。
   （第 198→199 轮即此范例：pinned 首版变差，查明病根后修好而非回退）。
 * **数据与引擎缺陷分开记账**，不许互相掩盖（`db_matrix` 出清单）。
 * **测试库标准可能有错**：先问"这是化学事实，还是某次引擎输出的快照"。
-* 一切数据改动走 `dev.py patch` 或 `tools/jsondb.py`（**按键路径**）。
+* 一切数据改动走 `chemkit.testsuit patch` 或 `chemkit/helper/jsondb.py`（**按键路径**）。
 * 记忆值**不得**当已核数据：查不到出处就**不入库**，或写
   `calibrated: provenance 未核实` 并单列待复核。
 * **改闸/守卫前先量爆炸半径**（`gateface.py` / `gatefilter.py` / `jointclose.py`）：

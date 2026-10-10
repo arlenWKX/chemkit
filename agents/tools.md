@@ -10,7 +10,7 @@
 ```powershell
 python -m chemkit.testsuit <verb> [args]
 python -m chemkit.testsuit help          # 打印全部子命令
-python tools/dev.py <verb> [args]        # 等价旧写法（薄转发，无独立实现）
+python -m chemkit.testsuit <verb> [args]        # 等价旧写法（薄转发，无独立实现）
 ```
 
 | verb | 作用 |

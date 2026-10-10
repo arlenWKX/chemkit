@@ -36,9 +36,9 @@ r.pH                              # 终态 pH
 ```bash
 git clone https://github.com/arlenWKX/chemkit.git
 cd chemkit
-python tools/dev.py suite      # 全量套件（约 1–2 min），输出摘要与失败明细
-python tools/dev.py eqcheck    # 用例期望方程式的精确守恒（须 0 违规）
-python tools/dev.py case EU01  # 单例深探：步表、账本净差、净方程、断言判定
+python -m chemkit.testsuit suite      # 全量套件（约 1–2 min），输出摘要与失败明细
+python -m chemkit.testsuit eqcheck    # 用例期望方程式的精确守恒（须 0 违规）
+python -m chemkit.testsuit case EU01  # 单例深探：步表、账本净差、净方程、断言判定
 ```
 
 ## 用法
@@ -99,9 +99,9 @@ r.raw                                 # 引擎原始 dict（含 H_excess 等记�
 ### 环境变量
 
 ```bash
-CHEMKIT_SIT=0        python tools/dev.py suite   # 关离子强度层（回到全 I→0 口径）
-CHEMKIT_CL_BETA=0    python tools/dev.py suite   # 关氯合络合数据
-CHEMKIT_TRACE=1      python tools/dev.py case EU01   # 走步轨迹（pick/冻结/微步）
+CHEMKIT_SIT=0        python -m chemkit.testsuit suite   # 关离子强度层（回到全 I→0 口径）
+CHEMKIT_CL_BETA=0    python -m chemkit.testsuit suite   # 关氯合络合数据
+CHEMKIT_TRACE=1      python -m chemkit.testsuit case EU01   # 走步轨迹（pick/冻结/微步）
 ```
 
 ## 文档

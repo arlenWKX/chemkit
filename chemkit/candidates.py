@@ -729,7 +729,7 @@ def _ksp_xy(e: dict) -> tuple[int, int]:
     错一档即整个溶度积错（甘汞/汞盐族全线受影响）。
     同族受影响的还有 Fe_3[Fe(CN)_6]_2（Fe 同时出现在阳离子与配阴离子中）
     与 K_2Na_2[Fe(CN)_6]（Na⁺ 未进 pair，元素空间无解——属数据缺口，
-    由 tools/data_audit.py 报出）。扫描无解时退回电荷 gcd（旧口径兜底）。
+    由 chemkit/helper/data_audit.py 报出）。扫描无解时退回电荷 gcd（旧口径兜底）。
     """
     cat, an = e["pair"]
     qc, qa = charge_of(cat), -charge_of(an)
@@ -995,7 +995,7 @@ def build_derived(T) -> list[Cand]:
         # 电荷。两者只在 M(OH)_z 型（x=1, y=z）相等；M₂O 型（Ag₂O 的
         # x=2,y=2 而 z=1）会少减一个 pKw。
         # v0.4.5 修：原 `charge_of(b["center"])` 使 4 条 beta_ksp:…/Ag_2O
-        # 派生候选的 logK 整偏 +14.000（= PKW_298）——用 tools/hess_audit.py
+        # 派生候选的 logK 整偏 +14.000（= PKW_298）——用 chemkit/helper/hess_audit.py
         # 对 12971 条派生候选做 Hess 自洽审计，只有这 4 条不自洽，Δ 逐一
         # 等于 +14.000。这正是 H46「Hess 派生行秩亏」的病根：派生行是基行的
         # 线性组合，秩检查看不出问题，但系数错 1 个 pKw 后方程自相矛盾，

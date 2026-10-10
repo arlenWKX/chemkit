@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""数据库**跨表完备性**审计（`tools/data_audit.py` 管的是表内自洽，本工具管
+"""数据库**跨表完备性**审计（`chemkit/helper/data_audit.py` 管的是表内自洽，本工具管
 "某个物种在这张表里有、在那张表里没有"）。
 
 ## 为什么需要（第 144 轮实测两例）
@@ -15,9 +15,9 @@
 **机械地列出来**，并按"测试用例触达数"排序，使数据库扩充有优先级依据。
 
 用法：
-    python tools/db_matrix.py                # 全部规则 + 摘要
-    python tools/db_matrix.py --rule ksp_cat_no_beta --top 30
-    python tools/db_matrix.py --json .tmp_dbmatrix.json
+    python chemkit/helper/db_matrix.py                # 全部规则 + 摘要
+    python chemkit/helper/db_matrix.py --rule ksp_cat_no_beta --top 30
+    python chemkit/helper/db_matrix.py --json .tmp_dbmatrix.json
 """
 import argparse
 import json

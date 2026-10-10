@@ -1229,6 +1229,63 @@ def _artifact(cmd: str, src: str) -> str | None:
     return dst
 
 
+class _Tee(io.TextIOBase):
+    """**同时**写控制台与文件（第 303 轮：内置文件输出，不需 shell 重定向）。
+
+    为什么要它：此前"输出到文件"只能靠 `> out.txt 2>&1`，于是
+    ① 控制台与文件内容不一致（重定向后控制台什么都没有）；
+    ② 重定向丢掉 stderr 的进度行；
+    ③ 每个调用方都得记着加重定向。
+    现在**同一份字节**同时进两处，格式必然一致。
+    """
+
+    def __init__(self, stream, fobj):
+        self._s = stream
+        self._f = fobj
+
+    def write(self, s):
+        self._s.write(s)
+        try:
+            self._f.write(s)
+        except Exception:                                # noqa: BLE001
+            pass
+        return len(s)
+
+    def flush(self):
+        self._s.flush()
+        try:
+            self._f.flush()
+        except Exception:                                # noqa: BLE001
+            pass
+
+
+class _tee:
+    """上下文管理器：把 stdout（可选 stderr）接到 `_Tee`。"""
+
+    def __init__(self, path=None, also_stderr=False):
+        self.path = path
+        self.also_stderr = also_stderr
+        self._f = None
+
+    def __enter__(self):
+        if not self.path:
+            return self
+        os.makedirs(os.path.dirname(os.path.abspath(self.path)),
+                    exist_ok=True)
+        self._f = io.open(self.path, "w", encoding="utf-8")
+        self._old = (sys.stdout, sys.stderr)
+        sys.stdout = _Tee(self._old[0], self._f)
+        if self.also_stderr:
+            sys.stderr = _Tee(self._old[1], self._f)
+        return self
+
+    def __exit__(self, *exc):
+        if self._f is not None:
+            sys.stdout, sys.stderr = self._old
+            self._f.close()
+        return False
+
+
 def _logged(cmd: str):
     """捕获子命令输出：原样回放 + 全量写日志 + 打印路径（不做截断）。"""
     def deco(fn):
@@ -1307,18 +1364,36 @@ def cmd_suite(rest: list[str]) -> int:
         rc = main(None, None, jobs=jobs, cases=cases)
     out = buf.getvalue()
     for ln in out.split("\n"):
-        if ln.startswith("=====") or ln.startswith("失败:") \
-                or ln.startswith("总耗时") or ln.startswith("[并行") \
-                or "环闭合" in ln:
+        # `失败:` 不打——下面会以**逐行**形式重打一遍可读的失败明细
+        # （`main()` 里那行是 98 个名字挤在一行的 Python 列表 repr，读不了）。
+        if ln.startswith("=====") or ln.startswith("总耗时") \
+                or ln.startswith("[并行") or "环闭合" in ln:
             print(ln[:400])
     bad = [r for r in RESULTS if not r.get("ok")]
     dump = _TMP + "results.json"
     with io.open(dump, "w", encoding="utf-8") as f:
         json.dump(RESULTS, f, ensure_ascii=False)
-    for r in bad[:12]:
-        print(f"  [FAIL] {r['name']} -- {'; '.join(r.get('errors') or [])[:300]}")
-    if len(bad) > 12:
-        print(f"  ... 另有 {len(bad) - 12} 例失败（明细见 {dump}）")
+    # **失败清单要能读**（第 303 轮）：旧版把 98 个名字挤成一行 Python 列表
+    # repr（`失败: ['9 BaSO4...', '41 Au+王水', ...]`），控制台折行后没人看得懂。
+    # 现在**逐行一条**，默认前 12 条，`--limit=N` 可调（0 = 全部）。
+    lim = 12
+    for a in rest:
+        if a.startswith("--limit="):
+            try:
+                lim = int(a.split("=", 1)[1])
+            except ValueError:
+                lim = 12
+    if bad:
+        print(f"\n---- 失败明细（{len(bad)} 例"
+              + ("" if lim <= 0 else f"，显示前 {min(lim, len(bad))} 例")
+              + "）----")
+        for r in (bad if lim <= 0 else bad[:lim]):
+            errs = "; ".join(r.get("errors") or [])
+            print(f"  ✗ {r['name']}")
+            print(f"      {errs[:300]}")
+        if lim > 0 and len(bad) > lim:
+            print(f"  ... 另有 {len(bad) - lim} 例"
+                  f"（全量见 {dump} 或 `--limit=0`）")
     print(f"[留档] {len(RESULTS)} 例逐例结果 -> {dump}")
     # **子集/分片不得覆盖全量留档**（第 296 轮踩到）：否则并行分片互相覆盖，
     # `logs/suite-latest.json` 变成最后完成的那个分片。
@@ -1638,10 +1713,11 @@ def cmd_run(rest: list[str]) -> int:
 
 
 USAGE = """\
-chemkit 测试与开发工具（**唯一入口**，第 303 轮合并自 tools/dev.py）
+chemkit 测试与开发工具（**唯一入口**）
 
-  python -m chemkit.testsuit suite [前缀...] [--jobs=N] [--shard=i/N]
+  python -m chemkit.testsuit suite [前缀...] [--jobs=N] [--shard=i/N] [--out F]
         跑套件（默认全量 + 并行）。前缀 = 用例名开头（可多个）。
+        --out F 同时写控制台与文件（含进度行），不需 shell 重定向。
   python -m chemkit.testsuit case <前缀> [--all]
         单例深探：步表 / 账本净差 / 两版净方程 / 断言判定
   python -m chemkit.testsuit snapshot <OUT.json> [前缀...]
@@ -1665,7 +1741,10 @@ chemkit 测试与开发工具（**唯一入口**，第 303 轮合并自 tools/de
   · 每个子命令首行打印当前 **pKw 约定**，避免"这轮跑的到底是哪个约定"。
   · 输出自动留档到 logs/<cmd>-latest.log 与 logs/<cmd>-latest.json，
     控制台只留摘要 ⟹ **跑一次、读多次**，不要靠重跑换信息。
-  · 并行默认 = min(4, 物理核)；--jobs=0 强制串行。"""
+  · 并行默认 = min(4, 物理核)；--jobs=0 强制串行。
+  · 临时工具可直接 `from chemkit.testsuit import load_cases, run_case,
+    main`；审计工具在 `chemkit/helper/`（如 `from chemkit.helper import
+    eqcheck`）。"""
 
 _VERBS = {
     "suite": cmd_suite, "case": cmd_case, "snapshot": cmd_snapshot,
@@ -1697,16 +1776,24 @@ def cli(argv: list[str] | None = None) -> int:
     if not args or args[0] in ("-h", "--help", "help"):
         print(USAGE)
         return 0
-    # 兼容旧调用 `python -m chemkit.testsuit [用例库.json] [--out X]`
-    if args[0].endswith(".json") or args[0] not in _VERBS:
-        out = None
-        if "--out" in args:
-            i = args.index("--out")
-            out = args[i + 1] if i + 1 < len(args) else None
+    # **内置文件输出**（`--out FILE`）：同一份字节同时进控制台与文件，
+    # 不需 shell 重定向（重定向会让控制台变空、且丢 stderr 进度行）。
+    out_file = None
+    if "--out" in args:
+        i = args.index("--out")
+        if i + 1 < len(args) and not args[i + 1].startswith("-"):
+            out_file = args[i + 1]
             args = args[:i] + args[i + 2:]
-        return main(args[0] if args else None, out)
-    verb, rest = args[0], args[1:]
-    return _VERBS[verb](rest)
+        else:
+            args = args[:i] + args[i + 1:]
+    # 兼容旧调用 `python -m chemkit.testsuit [用例库.json]`
+    if args and (args[0].endswith(".json") or args[0] not in _VERBS):
+        return main(args[0], out_file)
+    verb, rest = args[0], args[1:] if args else []
+    with _tee(out_file, also_stderr=True):
+        if out_file:
+            print(f"[输出] 同时写入 {out_file}")
+        return _VERBS[verb](rest)
 
 
 if __name__ == "__main__":

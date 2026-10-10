@@ -4,7 +4,7 @@
 
 ---
 
-## 1. 现在是什么状态（第 303 轮末，提交 `cc2063b`）
+## 1. 现在是什么状态（第 303 轮末，版本 **0.6.1**）
 
 | 项 | 值 |
 |---|---|
@@ -27,8 +27,12 @@ python -m chemkit.testsuit help              # 全部子命令
 python -m chemkit.testsuit suite             # 全量
 python -m chemkit.testsuit suite J05 NR23    # 按名字前缀
 python -m chemkit.testsuit case 15           # 单例深探
-python tools/dev.py suite                    # 等价的旧写法（薄转发，无独立实现）
+python -m chemkit.testsuit suite --out run.txt   # 内置写文件（不需 shell 重定向）
 ```
+
+> `tools/dev.py` **已删除**（合并后无独立实现，不保留冗余入口）。
+> 审计工具在 `chemkit/helper/`：`python -m chemkit.helper.eqcheck` 等。
+> 临时脚本可直接 `from chemkit.testsuit import load_cases, run_case, main`。
 
 审计工具在 `chemkit/helper/`：`python -m chemkit.helper.eqcheck` 等。
 

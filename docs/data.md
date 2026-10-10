@@ -63,7 +63,7 @@
 ## 3. 动力学字段（`couples.json` 的 `kinetics`，唯一书写形式）
 
 `chemkit/data.py::_expand_kinetics` 是**唯一接线点**：只转换下列键，
-未列出的键不会生效（只进 `kinetics_all` 留档，由 `tools/data_audit.py`
+未列出的键不会生效（只进 `kinetics_all` 留档，由 `chemkit/helper/data_audit.py`
 审计"注了却没被消费"）。
 
 | 字段 | 含义 |
@@ -117,14 +117,14 @@
    pKsp(Al(OH)₃)=33 联合标定，使 `Al(OH)₃ + OH⁻ → [Al(OH)₄]⁻` 的整体
    logK ≈ +1.5 符合两性溶解的实测）。
 5. **准入即审计**：新增/改动的数据要过
-   `tools/data_audit.py`（机械审计：死注解、值域、重复、单侧缺失）、
-   `tools/hess_audit.py`（派生候选的 logK 必须等于基候选的线性组合，
-   含变温 273.15/363.15 K）、`tools/eqcheck.py`（用例期望方程式的精确守恒）。
+   `chemkit/helper/data_audit.py`（机械审计：死注解、值域、重复、单侧缺失）、
+   `chemkit/helper/hess_audit.py`（派生候选的 logK 必须等于基候选的线性组合，
+   含变温 273.15/363.15 K）、`chemkit/helper/eqcheck.py`（用例期望方程式的精确守恒）。
 
-## 跨表完备性审计（`tools/db_matrix.py`）
+## 跨表完备性审计（`chemkit/helper/db_matrix.py`）
 
-`tools/data_audit.py` 检查**表内**自洽（守恒、电子数、重复、冲突），
-`tools/db_matrix.py` 检查**跨表**完备：某物种在一张表里有、在另一张表里没有，
+`chemkit/helper/data_audit.py` 检查**表内**自洽（守恒、电子数、重复、冲突），
+`chemkit/helper/db_matrix.py` 检查**跨表**完备：某物种在一张表里有、在另一张表里没有，
 不报错也不违反守恒，只是化学少了一块。当前缺口家族（按测试用例触达数排序）：
 
 - **有 pKa 无 thermo**（45 条）：硅酸/锗酸、草酸、过氧族 —— 缺温度依赖。
@@ -135,9 +135,9 @@
 - **化合物固相缺 thermo**（147 条）：Cr(OH)₃、SiO₂、Ga(OH)₃、镧系 M(OH)₃ 成片缺失。
 
 ```bash
-python tools/db_matrix.py                 # 全部规则 + 规模摘要
-python tools/db_matrix.py --rule solid_no_ksp --top 20
-python tools/db_matrix.py --json .tmp_db.json
+python chemkit/helper/db_matrix.py                 # 全部规则 + 规模摘要
+python chemkit/helper/db_matrix.py --rule solid_no_ksp --top 20
+python chemkit/helper/db_matrix.py --json .tmp_db.json
 ```
 
 ## 8. 氯合数据的权威库对拍台账（2026-10 抽取；**原始库已删除**）

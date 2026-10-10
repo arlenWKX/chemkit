@@ -20,9 +20,9 @@
 逐例结果不在此处复制 —— 那在 `logs/suite-latest.json`）。
 
 用法：
-  python tools/suite_parallel.py            # 自动选 worker 数
-  python tools/suite_parallel.py 6          # 指定 worker 数
-  python tools/suite_parallel.py 6 --check  # 额外串行跑一遍对拍（慢但严谨）
+  python chemkit/helper/suite_parallel.py            # 自动选 worker 数
+  python chemkit/helper/suite_parallel.py 6          # 指定 worker 数
+  python chemkit/helper/suite_parallel.py 6 --check  # 额外串行跑一遍对拍（慢但严谨）
 """
 import io
 import json

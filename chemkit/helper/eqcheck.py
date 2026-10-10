@@ -1,7 +1,7 @@
 """期望方程式守恒核验（元素 + 电荷），逐条给出偏差。
 
-用法：python tools/eqcheck.py "式子1" "式子2" ...
-      python tools/eqcheck.py --cases N30 NR95        # 从 tests.json 取 eq
+用法：python chemkit/helper/eqcheck.py "式子1" "式子2" ...
+      python chemkit/helper/eqcheck.py --cases N30 NR95        # 从 tests.json 取 eq
 """
 from __future__ import annotations
 

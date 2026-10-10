@@ -7,8 +7,8 @@
 `logs/suite-shard<i>-of<n>.json`，本脚本负责按 `index` 合并回单一全量留档。
 
 用法：
-    python tools/suite_merge.py 4            # 合并 shard0..3（各 of4）
-    python tools/suite_merge.py 4 --check    # 顺带检查分片完整性（无缺失/重复）
+    python chemkit/helper/suite_merge.py 4            # 合并 shard0..3（各 of4）
+    python chemkit/helper/suite_merge.py 4 --check    # 顺带检查分片完整性（无缺失/重复）
 """
 from __future__ import annotations
 

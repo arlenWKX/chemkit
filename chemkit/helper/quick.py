@@ -3,9 +3,9 @@
 用途：针对某一处改动的验证，**只跑受影响的用例**，避免每次全量 1173 例
 的开销。典型用法是先把上一轮报错项喂进来：
 
-    python tools/quick.py --fails            # 读 _fails.txt 里的上轮失败项
-    python tools/quick.py V16 Z31 N30        # 按名称前缀
-    python tools/quick.py --list 12 73 501   # 按清单序号（同 testsuit 的编号）
+    python chemkit/helper/quick.py --fails            # 读 _fails.txt 里的上轮失败项
+    python chemkit/helper/quick.py V16 Z31 N30        # 按名称前缀
+    python chemkit/helper/quick.py --list 12 73 501   # 按清单序号（同 testsuit 的编号）
 
 约定：失败项落盘到 `_fails.txt`（一行一个用例名），供下一轮 `--fails` 复用。
 """
@@ -40,7 +40,7 @@ def main(argv: list[str]) -> int:
             names = [ln.strip() for ln in open(FAILS_PATH, encoding="utf-8")
                      if ln.strip()]
         except FileNotFoundError:
-            print(f"没有 {FAILS_PATH}；先跑一次 tools/quick.py <名称…>")
+            print(f"没有 {FAILS_PATH}；先跑一次 chemkit/helper/quick.py <名称…>")
             return 2
         picks = [c for c in cases if c["name"] in set(names)]
         print(f"上一轮失败项 {len(names)} 个，匹配到 {len(picks)} 例")

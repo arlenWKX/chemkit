@@ -8,8 +8,8 @@
 
 ## 一、数据表增改只能走「patch + 新进程」
 
-`dev.py` 模块级已 `import chemkit` ⟹ 在脚本里改数据（自写 JSON 或内存
-`T.beta.append`）**对加载器不可见**。可信路径只有一条：
+`chemkit.testsuit` 模块级已 `import chemkit` ⟹ 在脚本里改数据（自写 JSON
+或内存 `T.beta.append`）**对加载器不可见**。可信路径只有一条：
 
 1. `python -m chemkit.testsuit patch <spec.py>`（唯一合法写盘方式，带 JSON 复验）；
 2. 用**新进程**测量：`suite` / `case`；

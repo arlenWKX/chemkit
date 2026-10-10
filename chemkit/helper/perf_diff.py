@@ -16,7 +16,7 @@
 
 用法：
 
-    python tools/perf_diff.py <基线档> <对照档> [-n 8]
+    python chemkit/helper/perf_diff.py <基线档> <对照档> [-n 8]
 
 纪律（`agents/lessons.md` §2「跑一次读多次」）：性能数字一律从**已存的档案**里读，
 不要为了"换个角度看同一批数据"重跑套件。

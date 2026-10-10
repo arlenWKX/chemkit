@@ -14,7 +14,7 @@
   全表       同一键（acid,base）/solid/(center,ligand,nu)/(ox,red) 不得重复；
               跨表引用的物种必须可解析
 
-用法：python tools/data_audit.py
+用法：python chemkit/helper/data_audit.py
 """
 from __future__ import annotations
 
