@@ -921,6 +921,27 @@ def _par_run(case: dict):
     return (name, bool(ok), ms, errs, rec, _LAST_PROBE)
 
 
+def _progress_path() -> str:
+    """实时进度文件路径（`logs/suite-progress.json`）。目录不存在则建。"""
+    d = os.path.join(os.getcwd(), "logs")
+    os.makedirs(d, exist_ok=True)
+    return os.path.join(d, "suite-progress.json")
+
+
+def _write_progress_atomic(path: str, payload: dict) -> None:
+    """**原子**落盘：写临时文件再 `os.replace`，任一时刻读到的都是完整 JSON。
+
+    第 303 轮动因：套件此前只在**全部跑完后**才落盘；一旦某例卡死（主循环
+    `MAX_ITER`=3000 × 多 sweep 仍可能跑数分钟以上），外部只看到静默，
+    既不知道完成了多少、也不知道**哪一例**卡住。现在每完成一例就刷新进度，
+    卡住时读 `pending` 即得嫌疑名单（并行时 = 正在跑的 ≤ jobs 例）。
+    """
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False)
+    os.replace(tmp, path)
+
+
 def run_cases_parallel(cases: list[dict], jobs: int,
                        progress: bool = True) -> tuple[int, float]:
     """并行跑用例，把结果**按原顺序**填入 RESULTS/TIMES/FAILS/PASS_N。
@@ -948,6 +969,20 @@ def run_cases_parallel(cases: list[dict], jobs: int,
     n_done = n_ok_so_far = 0
     total = len(cases)
     _next_pct = 10               # **每 10% 报一次**（第 296 轮：不再让人空等）
+    ppath = _progress_path()
+    pending = {cases[i]["name"] for i in order}
+    # **节流**：每例都落盘会把"已完成清单"反复序列化（O(n^2) 字节，实测把
+    # 80s 的全量拖慢），故按**墙钟**节流（默认 1 s 一次），且只写**轻量**
+    # 载荷（计数 + 未完成的 `pending`）而不写已完成清单——诊断"卡在哪一例"
+    # 只需 pending。环境变量 `CHEMKIT_PROGRESS_S` 可改间隔（0 = 每例都写）。
+    try:
+        _pint = float(os.environ.get("CHEMKIT_PROGRESS_S", "1.0"))
+    except ValueError:
+        _pint = 1.0
+    _last_write = -1e9
+    _write_progress_atomic(ppath, {"jobs": jobs, "total": total, "done": 0,
+                                   "ok": 0, "elapsed_s": 0.0,
+                                   "pending": sorted(pending)})
     with ProcessPoolExecutor(max_workers=jobs,
                              initializer=_par_init) as ex:
         futs = {ex.submit(_par_run, cases[i]): i for i in order}
@@ -957,6 +992,15 @@ def run_cases_parallel(cases: list[dict], jobs: int,
             n_done += 1
             _nm, _ok, _ms, _errs, _rec, _pr = got[futs[fu]]
             n_ok_so_far += 1 if _ok else 0
+            pending.discard(_nm)
+            _now = time.perf_counter()
+            if _now - _last_write >= _pint:
+                _last_write = _now
+                _write_progress_atomic(ppath, {
+                    "jobs": jobs, "total": total, "done": n_done,
+                    "ok": n_ok_so_far,
+                    "elapsed_s": round(_now - t0, 1),
+                    "pending": sorted(pending)})
             pct = n_done * 100 // total
             # **每跨过 10% 打一行进度**；失败例另外单打一行 ✗（不带计数，
             # 免得看起来像多报了几次进度）。
@@ -970,6 +1014,11 @@ def run_cases_parallel(cases: list[dict], jobs: int,
                 print(f"    ✗ {_nm[:56]} -- {'; '.join(_errs or [])[:78]}",
                       file=sys.stderr, flush=True)
     wall = time.perf_counter() - t0
+    # 收尾再写一次：保证结束时文件是"全部完成"状态（节流可能漏掉最后几例）
+    _write_progress_atomic(ppath, {"jobs": jobs, "total": total,
+                                   "done": n_done, "ok": n_ok_so_far,
+                                   "elapsed_s": round(wall, 1),
+                                   "pending": [], "finished": True})
     PASS_N = 0
     global _PROBES
     _PROBES = {}
