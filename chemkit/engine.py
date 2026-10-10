@@ -614,8 +614,6 @@ def _equil_gas_phase(ledger: dict, gas_phase: dict, V: float, T_K: float,
         if m <= X_MIN and gp <= X_MIN:
             continue
         cap = gas_cap(T, g, T_K, p_ext_kpa, V)
-        if fed:
-            cap = max(cap, fed.get(g, 0.0))   # 投料量不受泡点约束
         if m > cap:                       # 超泡点 ⟹ 鼓泡进入气相库
             gas_phase[g] = gp + (m - cap)
             ledger[g] = cap
