@@ -60,20 +60,23 @@ python -m chemkit.testsuit --out result.json  # 结构化结果（cases/summary/
 却足以让处在"刀口"上的用例翻盆。命令：
 
 ```bash
-python tools/dev.py anchor off && python tools/dev.py suite
-python tools/dev.py anchor on  && python tools/dev.py suite
+python -m chemkit.testsuit anchor off && python -m chemkit.testsuit suite
+python -m chemkit.testsuit anchor on  && python -m chemkit.testsuit suite
 ```
 
 其余固定动作（缺一不可）：
 
 | 动作 | 判据 |
 |---|---|
-| `python tools/dev.py suite` | 1299/1299（锚定）+ 1299/1299（未锚定） |
-| `python tools/dev.py eqcheck` | 全库期望方程式的**精确有理守恒** 0 违规 |
-| `python tools/hess_audit.py --T 273.15 --T 363.15 --with-templates` | 派生候选 logK = 基候选线性组合，0 条不自洽 |
-| `python tools/data_audit.py` | 数据机械审计硬错误 0 条 |
-| `python tools/dev.py perf` | 与 `converg-baseline.json` 逐项对账，位移逐条给出化学理由 |
+| `python -m chemkit.testsuit suite` | 两套约定都必须全绿（锚定 + 未锚定） |
+| `python -m chemkit.testsuit eqcheck` | 全库期望方程式的**精确有理守恒** 0 违规 |
+| `python -m chemkit.helper.hess_audit --T 273.15 --T 363.15 --with-templates` | 派生候选 logK = 基候选线性组合，0 条不自洽 |
+| `python -m chemkit.helper.data_audit` | 数据机械审计硬错误 0 条 |
 | `python -m chemkit.testsuit`（环闭合段） | 全部环闭合检查通过 |
+
+> **入口说明**：`python -m chemkit.testsuit <verb>` 是**唯一测试入口**
+> （第 303 轮起）；`python tools/dev.py <verb>` 是等价的旧写法（薄转发）。
+> 审计工具在 `chemkit/helper/`。
 
 ## 7. 收敛质量基线
 
