@@ -19,9 +19,31 @@ class FormulaError(ValueError):
     pass
 
 
+# ---------------------------------------------------------------- 相态注册表
+# **第 301 轮**：气相物种（`X(g)`）是**相**，不是新化学式——它与溶解态
+# `X` 具有**完全相同的元素向量与电荷**（相转移不改变组成）。
+# 相信息用**注册表**承载，而不是靠名字末尾的字符串后缀去猜：
+#   · `PHASE_PARENT`  气相物种名 -> 溶解态名（查元素/电荷时用）
+#   · 由 `data.load_tables()` 在建成气相物种时填充（单一事实源）
+# 这样解析层不需要任何字符串约定，也不会误伤含括号的配离子。
+PHASE_PARENT: dict[str, str] = {}
+
+
+def register_phase(gas_species: str, aqueous: str) -> None:
+    """登记气相物种与其溶解态的对应关系（由 data 层调用）。"""
+    PHASE_PARENT[gas_species] = aqueous
+
+
 @lru_cache(maxsize=None)
 def parse_species(name: str) -> tuple:
-    """返回 (elements_tuple, charge)。"""
+    """返回 (elements_tuple, charge)。
+
+    气相物种名（已登记于 `PHASE_PARENT`）**复用其溶解态的解析结果**——
+    相不改变元素组成，故两者必然逐位相同。
+    """
+    base = PHASE_PARENT.get(name)
+    if base is not None:
+        return parse_species(base)
     elems, charge = _parse(name)
     return (tuple(sorted(elems.items())), charge)
 

@@ -190,17 +190,6 @@ def _redox_pair_static(T):
             # 取 ~97°C（沸腾稀溶液仍可稳定 S——稀硝酸溶 CuS 止步于单质硫即此事实）。
             if b["red"] == "S" and a["ox"] != "H_2O_2":
                 slow_T.append((370.0, None, ()))
-                # **方向 + 温度**记录（第 301 轮）：`(方向, T_thr, except_ox)`，
-                # 与 `halate_rule` 同范式——静态侧记录，动态侧按 `T_K < T_thr`
-                # 落 `sd_static`。为什么还需要它（实测）：温度门 `slow_T` 只判
-                # `b["red"]`，而 `E01` 的 `S + SO_2 -> H_2S + SO_4^{2-}` 由
-                # **另一侧有序对**（S 落在 `a.red`）生成 ⟹ 标记静默失效，该
-                # 反应拿到 `slow=False`（S=23.29）被选中，与归中反应
-                # `2H_2S+SO_2->3S`（S=18.97，已被标记）来回拉锯 7 轮，
-                # 终态 S=0.498（应 3.0）。温度门必须**同时**覆盖两个槽。
-                sd_temp.append((1, 370.0, "H_2O_2"))
-            if a["red"] == "S" and b["ox"] != "H_2O_2":
-                sd_temp.append((-1, 370.0, "H_2O_2"))
             # 活泼金属（Li/Na/K/Rb/Cs/Ca/Sr/Ba）在水溶液中优先还原水而非金属物种
             # （教材规则：钠投入盐溶液只与水反应，再生成氢氧化物沉淀；Be/Mg 可直接置换）。
             # 覆盖两类氧化剂形态：金属阳离子、含金属阳离子的固相氢氧化物/氧化物
@@ -237,12 +226,6 @@ def _redox_pair_static(T):
                 _src_ok = (a["ox"] == b["red"]) if _d == 1 else (b["ox"] == a["red"])
                 if _src_ok and HALATE_DISP_T.get(_hx) is not None:
                     halate_rule.append((_d, _hx))
-            # **方向+温度**慢记录（第 301 轮）：`[(方向, T_thr, except_ox)]`。
-            # 与 `halate_rule` 同范式（静态侧记录、动态侧按 T_K 落 sd_static），
-            # 但**带 except_ox**（对方氧化形例外）以覆盖 `H_2O_2` 例外。
-            # 承载"S 作还原剂室温恒慢、370 K 以上解锁"——必须同时覆盖两个槽
-            # （`b.red` 正向 / `a.red` 逆向），见上方 S 规则的实测说明。
-            sd_temp: list = []
             # 水作还原剂析 O2 的浓碱解锁闸门（稀溶液动力学封闭——pH <
             # pKw+log10(oh_min) 时正向慢。实验事实：KMnO4 只在浓碱中可观察
             # 地氧化水（锰酸钾制备），稀溶液中分解慢到可忽略）
@@ -358,7 +341,6 @@ def _redox_pair_static(T):
                         and b["ox"] in a["slow_as_red_with"]))
                 is_dyn = bool(gates_only or slow_T or halate_rule
                               or h2o_oh_min is not None or _dir_slow
-                              or sd_temp
                               or ("T_min" in _g and "only_vs_red" not in _g))
                 _dE = a["E0"] - b["E0"]
                 _acid = b["red"] in solid_metals
@@ -389,7 +371,7 @@ def _redox_pair_static(T):
                               deferred_raw, tuple(sd_ph_hi), closed_red,
                               tuple(gates_only), tuple(slow_T),
                               tuple(halate_rule), h2o_oh_min,
-                              pre_kin, pre_nokin, tuple(sd_temp)))
+                              pre_kin, pre_nokin))
     T._redox_pair_static = pairs
     return pairs
 
@@ -432,7 +414,6 @@ def _redox_templates(T_K: float, T, kinetics: bool = True) -> list:
         (a, b, variants, dE, same_elem, solid_acid, slow_static,
          deferred_raw, sd_ph_hi, closed_red, gates_only, slow_T,
          halate_rule, h2o_oh_min) = item[:14]
-        sd_temp = item[16] if len(item) > 16 else ()
         if kinetics:
             # ox_inert：氧化形永不参与电子转移的惰性物种（动力学宣告）
             if a.get("ox_inert"):
@@ -472,12 +453,6 @@ def _redox_templates(T_K: float, T, kinetics: bool = True) -> list:
                 sd_static = sd_static | {1}
             if a.get("slow_as_red_with") and b["ox"] in a["slow_as_red_with"]:
                 sd_static = sd_static | {-1}
-            # 「S 作还原剂室温恒慢」的方向标记（第 301 轮）：与 halate_rule
-            # 同范式，但带 except_ox 例外——方向也受温度门约束（370 K 以上
-            # 解锁，如 S+热浓碱歧化 Z36），否则会把高温真实反应一起封掉。
-            for _d, _thr, _ex in sd_temp:
-                if T_K < _thr and a["ox"] != _ex and b["ox"] != _ex:
-                    sd_static |= {_d}
             # 卤酸歧化慢方向（温度阈值 + 碱催化解锁阈值）
             for _d, _hx in halate_rule:
                 if T_K < HALATE_DISP_T[_hx]:
@@ -646,26 +621,6 @@ def _build_static_cands(T_K: float, T, pKw: float) -> list:
                          x * (n * 14 - pKsp - 1.5), x * n,
                          meta={"solid": sp}),
                     frozenset((sp,))))
-
-    # ---- 4.3c 气液两相转移（第 301 轮，与 4.3 沉淀/溶解严格同构）----
-    # 溶解态气体 ⇌ 气相：X(aq) -> X(g)（逸出）/ X(g) -> X(aq)（回溶）。
-    # logK = −log10(H·p°)（亨利定律；已在 `_scratch/verify_logk.py` 逐位
-    # 验证：平衡时溶解态活度 = H·p_ext = 泡点浓度）。
-    #
-    # **为什么做成候选而不是事后夹子**：旧 `_equil_gas_phase` 在每轮末把
-    # 浓度"夹"到泡点，是**走步之外的第二套动力学**，与联立求解器、微步、
-    # 冻结机制全不通气 ⟹ 互逆 S 不反号、`15` 活锁、投料/自产两套语义。
-    # 做成候选后它与所有其他平衡**同一套机制**处理（走步/联立/联立触发点
-    # 全部自动覆盖），泡点只是这条反应的平衡结果，不再是外加约束。
-    from .data import henry_of as _henry_of
-    from .candidates import P_STD_KPA as _P_STD
-    for g in sorted(getattr(T, "gas_of", {}) or {}):
-        gp = T.gas_of[g]
-        lk = -__import__("math").log10(_henry_of(T, g, 298.15) * _P_STD)
-        out.append((Cand("gas", {g: 1}, {gp: 1}, lk, meta={"gas": g}),
-                    frozenset((g,))))
-        out.append((Cand("gas", {gp: 1}, {g: 1}, -lk, meta={"gas": g}),
-                    frozenset((gp,))))
 
     # ---- 4.4 配位 / 解离（OH- 配体正则化）
     for b in T.beta:
