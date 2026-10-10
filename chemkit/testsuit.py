@@ -34,10 +34,12 @@
   note     备注（不校验）
 """
 from __future__ import annotations
+import io
 import json
 import os
 import sys
 import time
+from contextlib import redirect_stdout
 
 from .data import load_tables, Tables, _half_balance
 from .engine import judge
@@ -1188,26 +1190,524 @@ def main(cases_path: str | None = None, out_path: str | None = None,
     return 0 if (not FAILS and not cfail) else 1
 
 
-if __name__ == "__main__":
+# ===================================================================
+# 第 303 轮：**单一测试入口**——把原 `tools/dev.py` 的子命令合并进来。
+# 此前存在两套入口（`python -m chemkit.testsuit` 与 `python tools/dev.py`），
+# 职责重叠、行为漂移。现在只有 `python -m chemkit.testsuit <verb>`。
+# ===================================================================
+_LOGDIR = "logs"
+_TMP = ".tmp_dev_"
+# 墙钟字段只报不比对（同一份代码在不同时刻能差 30%+）
+_MS_KEYS = ("ms_mean", "ms_p50", "ms_p90", "ms_max",
+            "n_gt50", "n_gt100", "n_gt500")
+
+
+def _runlog(cmd: str, text: str) -> str:
+    """完整输出 -> logs/<cmd>-<时间戳>.log；同时刷新 logs/<cmd>-latest.log。"""
+    import datetime as _dt
+    os.makedirs(_LOGDIR, exist_ok=True)
+    ts = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    path = os.path.join(_LOGDIR, f"{cmd}-{ts}.log")
+    with io.open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    with io.open(os.path.join(_LOGDIR, f"{cmd}-latest.log"), "w",
+                 encoding="utf-8") as f:
+        f.write(text)
+    return path
+
+
+def _artifact(cmd: str, src: str) -> str | None:
+    """结构化 JSON 产物 -> logs/<cmd>-latest.json（机读入口，供 readback 用）。"""
+    if not src or not os.path.exists(src):
+        return None
+    os.makedirs(_LOGDIR, exist_ok=True)
+    dst = os.path.join(_LOGDIR, f"{cmd}-latest.json")
+    with io.open(src, encoding="utf-8") as f:
+        data = f.read()
+    with io.open(dst, "w", encoding="utf-8") as f:
+        f.write(data)
+    return dst
+
+
+def _logged(cmd: str):
+    """捕获子命令输出：原样回放 + 全量写日志 + 打印路径（不做截断）。"""
+    def deco(fn):
+        def wrapper(*a, **kw):
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                rc = fn(*a, **kw)
+            out = buf.getvalue()
+            sys.stdout.write(out)
+            sys.stdout.flush()
+            try:
+                print(f"[日志] {_runlog(cmd, out)}")
+            except Exception as exc:                     # noqa: BLE001
+                print(f"[日志] 写入失败：{exc}")
+            return rc
+        wrapper.__name__ = fn.__name__
+        return wrapper
+    return deco
+
+
+def convention() -> str:
+    """当前 pKw 约定（每个子命令首行都打，避免"这轮跑的是哪个约定"）。"""
+    from .core import pKw_of
+    v = pKw_of(298.15)
+    tag = "未锚定" if abs(v - 14.0) > 1e-9 else "锚定 14.0"
+    return f"[约定] pKw(298.15) = {v:.6f}  ({tag})   pKw(373) = {pKw_of(373.15):.4f}"
+
+
+def _banner(verb: str) -> None:
+    print(f"== testsuit {verb} ==")
+    print(convention())
+
+
+@_logged("suite")
+def cmd_suite(rest: list[str]) -> int:
+    """跑套件（全量 / 前缀子集 / 并行分片）。"""
+    prefixes = [a for a in rest if not a.startswith("-")]
+    jobs = 0
+    for a in rest:
+        if a.startswith("--jobs="):
+            jobs = max(1, int(a.split("=", 1)[1]))
+    # 默认按**物理核数**定 worker：本机实测 4w 55s / 6w 50s / 8w 51s，
+    # 8 并不快于 6（超订只增争用），收益在 4~6 饱和 ⟹ 默认 min(4, 物理核)。
+    if jobs == 0:
+        jobs = min(4, max(1, (os.cpu_count() or 2) // 2))
+    shard = None
+    for a in rest:
+        if a.startswith("--shard="):
+            body = a.split("=", 1)[1]
+            i_s, n_s = body.split("/", 1)
+            shard = (int(i_s), int(n_s))
+    if "--jobs=0" in rest:
+        jobs = 1                    # 供分片内部串行（外面再并行分片）
+    _banner("suite" + (f" {' '.join(prefixes)}" if prefixes else "（全量）")
+            + (f"  jobs={jobs}" if jobs > 1 else "")
+            + (f"  shard={shard[0]}/{shard[1]}" if shard else ""))
+    cases = None
+    if prefixes or shard:
+        cases = load_cases(None)
+        if prefixes:
+            cases = [c for c in cases if c["name"].startswith(tuple(prefixes))]
+        if shard:
+            i, n = shard
+            # **带上全局序号**（`__gidx`）：否则各分片的 index 都从 1 开始，
+            # 合并时无法归位（第 296 轮实测：344 个 index 重复）。
+            for k, c in enumerate(cases):
+                c["__gidx"] = k + 1
+            cases = [c for k, c in enumerate(cases) if k % n == i]
+        if not cases:
+            print("!! 没有匹配的用例")
+            return 2
+        print(f"[子集] {len(cases)} 例"
+              + (f"（分片 {shard[0]}/{shard[1]}）" if shard else ""))
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rc = main(None, None, jobs=jobs, cases=cases)
+    out = buf.getvalue()
+    for ln in out.split("\n"):
+        if ln.startswith("=====") or ln.startswith("失败:") \
+                or ln.startswith("总耗时") or ln.startswith("[并行") \
+                or "环闭合" in ln:
+            print(ln[:400])
+    bad = [r for r in RESULTS if not r.get("ok")]
+    dump = _TMP + "results.json"
+    with io.open(dump, "w", encoding="utf-8") as f:
+        json.dump(RESULTS, f, ensure_ascii=False)
+    for r in bad[:12]:
+        print(f"  [FAIL] {r['name']} -- {'; '.join(r.get('errors') or [])[:300]}")
+    if len(bad) > 12:
+        print(f"  ... 另有 {len(bad) - 12} 例失败（明细见 {dump}）")
+    print(f"[留档] {len(RESULTS)} 例逐例结果 -> {dump}")
+    # **子集/分片不得覆盖全量留档**（第 296 轮踩到）：否则并行分片互相覆盖，
+    # `logs/suite-latest.json` 变成最后完成的那个分片。
+    if shard:
+        sp = f"{_LOGDIR}/suite-shard{shard[0]}-of{shard[1]}.json"
+        with io.open(sp, "w", encoding="utf-8") as f:
+            json.dump(RESULTS, f, ensure_ascii=False)
+        print(f"[分片留档] {sp}（合并用 helper/suite_merge.py）")
+    elif prefixes:
+        sp = f"{_LOGDIR}/suite-subset.json"
+        with io.open(sp, "w", encoding="utf-8") as f:
+            json.dump(RESULTS, f, ensure_ascii=False)
+        print(f"[子集留档] {sp}（**不动** logs/suite-latest.json）")
+    else:
+        art = _artifact("suite", dump)
+        if art:
+            print(f"[产物] {art}（机读；helper/readback.py 默认读它）")
+    return rc
+
+
+@_logged("case")
+def cmd_case(rest: list[str]) -> int:
+    """单例深探：步表 + 账本净差 + 两版净方程 + 断言判定。"""
+    from .engine import judge
+    from .system import Reaction
+    prefixes = [a for a in rest if not a.startswith("-")]
+    show_all = "--all" in rest
+    limit = 14
+    _banner("case " + " ".join(prefixes))
+    T = load_tables()
+    hit = 0
+    for c in load_cases(None):
+        if not c["name"].startswith(tuple(prefixes)):
+            continue
+        hit += 1
+        r = judge([{"name": n, "mol": m} for n, m in c["subs"]],
+                  c.get("cond") or {"V_L": 1.0}, T)
+        R = Reaction(r)
+        print(f"\n-- {c['name']}  subs={c['subs']} cond={c.get('cond')}")
+        print(f"   degree={r['degree']} changed={r['changed']} "
+              f"reacted={r['reacted']} pH={r.get('final_pH')} "
+              f"He={r.get('H_excess_initial')}->{r.get('H_excess')}")
+        ne = r.get("net_exact") or {}
+        if ne:
+            cc = {k: v for k, v in ne["c"].items() if v > 1e-9}
+            pp = {k: v for k, v in ne["p"].items() if v > 1e-9}
+            fmt = lambda d: " + ".join(f"{v:.6g}{k}" for k, v in  # noqa: E731
+                                       sorted(d.items(), key=lambda kv: -kv[1]))
+            print(f"   账本净差: {fmt(cc)}  ->  {fmt(pp)}")
+        steps = r.get("steps") or []
+        order = steps if show_all else sorted(
+            steps, key=lambda s: -s.get("extent", 0))[:limit]
+        print(f"   步表（{len(steps)} 步"
+              f"{'' if show_all else '，按 extent 前 %d' % limit}）:")
+        for s in order:
+            print(f"     [{s.get('kind','?'):9s}] ext={s.get('extent', 0.0):<10.5g} "
+                  f"logK={s.get('logK')!s:<7.4} S={s.get('S')!s:<7.4} "
+                  f"conv={s.get('conversion')!s:<5.3} {(s.get('equation') or '')[:70]}")
+        n_eq, n_raw = R.net_equation, R.net_equation_raw
+        print(f"   精编: {None if n_eq is None else n_eq.plain()}")
+        print(f"   原始: {None if n_raw is None else n_raw.plain()}")
+        print(f"   同对象: {n_eq is n_raw}")
+        with redirect_stdout(io.StringIO()):    # 套件自身会打一行 PASS/FAIL+note
+            ok = run_case(c, T)
+        rec = RESULTS[-1] if RESULTS else {}
+        print("   判定: " + ("PASS" if ok else "FAIL -- " +
+                             "; ".join(rec.get("errors") or [])[:400]))
+    if not hit:
+        print("!! 没有匹配的用例")
+        return 2
+    return 0
+
+
+def _snap_one(r: dict) -> dict:
+    from .system import Reaction
+    R = Reaction(r)
+    return {
+        "degree": r.get("degree"), "changed": r.get("changed"),
+        "reacted": r.get("reacted"), "pH": r.get("final_pH"),
+        "net": None if R.net_equation is None else R.net_equation.plain(),
+        "raw": None if R.net_equation_raw is None else R.net_equation_raw.plain(),
+        "steps": [f"{s.get('equation')}@{s.get('extent')}"
+                  for s in (r.get("steps") or [])],
+    }
+
+
+@_logged("snapshot")
+def cmd_snapshot(rest: list[str]) -> int:
+    """全库关键输出快照（前后对比用，替代 `git stash`）。"""
+    from .engine import judge
+    _banner("snapshot")
+    args = [a for a in rest if not a.startswith("-")]
+    if not args:
+        print("!! 用法: snapshot <OUT.json> [前缀...]")
+        return 2
+    path, prefixes = args[0], args[1:]
+    T = load_tables()
+    data = {}
+    for c in load_cases(None):
+        if prefixes and not c["name"].startswith(tuple(prefixes)):
+            continue
+        r = judge([{"name": n, "mol": m} for n, m in c["subs"]],
+                  c.get("cond") or {"V_L": 1.0}, T)
+        data[c["name"]] = _snap_one(r)
+    with io.open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, sort_keys=True)
+    print(f"[快照] {len(data)} 例 -> {path}")
+    return 0
+
+
+@_logged("cmp")
+def cmd_cmp(rest: list[str]) -> int:
+    """只打两份快照的差异（差异为 0 时退出码 0）。"""
+    _banner("cmp")
+    args = [a for a in rest if not a.startswith("-")]
+    if len(args) < 2:
+        print("!! 用法: cmp <A.json> <B.json>")
+        return 2
+    a, b = args[0], args[1]
+    limit = 60
+    da = json.load(io.open(a, encoding="utf-8"))
+    db = json.load(io.open(b, encoding="utf-8"))
+    diff = 0
+    for name in sorted(set(da) | set(db)):
+        x, y = da.get(name), db.get(name)
+        if x == y:
+            continue
+        diff += 1
+        if diff > limit:
+            continue
+        if x is None or y is None:
+            print(f"\n* {name}: {'仅 A' if y is None else '仅 B'}")
+            continue
+        print(f"\n* {name}")
+        for k in ("degree", "changed", "reacted", "pH", "net", "raw"):
+            if x.get(k) != y.get(k):
+                print(f"    {k}: {x.get(k)!r}\n      -> {y.get(k)!r}")
+        if x.get("steps") != y.get("steps"):
+            print(f"    steps: {len(x.get('steps') or [])} -> "
+                  f"{len(y.get('steps') or [])} 条")
+    print(f"\n[差异] {diff} 例（上限 {limit} 例明细）")
+    return 0 if diff == 0 else 1
+
+
+# ---- pKw 锚定：把经验式在 298.15 K 处对齐到 14.0 ----
+_ANCHOR_PLAIN = "        v = 4471.0 / T_K - 6.09 + 0.0171 * T_K\n"
+_ANCHOR_FIXED = ("        v = (4471.0 / T_K - 6.09 + 0.0171 * T_K\n"
+                 "             - (4471.0 / 298.15 - 6.09 + 0.0171 * 298.15"
+                 " - 14.0))\n")
+
+
+def cmd_anchor(rest: list[str]) -> int:
+    """pKw 锚定开关（幂等，保留换行风格）。"""
+    mode = next((a for a in rest if not a.startswith("-")), "status")
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "core.py")
+    s = io.open(p, encoding="utf-8", newline="").read()
+    nl = "\r\n" if "\r\n" in s else "\n"
+    plain = _ANCHOR_PLAIN.replace("\n", nl)
+    fixed = _ANCHOR_FIXED.replace("\n", nl)
+    state = "on" if fixed in s else ("off" if plain in s else "?")
+    print(f"[锚定] 当前 = {state}")
+    if mode == "status" or state == "?":
+        if state == "?":
+            print("!! core.py 里的 pKw 经验式既非锚定形也非未锚定形，请手工检查")
+            return 2
+        return 0
+    want_on = mode == "on"
+    if (state == "on") == want_on:
+        print(f"[锚定] 已是 {mode}，无改动（幂等）")
+    else:
+        src, dst = (plain, fixed) if want_on else (fixed, plain)
+        assert s.count(src) == 1, "锚定行匹配数 != 1"
+        io.open(p, "w", encoding="utf-8", newline="").write(s.replace(src, dst))
+        print(f"[锚定] 已切换 -> {mode}")
+    return 0
+
+
+@_logged("eqcheck")
+def cmd_eqcheck(rest: list[str]) -> int:
+    """全库 `eq` / `eq_has` 精确守恒核验（须 0 违规）。"""
+    _banner("eqcheck")
+    here = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.join(here, "helper"))
+    try:
+        import eqcheck                                      # type: ignore
+    except ImportError:
+        print("!! 找不到 eqcheck（应在 chemkit/helper/ 或 tools/）")
+        return 2
+    buf = io.StringIO()
+    with redirect_stdout(buf):
+        rc = eqcheck.main([])
+    tail = [ln for ln in buf.getvalue().split("\n") if ln.strip()][-3:]
+    print("\n".join(tail))
+    print("[判定] 全库 eq/eq_has 精确守恒" if rc == 0 else "[判定] 存在违规")
+    return rc
+
+
+@_logged("patch")
+def cmd_patch(rest: list[str]) -> int:
+    """声明式补丁（先全量校验 + 计数断言，再原子落盘 + JSON 复验）。"""
+    _banner("patch")
+    args = [a for a in rest if not a.startswith("-")]
+    check = "--check" in rest
+    if not args:
+        print("!! 用法: patch <spec.py> [--check]")
+        print("spec 格式：PATCHES = [(相对路径, 旧串, 新串[, 期望出现次数]), ...]")
+        return 2
+    spec = args[0]
+    if not os.path.exists(spec):
+        print(f"!! 找不到 spec：{spec}")
+        return 2
+    g: dict = {}
+    exec(compile(io.open(spec, encoding="utf-8").read(), spec, "exec"), g)
+    patches = g.get("PATCHES")
+    if not patches:
+        print("!! spec 里没有 PATCHES")
+        return 2
+    # 换行风格统一：spec 通常 LF，而检出文件可能 CRLF ⟹ 在**归一化文本**上
+    # 匹配/计数/替换，落盘时还原原风格（免"旧串出现 0 次"这类与内容无关的失败）。
+    ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    staged: dict[str, str] = {}
+    nl_of: dict[str, str] = {}
+    for item in patches:
+        path, old, new = item[0], item[1], item[2]
+        n = item[3] if len(item) > 3 else 1
+        full = os.path.join(ROOT, path)
+        raw = staged.get(path)
+        if raw is None:
+            raw = io.open(full, encoding="utf-8", newline="").read()
+            nl_of[path] = "\r\n" if "\r\n" in raw else "\n"
+        crlf = nl_of[path] == "\r\n"
+        cur = raw.replace("\r\n", "\n")
+        old_n = old.replace("\r\n", "\n")
+        new_n = new.replace("\r\n", "\n")
+        got = cur.count(old_n)
+        if got != n:
+            print(f"!! {path}: 旧串出现 {got} 次，期望 {n} 次 -> 中止（未写入任何文件）")
+            return 1
+        nxt = cur.replace(old_n, new_n)
+        staged[path] = nxt.replace("\n", "\r\n") if crlf else nxt
+        print(f"   ok {path}: {got} 处替换（{len(old)}B -> {len(new)}B）"
+              + ("  [CRLF]" if crlf else ""))
+    if check:
+        print("[--check] 校验通过，未写入")
+        return 0
+    # 落盘前**复验 JSON**：数据表补丁最常见失误是漏逗号/未转义引号，
+    # 实测三次（beta.json 一次、couples.json 两次）。任一条不合法即整体中止。
+    import json as _json
+    for path, text in staged.items():
+        if path.endswith(".json"):
+            try:
+                _json.loads(text)
+            except Exception as e:                          # noqa: BLE001
+                print(f"!! {path}: 补丁后不是合法 JSON -> 中止（未写入任何文件）")
+                print(f"   {e}")
+                return 1
+            print(f"   ok {path}: JSON 复验通过")
+    for path, text in staged.items():
+        io.open(os.path.join(ROOT, path), "w", encoding="utf-8",
+                newline="").write(text)
+    print(f"[写入] {len(staged)} 个文件")
+    return 0
+
+
+@_logged("hygiene")
+def cmd_hygiene(rest: list[str]) -> int:
+    """行尾噪声 / 临时文件卫生（`--fix` 一键还原仅换行差异的文件）。"""
+    _banner("hygiene")
+    fix = "--fix" in rest
+    import subprocess
+    ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    r = subprocess.run(["git", "status", "--porcelain"], cwd=ROOT,
+                       capture_output=True, text=True, encoding="utf-8",
+                       errors="replace")
+    st = (r.stdout or "").split("\n")
+    mod = [ln[3:].strip() for ln in st if ln[:2] == " M"]
+    eol_only = []
+    for f in mod:
+        if not os.path.exists(os.path.join(ROOT, f)):
+            continue
+        d = subprocess.run(["git", "diff", "--", f], cwd=ROOT,
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace").stdout or ""
+        if not "".join(d.split()):
+            eol_only.append(f)
+    print(f"已修改 {len(mod)} 个文件；其中仅行尾差异 {len(eol_only)} 个")
+    for f in eol_only:
+        print(f"   {f}")
+    if fix and eol_only:
+        subprocess.run(["git", "checkout", "--"] + eol_only, cwd=ROOT)
+        print(f"[fix] 已还原 {len(eol_only)} 个文件")
+    return 0
+
+
+@_logged("run")
+def cmd_run(rest: list[str]) -> int:
+    """在 UTF-8 控制台环境下跑任意脚本（消除 GBK 的 UnicodeEncodeError）。"""
+    args = [a for a in rest if not a.startswith("-")] or list(rest)
+    if not args:
+        print("!! 用法: run <脚本.py> [参数...]")
+        return 2
+    script, sargs = args[0], args[1:]
+    _banner(f"run {script}")
+    if not os.path.exists(script):
+        print(f"!! 找不到脚本：{script}")
+        return 2
+    import runpy
+    argv0 = sys.argv
+    sys.argv = [script] + sargs
+    try:
+        runpy.run_path(script, run_name="__main__")
+    except SystemExit as e:                              # 脚本自带退出码
+        return int(e.code or 0)
+    finally:
+        sys.argv = argv0
+    return 0
+
+
+USAGE = """\
+chemkit 测试与开发工具（**唯一入口**，第 303 轮合并自 tools/dev.py）
+
+  python -m chemkit.testsuit suite [前缀...] [--jobs=N] [--shard=i/N]
+        跑套件（默认全量 + 并行）。前缀 = 用例名开头（可多个）。
+  python -m chemkit.testsuit case <前缀> [--all]
+        单例深探：步表 / 账本净差 / 两版净方程 / 断言判定
+  python -m chemkit.testsuit snapshot <OUT.json> [前缀...]
+        全库关键输出快照（前后对比用，替代 git stash）
+  python -m chemkit.testsuit cmp <A.json> <B.json>
+        只打两份快照的差异（无差异则退出码 0）
+  python -m chemkit.testsuit anchor on|off|status
+        pKw 锚定切换（298.15 K 处对齐到 14.0；幂等）
+  python -m chemkit.testsuit eqcheck
+        全库 eq / eq_has 精确守恒核验（须 0 违规）
+  python -m chemkit.testsuit patch <spec.py> [--check]
+        声明式补丁：先全量校验 + 计数断言，再原子落盘 + JSON 复验
+  python -m chemkit.testsuit hygiene [--fix]
+        行尾噪声 / 临时文件卫生
+  python -m chemkit.testsuit run <脚本.py> [参数...]
+        在 UTF-8 控制台跑任意脚本（免受 GBK 编码错误影响）
+  python -m chemkit.testsuit [用例库.json] [--out 结果.json]
+        兼容旧调用：直接跑用例库
+
+说明：
+  · 每个子命令首行打印当前 **pKw 约定**，避免"这轮跑的到底是哪个约定"。
+  · 输出自动留档到 logs/<cmd>-latest.log 与 logs/<cmd>-latest.json，
+    控制台只留摘要 ⟹ **跑一次、读多次**，不要靠重跑换信息。
+  · 并行默认 = min(4, 物理核)；--jobs=0 强制串行。"""
+
+_VERBS = {
+    "suite": cmd_suite, "case": cmd_case, "snapshot": cmd_snapshot,
+    "cmp": cmd_cmp, "anchor": cmd_anchor, "eqcheck": cmd_eqcheck,
+    "patch": cmd_patch, "hygiene": cmd_hygiene, "run": cmd_run,
+}
+
+
+def cli(argv: list[str] | None = None) -> int:
+    """**唯一的测试入口**（第 303 轮：合并原 `tools/dev.py` 的测试能力）。
+
+    此前有两套入口——`python -m chemkit.testsuit`（只跑用例）与
+    `python tools/dev.py suite`（带分片/并行/留档），职责重叠且行为漂移。
+    现在**只有这一个**；`dev.py` 保留为薄转发（见 `chemkit/helper/`）。
+
+    子命令见 `USAGE`（`-h`/`help`）。设计要点：
+      · 每个子命令首行强制打印 **pKw 约定**（"这轮跑的到底是哪个约定"
+        最容易误读）；
+      · 输出**自动留档**到 `logs/<cmd>-latest.log` + `logs/<cmd>-latest.json`，
+        控制台只留摘要 ⟹ **跑一次、读多次**，不要靠重跑换信息；
+      · 并行默认 = min(4, 物理核)；`--jobs=0` 强制串行。
+    """
     for _s in (sys.stdout, sys.stderr):
         try:
             _s.reconfigure(encoding="utf-8", errors="replace")
         except Exception:                                # pragma: no cover
             pass
-    args = sys.argv[1:]
-    if "-h" in args or "--help" in args:
-        # v0.5.2：此前 `--help` 会被当成用例库路径去 open() ⟹ 抛栈退出；
-        # 文档里写着这个入口，就得让它打印用法而不是崩。
-        print("用法: python -m chemkit.testsuit [用例库.json] [--out 结果.json]\n"
-              "  省略用例库 = 包内 data/tests.json + 温度域/酸碱地基/高层 API\n"
-              "  自检 + 环闭合检查；--out 另存结构化结果（cases/summary/checks）。")
-        sys.exit(0)
-    out = None
-    if "--out" in args:
-        i = args.index("--out")
-        if i + 1 >= len(args):
-            print("!! --out 需要一个文件名参数")
-            sys.exit(2)
-        out = args[i + 1]
-        args = args[:i] + args[i + 2:]
-    sys.exit(main(args[0] if args else None, out))
+    args = list(sys.argv[1:] if argv is None else argv)
+    if not args or args[0] in ("-h", "--help", "help"):
+        print(USAGE)
+        return 0
+    # 兼容旧调用 `python -m chemkit.testsuit [用例库.json] [--out X]`
+    if args[0].endswith(".json") or args[0] not in _VERBS:
+        out = None
+        if "--out" in args:
+            i = args.index("--out")
+            out = args[i + 1] if i + 1 < len(args) else None
+            args = args[:i] + args[i + 2:]
+        return main(args[0] if args else None, out)
+    verb, rest = args[0], args[1:]
+    return _VERBS[verb](rest)
+
+
+if __name__ == "__main__":
+    sys.exit(cli())

@@ -26,7 +26,8 @@ import json
 import os
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))   # 仓库根（chemkit/helper/x.py -> 上三级）
 for _s in (sys.stdout, sys.stderr):
     try:
         _s.reconfigure(encoding="utf-8", errors="replace")
@@ -63,8 +64,8 @@ def main() -> int:
     ap.add_argument("--grep", default=None, help="只列名字含该子串的失败")
     ap.add_argument("--full", action="store_true", help="不截断 errors/note")
     ap.add_argument("--top", type=int, default=12)
-    ap.add_argument("--results", default=os.path.join(ROOT, ".tmp_dev_results.json"))
-    ap.add_argument("--converg", default=os.path.join(ROOT, ".tmp_dev_converg.json"))
+    ap.add_argument("--results", default=os.path.join(ROOT, "logs", "suite-latest.json"))
+    ap.add_argument("--converg", default=os.path.join(ROOT, "logs", "perf-latest.json"))
     a = ap.parse_args()
 
     if a.cmd == "diff":
