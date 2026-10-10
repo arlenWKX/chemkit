@@ -11,7 +11,7 @@ from math import gcd
 import os
 from dataclasses import dataclass, field
 
-from .core import elements_of, charge_of, K_NERNST_298, register_phase
+from .core import elements_of, charge_of, K_NERNST_298
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -43,13 +43,6 @@ class Tables:
     pka_base: dict[str, list[dict]] = field(default_factory=dict)   # base -> entries
     solids: set[str] = field(default_factory=set)
     gases: set[str] = field(default_factory=set)
-    # 气相物种集合（`X(g)`，第二相，恒压库）——与 `solids` 严格对称：
-    # 固相是"溶解态的储备相"，气相亦然；两者活度都与存量无关
-    # （固相 = 1，气相 = p_ext/p°）。只含**有 Henry 数据**的气体。
-    gas_species: set[str] = field(default_factory=set)
-    # 溶解态气体 -> 气相物种名（双向映射，供相转移候选与呈现层用）
-    gas_of: dict[str, str] = field(default_factory=dict)
-    aq_of: dict[str, str] = field(default_factory=dict)
     # Henry 定律常数 H（mol/(L·kPa)，298K）：p = c/H。来源：NIST WebBook /
     # Sander, Atmos. Chem. Phys. 15, 4399 (2015) 汇编值（25℃，换算自 M/atm）
     henry: dict[str, float] = field(default_factory=lambda: {
@@ -385,19 +378,6 @@ def load_tables(data_dir: str | None = None) -> Tables:
             t.solids.add(name)
         if e.get("form") == "gas":
             t.gases.add(name)
-    # 气相物种：只给**有 Henry 数据**的气体建第二相（无数据的气体没有
-    # 泡点可依，其"逸出"无从定义，退化为全部留在溶液——旧 A_GAS 回退
-    # 是凭空造一个浓度地板，已废）。
-    for g in sorted(t.gases):
-        if henry_of(t, g, 298.15) is None:
-            continue
-        gp = g + "(g)"
-        t.gas_species.add(gp)
-        t.gas_of[g] = gp
-        t.aq_of[gp] = g
-        # 登记相态：气相物种与溶解态共享元素向量/电荷（相转移不改组成）。
-        # 解析层据此复用溶解态的解析结果，**不需要任何字符串约定**。
-        register_phase(gp, g)
     # 数据源目录快照（DATA_DIR 全局可被后续 load_tables(data_dir=...)
     # 改写，表实例须记住自己的来源）
     t.src_dir = os.path.abspath(DATA_DIR)
