@@ -75,7 +75,15 @@ python -m chemkit.testsuit anchor off; python -m chemkit.testsuit suite; python 
 
 ---
 
-## 5. 待办（按优先级）
+## 5. 目标文本（goal 工具需人工轮次才能更新，此处留最新一版）
+
+> 第 303 轮末的 goal 目标文本（待人工轮次时用 `update_goal` 写入）：
+> 主目标（`15 CaCO3+HCl` iters 3002→13）已达；第 303 轮完成工具链收敛
+> （唯一入口 `python -m chemkit.testsuit`、删除 `tools/`、新建 `chemkit/helper/`）
+> 与哨兵重裁 +3（1280→1283）。下一步见下方待办。
+> 约束新增 M（**探针先校尺**）、N（**判平衡用 Q/K 等不变量**）。
+
+## 6. 待办（按优先级）
 
 1. **失败用例分类**（95 例）—— 尚未做机制层面的归类。
 2. 设计收尾：`_equil_gas_phase` 仍是走步**后**的外部夹子；彻底对称需把相转移
