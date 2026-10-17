@@ -20,16 +20,25 @@
      `tests.json` 里的**期望式**，本工具校验的是**引擎的实际输出**。
      反例：`D43 Cl2+石灰乳` 输出 `Ca(OH)2 + Cl2 -> ClO- + Ca2+`，Cl 差 1。
 
+  ④ **绝热放热恒定**（`heat`）—— 固定投料摩尔数、改体积 ⟹ 绝热放热
+     `heat_kJ` 必须恒定（广延量）。**锁封闭体系**（`gas_escape=False`）：
+     开放体系的逸出焓差是真实物理（CO₂ 脱气 20.29 kJ/mol），逸出量随
+     泡点（浓度）变，总放热随之而变是正确的；封闭口径把该项归零，
+     剩下的漂移就是账本缺陷。
+     反例（第 306 轮实测，已修）：`CaCO3 0.05 + HCl 0.1` 封闭体系
+     1.196→1.672 kJ（V=0.1→2.0），根因是缺 ΔHf 的 `[CaCl]⁺` 被静默丢弃。
+
 用法：
-    python -m chemkit.helper.invariants              # 三条全跑（用 tests.json）
+    python -m chemkit.helper.invariants              # 四条全跑（用 tests.json）
     python -m chemkit.helper.invariants scale        # 只跑尺度
     python -m chemkit.helper.invariants det --n 40   # 只跑确定性，抽 40 例
     python -m chemkit.helper.invariants cons         # 只跑守恒
+    python -m chemkit.helper.invariants heat         # 只跑放热恒定
     python -m chemkit.helper.invariants cons --jobs 8 # 并行（默认 min(4, cpu)）
 
 退出码：0 = 全部通过；1 = 有违规（供 CI / 发版门槛使用）。
 
-**为什么这三条值得单独立工具**：它们检查的是"引擎能不能自相矛盾"，
+**为什么这几条值得单独立工具**：它们检查的是"引擎能不能自相矛盾"，
 而不是"引擎与某个外部真值差多少"。后者需要权威数据、会随数据更新而变；
 前者是逻辑同一性，永不过期，而且一旦违反，无论真值是什么都说明有 bug。
 """
@@ -74,14 +83,22 @@ def _subs_of(case: dict) -> dict:
     return dict(raw) if isinstance(raw, dict) else {k: v for k, v in raw}
 
 
-def _react(case: dict, V: float | None = None, T=None):
-    """按用例跑一次；`V` 给定时覆盖用例自带的体积。"""
+def _react(case: dict, V: float | None = None, T=None,
+           gas_escape: bool | None = None):
+    """按用例跑一次；`V` 给定时覆盖用例自带的体积。
+
+    `gas_escape=False` 用于封闭体系口径（④ 放热恒定检查：隔离逸出焓差
+    这一真实物理效应，只留账本缺陷）。
+    """
     import chemkit
     subs = _subs_of(case)
     cond = case.get("cond") or {}
     v = V if V is not None else cond.get("V_L", 1.0)
     tk = T if T is not None else cond.get("T_K", 298.15)
-    return chemkit.react(subs, V=v, T=tk)
+    kw = {"V": v, "T": tk}
+    if gas_escape is not None:
+        kw["gas_escape"] = gas_escape
+    return chemkit.react(subs, **kw)
 
 
 def _conc(final: dict, V: float) -> dict:
@@ -338,12 +355,92 @@ def _cons_one(case: dict) -> list[dict]:
     return bad
 
 
+# ------------------------------------------------- ④ 绝热放热恒定
+
+def _heat_one(case: dict, factors=(0.1, 1.0, 10.0)) -> list[dict]:
+    """单例放热恒定检查（worker 入口）。
+
+    **判据**：固定投料摩尔数，改变体积 ⟹ 绝热放热 `heat_kJ` 必须恒定
+    （广延量：同摩尔数的同一反应，放热与体积无关）。
+
+    **必须锁封闭体系**（`gas_escape=False`）：开放体系的逸出焓差
+    （CO₂ 脱气 20.29 kJ/mol）是**真实物理**——逸出量随泡点（浓度）变，
+    于是总放热随体积变是**正确的**，不是缺陷。封闭体系把逸出项归零，
+    剩下的漂移就是账本缺陷（T2 主因：缺 ΔHf 的配离子被静默丢弃，
+    第 306 轮已修）。
+
+    历史（第 306 轮实测）：`CaCO₃ 0.05 + HCl 0.1` 封闭体系修前
+    1.196→1.672 kJ（V=0.1→2.0，漂 0.48）；修后应恒定。
+    """
+    bad: list[dict] = []
+    subs0 = _subs_of(case)
+    if not subs0:
+        return bad
+    cond = case.get("cond") or {}
+    V0 = cond.get("V_L", 1.0)
+    T0 = cond.get("T_K", 298.15)
+    base = None
+    for f in factors:
+        try:
+            r = _react({"subs": list(subs0.items()),
+                        "cond": {"V_L": V0 * f, "T_K": T0}},
+                       gas_escape=False)
+        except Exception as e:                   # 引擎崩了也是缺陷
+            bad.append({"case": case["name"], "factor": f,
+                        "kind": "异常", "detail": f"{type(e).__name__}: {e}"})
+            continue
+        th = r.thermal or {}
+        q = th.get("heat_kJ")
+        if q is None:
+            # 无热值（H/O 不闭合/无变换）：跨体积必须一致地无
+            if base is not None and base[0] is not None:
+                bad.append({"case": case["name"], "factor": f,
+                            "kind": "热值有无",
+                            "detail": f"f={base[1]} → {base[0]}, "
+                                      f"f={f} → None"})
+            if base is None:
+                base = (None, f)
+            continue
+        if base is None:
+            base = (q, f)
+            continue
+        b, bf = base
+        if b is None:
+            bad.append({"case": case["name"], "factor": f, "kind": "热值有无",
+                        "detail": f"f={bf} → None, f={f} → {q}"})
+            continue
+        # 相对容差 2%：ΔHf 表值 3 位有效数字 + 配位分配残差
+        if abs(q - b) > 0.02 * max(abs(q), abs(b), 1e-9):
+            bad.append({"case": case["name"], "factor": f, "kind": "放热漂移",
+                        "detail": f"f={bf} → {b:.4f}, f={f} → {q:.4f} "
+                                  f"（Δ{q - b:+.4f} kJ）"})
+    return bad
+
+
+def check_heat(cases: list[dict], factors=(0.1, 1.0, 10.0),
+               limit: int | None = None) -> list[dict]:
+    """固定投料改体积 ⟹ 绝热放热恒定（封闭体系口径）。"""
+    use = cases[:limit] if limit else cases
+    bad: list[dict] = []
+    jobs = _jobs()
+    if jobs > 1 and len(use) > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=jobs) as ex:
+            for row in ex.map(_heat_one, use, [factors] * len(use)):
+                bad.extend(row)
+        return bad
+    for c in use:
+        bad.extend(_heat_one(c, factors))
+    return bad
+
+
 # ---------------------------------------------------------------- CLI
 
 _KINDS = {
     "scale": ("① 尺度不变性", check_scale),
     "det": ("② 进程确定性", check_det),
     "cons": ("③ 输出守恒", check_cons),
+    "heat": ("④ 绝热放热恒定", check_heat),
 }
 
 

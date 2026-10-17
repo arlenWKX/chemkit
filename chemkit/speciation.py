@@ -1360,7 +1360,13 @@ def estimate_state(ledger: dict, H_excess: float, V: float, T, T_K: float,
                 if _led2 is None:
                     _led2 = dict(ledger)
                 _led2.pop(_cat, None)
-                _n_inv = ledger[_cat] + _x * _ns     # 金属库存（回检用）
+                # **L1363 必须用 `.get`**（第 307 轮修，`invariants heat`
+                # 新检查发现）：上方 L1355 的闸在 `pin_mode is True` 时**不
+                # 跳过**（第 267 轮为 `H45` 开的口子），而"账本里没有这个键"
+                # 与"键在但值为 0"是两件事——`NR94 Fe(OH)3+Cu(OH)2` 投料
+                # 10 mol 时 `Fe^{3+}` 整步消耗后键被 pop，`ledger[_cat]`
+                # 直接 `KeyError` 崩掉整条耦合求解。
+                _n_inv = ledger.get(_cat, 0.0) + _x * _ns   # 金属库存（回检用）
                 for _zc, _lb, _nu, _cx in _lad:
                     if _led2.pop(_cx, 0.0) > 0.0:
                         _n_inv += ledger[_cx]
