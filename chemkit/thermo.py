@@ -20,8 +20,9 @@
     4. ΔT = q×1000 / (m·c_p)，m = V×1000 g（以水的比热容与密度为准，
        忽略溶质质量——教材级近似），c_p = 4.184 J/(g·K)。
     5. ΔHf° 单一数据源 data/thermo.json（裸名 = 账本态，"X(g)" 键 =
-       逸出气相态）；净变换中含量 ≥1e-3 mol 的物种缺数据时返回
-       heat=None（宁缺毋假），<1e-3 mol 的痕量物种忽略。
+       逸出气相态）；**缺 ΔHf 的物种按 0 计入并全部列入 `missing`**
+       （v0.6.5 改：旧口径"≥1e-3 否决、<1e-3 静默丢弃"让同一缺失物种
+       随浓度在报/不报之间切换，且被配位绑走的焓照样消失）。
 
 绝热耦合求解 coupled()（isothermal=False 的真实语义）：
     物理问题：溶液初温 T₀，反应绝热进行，终态 = 平衡(T_f) 且能量守恒：
@@ -67,6 +68,8 @@ TOL_K = 0.25               # 温度收敛容差（K）
 # 裸名 = 账本态（水溶/凝聚）；"X(g)" 键 = 逸出气相态。
 
 # 净变换中缺 ΔHf 数据仍可忽略的摩尔上限（热贡献 ~0.5 J 量级）
+# ⚠️ v0.6.5 起**不再作为门槛**（A2/B1/T3：缺 ΔHf 一律按 0 计入并全部
+# 列入 `missing`）。常量保留仅为兼容既有引用与注释。
 TRACE_MOL = 1e-3
 
 
@@ -134,14 +137,22 @@ def analyze(res: dict, T) -> dict | None:
     多计）。
 
     返回 dict（可能含 None 字段）：
-        heat_kJ     放热为正（= −ΔH；None = 数据不足，宁缺毋假）
+        heat_kJ     放热为正（= −ΔH；None 仅在无净变换/H-O 不闭合时）
         dT_K        温升（负=降温；None 同上）
         T_final_K   终温（数据不足时 = 初温）
         water_mol   净生成水量
         mass_g      供热容用的水质量（V×1000 g）
-        missing     缺 ΔHf 数据的显著物种（|net| ≥ 1e-3）
+        missing     缺 ΔHf 而被**按 0 处理**的物种（全部，无量级门槛）
         flags       ["boils"/"freezes", "h_o_open"...]
-        reason      失败原因（数据不足/H-O 不闭合/无变换）
+        reason      失败原因（仅 H-O 不闭合/无变换等**真**失败）
+
+    **缺 ΔHf 的口径（v0.6.5 改，A2/B1/T3）**：一律按 0 计入并全部列入
+    `missing`。旧口径是"≥TRACE_MOL 否决整个热值、<TRACE_MOL 静默丢弃"——
+    同一缺失物种随浓度跨过 1e-3 就在"报"与"不报"之间切换，且被配位绑走的
+    那部分焓照样从账上消失（T2 实测：封闭体系热值随配位分配漂移 0.48 kJ）。
+    数据面 65.5% 的族相关物种没有公认 ΔHf（配离子/复盐极少测定），
+    可从表内 dH 循环推导的只有 2 个 ⟹ "宁缺毋假"实际是"几乎永远缺"，
+    故改为如实给值 + 显式暴露未知部分。
     """
     cond = res.get("cond") or {}
     V = float(cond.get("V_L", 1.0))
@@ -162,32 +173,47 @@ def analyze(res: dict, T) -> dict | None:
         out["reason"] = "H/O 原子不闭合（投料在规范化阶段转变，如 SO3+H2O）"
         return out
     out["water_mol"] = w
-    missing = sorted(s for s, v in net.items()
-                     if dhf_of(T, s) is None and abs(v) >= TRACE_MOL)
-    if missing:
-        out["missing"] = missing
-        out["reason"] = f"缺 ΔHf° 数据：{', '.join(missing[:6])}"
-        return out
-    # 计入焓的物种**一次定死**（ΔHf 已知者）：痕迹量且 ΔHf 未知的物种
-    # （如 nb 入库的一级水解产物 `[Zn(OH)]⁺` 1e-4 mol）既不该按"缺数据"
-    # 整体否决热值，也不能在求和里 `None * float` 崩掉——量级在 TRACE_MOL
-    # 以下，略去对热值无可见影响。判别与求和**必须同一个集合**（第 147 轮
-    # 实测：原先判别只看 ≥TRACE_MOL、求和却遍历全体 ⟹ TypeError 整条降级）。
-    accounted = {s: v for s, v in net.items() if dhf_of(T, s) is not None}
+    # ---- A2/B1（v0.6.5 修）：缺 ΔHf 一律按 0 处理，并**全部**显式报告 ----
+    # 旧行为：`|net| ≥ TRACE_MOL` 的缺数据物种**整体否决热值**（heat=None），
+    # 而 `< TRACE_MOL` 的缺数据物种**静默从求和里消失**。两个后果：
+    #   · `[CaCl]⁺` 0.00161 mol（V=0.05）⟹ heat=None；同物种在 V=0.1 只有
+    #     0.00082 mol ⟹ 不报、热值照给 —— **同一个缺失物种只因量小就不报**，
+    #     而热值仍少算它（T3 原文，实测复现）；
+    #   · 被配位绑走的 Cl⁻ 的焓从账上消失 ⟹ 封闭体系的热值随配位分配漂移
+    #     （T2：CaCO₃+HCl 封闭体系 1.196→1.672 kJ，漂移 0.48 kJ）。
+    # 数据面现实（A3 实测）：族相关 685 个物种缺 449 个 ΔHf（65.5%），其中
+    # beta 配离子 238 个、ksp 固相 134 个。可用表内 dH 热力学循环推导的
+    # **只有 2 个**（beta 244 条里仅 8 条有 dH，且需反应物两侧都有 ΔHf）
+    # ⟹ 补数据路不可行，**缺 ΔHf 没有公认值**（配离子/复盐生成焓极少测定）。
+    # 故改为：缺 ΔHf 按 0 计入 + 全部列入 `missing`（无论量多小），
+    # 让"这部分焓未知"始终可见，而不是让它在两个集合之间悄悄切换。
+    dhf_cache: dict[str, float | None] = {}
+    missing: list[str] = []
+    for s, v in net.items():
+        dhf = dhf_of(T, s)
+        dhf_cache[s] = dhf
+        if dhf is None:
+            missing.append(s)
     # 气相拆分校正：gas ⊆ production（二者同为总量口径的气相部分）；
     # "X(g)" 键存在时气相部分按 ΔHf(g) 计价（账本态基线 + (g−aq)·gas）
     esc = {e["name"]: e["mol"] for e in res.get("gas", [])}
     dH = 0.0
-    for s, v in accounted.items():
-        dH += v * dhf_of(T, s)
+    for s, v in net.items():
+        dhf = dhf_cache[s]
+        if dhf is None:
+            continue                      # 按 0 处理（已入 missing）
+        dH += v * dhf
         e = esc.get(s)
         if e:
             g = T.thermo.get(s + "(g)")
             if g is not None:
-                dH += e * (g - dhf_of(T, s))
+                dH += e * (g - dhf)
     dH += w * DH_WATER
     q = -dH                       # kJ，放热为正
     out["heat_kJ"] = round(q, 3)
+    if missing:
+        # **全部**缺数据物种（不再有 TRACE_MOL 门槛）——"未知"必须可见
+        out["missing"] = sorted(missing)
     dT = q * 1000.0 / (out["mass_g"] * C_P_WATER)
     out["dT_K"] = round(dT, 3)
     out["T_final_K"] = round(T_K + dT, 2)

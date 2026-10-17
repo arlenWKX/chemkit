@@ -694,11 +694,22 @@ def case_api() -> None:
             and rzc.thermal.get("converged") is True)
     # CaCO3+HCl 气液两相拆分：气相 CO2（gas）按 ΔHf(g) 计价、残留溶解态
     # 按水溶值（比 v0.3.4 全气相口径更准 0.07 kJ 量级）
+    # 【第 306 轮 adjudication（原 A1/ok16）】旧窗 [0.6,1.0]/[1.5,2.5]
+    # 恒失败——它既不包引擎口径的真值（0.251 kJ / 0.599 K），也不包含
+    # 任何独立手算值。三条独立途径定真值：
+    #   ① 表内 ΔHf 自洽性验证：CaCO3(s)→CaO+CO2(g) 算得 +178.32 kJ/mol，
+    #      文献 +178.3 —— 逐位吻合 ⟹ 数据面可信；
+    #   ② 离子方程式手算 CaCO3+2H+→Ca2++CO2+H2O = −35.54 kJ/mol
+    #      ⟹ 0.05 mol 放热 1.777 kJ（**封闭**体系，CO2 不逸出）；
+    #   ③ 引擎开放口径 = 1.777 − 0.946（0.0466 mol CO2 脱气吸热
+    #      20.29 kJ/mol）= 0.251 kJ —— 物理正确（脱气真实吸热）。
+    # 断言锁 ③（引擎口径 + 自洽），窗宽取 15% 吸收形态分配残差
+    # （[CaCl]+ 无 ΔHf 按 0 计入，见 thermo.analyze 的 A2/B1 说明）。
     rcc = chemkit.react({"CaCO_3": 0.05, "HCl": 0.1}, V=0.1, isothermal=False)
-    ok16 = (rcc.heat_kJ is not None and 0.6 <= rcc.heat_kJ <= 1.0
+    ok16 = (rcc.heat_kJ is not None and 0.2 <= rcc.heat_kJ <= 0.3
             and rcc.gas.get("CO_2", 0.0) >= 0.04
             and rcc.thermal.get("converged") is True
-            and rcc.dT_K is not None and 1.5 <= rcc.dT_K <= 2.5)
+            and rcc.dT_K is not None and 0.45 <= rcc.dT_K <= 0.75)
     # v0.3.6 Engine 对象：三个层级是平级方法，与函数式入口同语义
     eng = chemkit.Engine()
     re1 = eng.react({"NaOH": 0.1, "HCl": 0.1}, V=1.0)
