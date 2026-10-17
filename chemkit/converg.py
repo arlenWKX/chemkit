@@ -36,13 +36,42 @@ from .testsuit import load_cases, DEFAULT_CASES
 
 # ---------------------------------------------------------- 摘要与差分
 
+def _canon(obj):
+    """把结果里的容器**规范化**成与插入序无关的形式（第 304 轮根治）。
+
+    病灶：`judge` 返回的 `consumption`/`production`/`final`/`gas` 等是
+    `dict`，而它们由 `set(ledger) | set(gas_phase)` 之类**集合遍历**装配
+    ⟹ 键序随 `PYTHONHASHSEED` 变。原实现直接 `json.dumps(core,
+    sort_keys=True)`——但 `sort_keys` 只排**字典的键**，对 dict 内部再嵌套
+    的 dict 有效，对**列表里元素的顺序**无效；而 `production` 等在某些
+    路径上是 list[dict]。实测：同一份代码连跑 4 个 seed 得 4 个不同 digest，
+    逐字段比对确认**只有顺序变、数值全同**。
+
+    修法：进摘要前一律规范化——dict 按键排序，list 递归后按 `repr` 排序
+    （列表在语义上是"物种集合"，顺序不承载信息），标量原样。
+    """
+    if isinstance(obj, dict):
+        return {k: _canon(obj[k]) for k in sorted(obj)}
+    if isinstance(obj, (list, tuple)):
+        return sorted((_canon(x) for x in obj), key=repr)
+    if isinstance(obj, float):
+        # 浮点尾数抖动不该让摘要变化：统一到 12 位有效数字。
+        # （12 位远高于任何化学判据的分辨率，但足以吃掉累加顺序差异。）
+        return round(obj, 12)
+    return obj
+
+
 def _result_digest(r: dict) -> str:
     """结果字典的语义摘要（量值与判定维度；steps 计数入摘要、轨迹不入
-    ——轨迹是求解过程自由度，摘要锁的是对外呈现语义）。"""
+    ——轨迹是求解过程自由度，摘要锁的是对外呈现语义）。
+
+    **必须跨进程稳定**：摘要的用途是"两次运行是否等价"，
+    若它对 `PYTHONHASHSEED` 敏感，这个用途就完全失效（第 304 轮实测）。
+    """
     keys = ("changed", "reacted", "degree", "annotations", "consumption",
             "production", "final", "gas", "ionize", "net_equation",
             "equations", "final_pH", "unknown")
-    core = {k: r.get(k) for k in keys if k in r}
+    core = {k: _canon(r.get(k)) for k in keys if k in r}
     blob = json.dumps(core, sort_keys=True, ensure_ascii=False,
                       separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]

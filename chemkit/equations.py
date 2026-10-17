@@ -1011,8 +1011,23 @@ def _collapse_transient_intermediates(
                               for r2, p2, e2 in involving)]
             if net_r and net_p:
                 # extent 取形成/消耗总量的最大值
-                new_ext = max_amt
-                out.append((net_r, net_p, new_ext))
+                # **extent 的取法**（第 304 轮根治"折叠后方程缺原子"）。
+                #
+                # `net_r`/`net_p` 已经是**摩尔量**（每项都乘过各自的 e），
+                # 所以新的 extent 必须是 **1**，不能再乘一次 `max_amt`。
+                # 原实现取 `new_ext = max_amt`（毛量），于是 `_step_to_ionic`
+                # 又把它乘一遍 ⟹ 系数比例被放大成 `max_amt` 倍，而配平补项
+                # （H₂O/H⁺）的绝对量是**按旧的单步尺度**加的 ⟹ 折叠步的
+                # 元素守恒彻底错位。
+                #
+                # 实测病灶：`X33 AgCl+过量NaSCN`。引擎真实两步是
+                #   `AgCl + 2SCN^- -> [Ag(SCN)2]^- + Cl^-`（extent 0.1）
+                #   `[Ag(SCN)2]^- -> AgSCN + SCN^-`（配平后的瞬态分解）
+                # 折叠中间体 `[Ag(SCN)2]^-` 后应为
+                #   `AgCl + SCN^- -> AgSCN + Cl^-`，
+                # 而 `max_amt` 版给出 `1.009SCN^- + AgCl -> Cl^-`
+                # —— **AgSCN（主产物）整个消失，Ag/C/N/S 四种元素凭空没了**。
+                out.append((net_r, net_p, 1.0))
     return out
 
 
@@ -1026,6 +1041,19 @@ def _step_to_ionic(reactants: dict, products: dict, extent: float
     produced = {sp: nu * extent for sp, nu in products.items()}
     consumed, produced = _balance_h_o(consumed, produced)
     consumed, produced = _restore_oh(consumed, produced, _TRACE)
+    # **还原 OH⁻ 之后必须再配平一次**（第 304 轮根治分步方程缺 H₂O）。
+    #
+    # 病灶：`_restore_oh` 会把 `H^+`（在碱侧）改写成 `OH^-`，
+    # 即 `… + k·H^+  →  … + k·OH^-`，这一步**改变了 H/O 原子数**。
+    # 而原实现在它之后直接 `return`，没有再调 `_balance_h_o` ⟹
+    # 分步方程普遍缺一个 H₂O。实测症状高度一致：`H 左1 右2、O 左0 右1`
+    # （40 例中 17 例是这一条），如 `H71 NH4Cl+Ca(OH)2 加热` 的第 3 步。
+    #
+    # 净方程侧没这个问题，因为 `_build_equations` 在后面还有
+    # `_h_o_balanced` 检查 + `_stoichiometric_net` 兜底；分步走得是
+    # 这条更短的路径，缺了那一步。
+    if consumed and produced:
+        consumed, produced = _balance_h_o(consumed, produced)
     if not consumed or not produced:
         return {}, {}, None
     _n = _normalize_equation(consumed, produced)
@@ -1079,17 +1107,39 @@ def _fold_pools(consumed: dict[str, float], produced: dict[str, float],
     flux = _pool_ligand_flux(consumed, produced, r)
     consumed = _fold(consumed)
     produced = _fold(produced)
+    # **配体守恒的减法必须落在一侧**（第 304 轮根治"凭空删原子"）。
+    #
+    # 病灶（原实现）：`consumed[lig] = consumed.get(lig, 0.0) - x`，
+    # 若 `lig` 本不在 `consumed` 侧，`get` 给出 0 ⟹ 结果变**负数**，
+    # 紧接着 `if consumed[lig] <= 1e-9: pop` 把它**静默删除**。
+    # 净效果是"池吸走的配体"被从"凭空不存在的一侧"扣掉 ⟹ 原子蒸发。
+    # 实测：真实语料 `D43 Cl2+石灰乳` 的净方程因此缺 6.44 mol Cl
+    # （相对 0.35%），而该错误结果已被写进 `tests.json` 的 `eq` 标准。
+    #
+    # 正确语义：配体净流量 x>0（池吸入）意味着游离配体被**消耗** x；
+    #   · 若减成负数 ⟹ 说明它实际是**净生成**，应搬到生成侧（取绝对值），
+    #     而不是删除——否则元素不守恒。
+    def _apply(side: dict[str, float], other: dict[str, float],
+               delta: float) -> None:
+        """在 `side` 上施加 `delta`（正=增加该侧量），负则搬去 `other`。"""
+        cur = side.get(lig, 0.0) + delta
+        if cur >= -1e-9:
+            if cur > 1e-9:
+                side[lig] = cur
+            else:
+                side.pop(lig, None)
+            return
+        # 越过零点：本侧清零，余额以相反符号记到另一侧
+        side.pop(lig, None)
+        other[lig] = other.get(lig, 0.0) - cur     # cur<0 ⟹ -cur>0
+        if other[lig] <= 1e-9:
+            other.pop(lig, None)
+
     for lig, x in flux.items():
         if abs(x) <= 1e-9:
             continue
-        if x > 0:      # 池吸入：游离配体的事件消耗扣除吸入量
-            consumed[lig] = consumed.get(lig, 0.0) - x
-            if consumed[lig] <= 1e-9:
-                consumed.pop(lig, None)
-        else:          # 池释放：配体回归不计事件生成
-            produced[lig] = produced.get(lig, 0.0) + x   # x<0，扣除
-            if produced[lig] <= 1e-9:
-                produced.pop(lig, None)
+        # x>0 池吸入 ⟹ 消耗侧减 x；x<0 池释放 ⟹ 消耗侧加 |x|
+        _apply(consumed, produced, -x)
     return consumed, produced
 
 
@@ -1274,8 +1324,12 @@ def _build_equations(steps: list[dict], r: dict
         tp = {s: v for s, v in tp.items() if v > 1e-9}
         return _gate(tc, tp, cur_c, cur_p)
 
-    consumed, produced = _cancel_minor_protonation(consumed, produced)
-    consumed, produced = _cancel_minor_hydrolysis(consumed, produced)
+    # **必须过闸门**（第 304 轮修正）：注释（下方）承诺"全部走同一个闸门
+    # `_step`"，但这两行原本是裸调用——它们能把整块物种删掉而不受检查。
+    # 实测 `IN4 InCl3+过量HCl` 的 `[InCl]^{2+}`（0.0075 mol，占产物侧 Cl 8.1%）
+    # 即由此二函数之一删掉。
+    consumed, produced = _step(_cancel_minor_protonation, consumed, produced)
+    consumed, produced = _step(_cancel_minor_hydrolysis, consumed, produced)
     # 同物种跨侧抵消（浓酸分子化/再电离等记账形态转换会在两侧各留一份）
     for sp in set(consumed) & set(produced):
         x = min(consumed[sp], produced[sp])
@@ -1397,11 +1451,47 @@ def _build_equations(steps: list[dict], r: dict
 
 def _beautify_covers(consumed: dict, produced: dict,
                      bc: dict, bp_: dict, frac: float = 0.5) -> bool:
-    """美化式是否覆盖了主通道：被保留物种承载的净差 ≥ frac（投向两侧的
-    较小者，避免"只留反应物"也算覆盖）。"""
-    tot = sum(consumed.values()) + sum(produced.values())
-    keep = (sum(bc.values()) + sum(bp_.values())) * 0.5
-    return tot <= 0 or keep >= frac * tot * 0.5
+    """美化式是否覆盖了主通道。
+
+    **原实现的错误**（第 304 轮修正）：注释写"投向两侧的较小者，避免
+    '只留反应物'也算覆盖"，但代码是
+
+        keep = (sum(bc) + sum(bp_)) * 0.5
+        return total <= 0 or keep >= frac * total * 0.5
+
+    —— 两个 `* 0.5` 分处两侧、相互抵消，实际判据退化成
+    `keep >= frac * total`，**与"较小者"毫无关系**；而且 `total` 含 H⁺/H₂O
+    这类大项，任何小产物都能轻易"被覆盖"。
+
+    **正确判据**：先按系数尺度把美化式还原到真值的摩尔量，
+    再取两侧净差的较小者作为主通道规模的度量，要求不低于 `frac`。
+
+    注意：美化式的系数是**归一化整数比**（如 `In³⁺:1, Cl⁻:2`），
+    与真值的摩尔量差一个常数因子，所以必须先定标再比。
+    """
+    _fill = {WATER, H_ION, OH_ION}
+
+    def _mass(c: dict, p: dict) -> float:
+        sc = sum(v for s, v in c.items() if s not in _fill)
+        sp = sum(v for s, v in p.items() if s not in _fill)
+        return min(sc, sp)
+
+    base = _mass(consumed, produced)
+    if base <= 0:
+        return True
+    keep_raw = _mass(bc, bp_)
+    if keep_raw <= 0:
+        return False
+    # 定标：用"真值摩尔量 / 美化式系数"的比值。取两侧总毛量的比值
+    # （比单元素稳：单元素可能恰好不在美化式里）。
+    tot_t = sum(v for s, v in list(consumed.items()) + list(produced.items())
+                if s not in _fill)
+    tot_b = sum(v for s, v in list(bc.items()) + list(bp_.items())
+                if s not in _fill)
+    if tot_b <= 0:
+        return False
+    k = tot_t / tot_b
+    return keep_raw * k >= frac * base
 
 
 def _coef_stats(*sides: dict) -> tuple[float, bool]:

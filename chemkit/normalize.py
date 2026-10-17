@@ -173,12 +173,32 @@ def _ion_coeffs(name: str, ions: list, T) -> dict:
     return out
 
 
+def _anion_order(T) -> list:
+    """`T.anions` 的**确定性**遍历序（第 304 轮根治 `PYTHONHASHSEED` 依赖）。
+
+    病灶：`T.anions` 是 `set`，`for an in T.anions` 的顺序随哈希种子变，
+    而 `_split_salt`/`_split_acid` 都是**首个匹配即返回**。于是同一个物种
+    在不同进程里可能拆成不同的离子组（实测 `H_3PO_4`：seed=0 得
+    `H^+ + H_2PO_4^-`，seed=1 得 `3H^+ + PO_4^{3-}`）。
+
+    修法不是"随便排个序"——排序键必须让**化学上更合理**的拆解先出现，
+    否则只是把随机性换成另一种任意性：
+      1. 电荷绝对值小者优先（逐级电离优先于一步脱光：`H_3PO_4` 应得
+         `H^+ + H_2PO_4^-`，不是 `3H^+ + PO_4^{3-}`）；
+      2. 元素数少者优先（简单阴离子优先于多原子阴离子）；
+      3. 化学式字典序兜底（纯为完全确定性）。
+    """
+    def key(an: str):
+        return (abs(charge_of(an)), len(elements_of(an)), an)
+    return sorted(T.anions, key=key)
+
+
 def _split_acid(name: str, T) -> dict | None:
     elems = elements_of(name)
     if "H" not in elems:
         return None
     n_h = elems["H"]
-    for an in T.anions:
+    for an in _anion_order(T):          # 确定性序，见 `_anion_order`
         q = -charge_of(an)
         if q <= 0 or n_h % q != 0:
             continue
@@ -248,7 +268,7 @@ def _split_salt(name: str, T):
         ec = elements_of(cat)
         if any(elems.get(k, 0) < v for k, v in ec.items()):
             continue
-        for an in T.anions:
+        for an in _anion_order(T):      # 确定性序，见 `_anion_order`
             qa = -charge_of(an)
             if qa <= 0:
                 continue

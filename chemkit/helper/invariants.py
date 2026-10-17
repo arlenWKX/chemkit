@@ -1,0 +1,326 @@
+"""**不变量审计**：抓"引擎在什么情况下于物理上不可能对"的三类错误。
+
+第 304 轮建立。动机来自第 303 轮的全面审查（`_audit/SUMMARY.md`）：
+套件 1283/1378 这个数字里混着三类**结构性假阳性**，而当时的检查一条都抓不到。
+
+三条不变量（都是**可以在不看真值的前提下**判定对错的）：
+
+  ① **尺度不变性**（`scale`）—— 同一浓度、同一配比的溶液，
+     改体积不能改变任何**强度量**（pH、各物种浓度、degree）。
+     体积是热力学的无关变量。反例：`GaCl3+4NaOH` 在 V=0.1…10 之间
+     pH 漂 6.1 个单位（`acidbase.dist_charge` 量纲错）。
+
+  ② **进程确定性**（`det`）—— 同一份代码、同一份数据、同一输入，
+     在不同 `PYTHONHASHSEED` 下必须给出**逐位相同**的结果。
+     反例：`normalize._split_salt` 遍历未排序的 `T.anions`，
+     `H_3PO_4` 在 seed=0 拆成 `H+ + H2PO4-`、seed=1 拆成 `3H+ + PO4^3-`。
+
+  ③ **输出守恒**（`cons`）—— 引擎**自己给出**的净方程式 / 分步方程式
+     必须元素与电荷守恒。注意这与 `eqcheck` 不同：`eqcheck` 校验的是
+     `tests.json` 里的**期望式**，本工具校验的是**引擎的实际输出**。
+     反例：`D43 Cl2+石灰乳` 输出 `Ca(OH)2 + Cl2 -> ClO- + Ca2+`，Cl 差 1。
+
+用法：
+    python -m chemkit.helper.invariants              # 三条全跑（用 tests.json）
+    python -m chemkit.helper.invariants scale        # 只跑尺度
+    python -m chemkit.helper.invariants det --n 40   # 只跑确定性，抽 40 例
+    python -m chemkit.helper.invariants cons         # 只跑守恒
+
+退出码：0 = 全部通过；1 = 有违规（供 CI / 发版门槛使用）。
+
+**为什么这三条值得单独立工具**：它们检查的是"引擎能不能自相矛盾"，
+而不是"引擎与某个外部真值差多少"。后者需要权威数据、会随数据更新而变；
+前者是逻辑同一性，永不过期，而且一旦违反，无论真值是什么都说明有 bug。
+"""
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:                                    # pragma: no cover
+    pass
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
+from chemkit.core import charge_of, elements_of       # noqa: E402
+
+# ---------------------------------------------------------------- 公共
+
+_TOL_PH = 0.02       # pH 分辨率：引擎 pH 保留 3 位小数，0.02 足够宽松
+_TOL_REL = 0.05      # 浓度相对容差（5%）——吸收数值路径的合理差异
+# 痕量门的**两层**设计（第 304 轮实测教训）：
+#   · `_TRACE`（绝对）= 1e-6 M：低于此浓度不参与比较。
+#   · `_TRACE_REL`（相对）= 1e-3：相对主量低于 0.1% 的物种也不比较。
+_TRACE = 1e-6
+_TRACE_REL = 1e-3
+
+
+def load_cases() -> list[dict]:
+    """读包内 tests.json（与 testsuit 同一份真值源）。"""
+    p = os.path.join(_ROOT, "chemkit", "data", "tests.json")
+    with open(p, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _subs_of(case: dict) -> dict:
+    raw = case.get("subs") or []
+    return dict(raw) if isinstance(raw, dict) else {k: v for k, v in raw}
+
+
+def _react(case: dict, V: float | None = None, T=None):
+    """按用例跑一次；`V` 给定时覆盖用例自带的体积。"""
+    import chemkit
+    subs = _subs_of(case)
+    cond = case.get("cond") or {}
+    v = V if V is not None else cond.get("V_L", 1.0)
+    tk = T if T is not None else cond.get("T_K", 298.15)
+    return chemkit.react(subs, V=v, T=tk)
+
+
+def _conc(final: dict, V: float) -> dict:
+    """呈现层 `final`（mol）→ 浓度（mol/L），滤掉痕量。"""
+    return {s: m / V for s, m in (final or {}).items() if m / V > _TRACE}
+
+
+# ------------------------------------------------- ① 尺度不变性
+
+def check_scale(cases: list[dict], factors=(0.1, 1.0, 10.0),
+                limit: int | None = None) -> list[dict]:
+    """同一**浓度**体系，体积放大/缩小 ⟹ 强度量必须不变。
+
+    做法：把用例的投料量与体积**同比缩放**（保持浓度不变），比较
+    pH、degree、changed 与各物种**浓度**。总摩尔数（广延量）理应随
+    体积线性变化，故不比较 mol，只比较 mol/L。
+
+    注意：气相也要比——泡点是**浓度**界（`c_sat = H·p`），同浓度就该同泡点，
+    与总体积无关。这正是它能抓住 `_equil_gas_phase` 里
+    `cap`（mol）与浓度混用那类错误的原因。
+    """
+    bad: list[dict] = []
+    use = cases[:limit] if limit else cases
+    for c in use:
+        subs0 = _subs_of(c)
+        if not subs0:
+            continue
+        cond = c.get("cond") or {}
+        V0 = cond.get("V_L", 1.0)
+        T0 = cond.get("T_K", 298.15)
+        base = None
+        for f in factors:
+            subs = {s: m * f for s, m in subs0.items()}
+            try:
+                r = _react({"subs": list(subs.items()),
+                            "cond": {"V_L": V0 * f, "T_K": T0}})
+            except Exception as e:                   # 引擎崩了也是缺陷
+                bad.append({"case": c["name"], "factor": f,
+                            "kind": "异常", "detail": f"{type(e).__name__}: {e}"})
+                continue
+            cur = {"pH": r.pH, "degree": r.degree, "changed": r.changed,
+                   "conc": _conc(r.final, V0 * f)}
+            if base is None:
+                base = (cur, f)
+                continue
+            b, bf = base
+            if (cur["pH"] is None) != (b["pH"] is None):
+                bad.append({"case": c["name"], "factor": f, "kind": "pH 有无",
+                            "detail": f"f={bf} → {b['pH']}, f={f} → {cur['pH']}"})
+            elif cur["pH"] is not None and abs(cur["pH"] - b["pH"]) > _TOL_PH:
+                bad.append({"case": c["name"], "factor": f, "kind": "pH 漂移",
+                            "detail": f"f={bf} → {b['pH']:.3f}, "
+                                      f"f={f} → {cur['pH']:.3f}"})
+            if cur["degree"] != b["degree"] or cur["changed"] != b["changed"]:
+                bad.append({"case": c["name"], "factor": f, "kind": "判定翻转",
+                            "detail": f"degree {b['degree']}→{cur['degree']}, "
+                                      f"changed {b['changed']}→{cur['changed']}"})
+            sp = set(cur["conc"]) | set(b["conc"])
+            _scale = max([abs(b["conc"].get(s, 0.0)) for s in sp]
+                         + [abs(cur["conc"].get(s, 0.0)) for s in sp] + [1e-12])
+            diff = []
+            for s in sorted(sp):
+                x, y = b["conc"].get(s, 0.0), cur["conc"].get(s, 0.0)
+                if max(abs(x), abs(y)) < _TRACE_REL * _scale:
+                    continue
+                if abs(x - y) > _TOL_REL * max(abs(x), abs(y), 1e-12):
+                    diff.append(f"{s}: {x:.4g}→{y:.4g}")
+            if diff:
+                bad.append({"case": c["name"], "factor": f, "kind": "浓度漂移",
+                            "detail": "; ".join(diff[:5])})
+    return bad
+
+
+# ------------------------------------------------- ② 进程确定性
+
+_DET_PROBE = r"""
+import json, sys
+sys.path.insert(0, {root!r})
+import chemkit
+from chemkit.converg import _result_digest
+out = []
+for c in json.loads({payload!r}):
+    try:
+        r = chemkit.react(dict(c["subs"]), V=c.get("V", 1.0), T=c.get("T", 298.15))
+        out.append({{"name": c["name"], "digest": _result_digest(r.raw),
+                     "pH": r.pH, "degree": r.degree}})
+    except Exception as e:
+        out.append({{"name": c["name"], "err": f"{{type(e).__name__}}: {{e}}"}})
+print(json.dumps(out))
+"""
+
+
+def check_det(cases: list[dict], seeds=("0", "1", "2"), limit: int | None = None,
+              digest_only: bool = False) -> list[dict]:
+    """同一输入在多个 `PYTHONHASHSEED` 下必须给出同一个结果。
+
+    **必须分进程跑**：`PYTHONHASHSEED` 在解释器启动时冻结，同进程改无效。
+    """
+    use = cases[:limit] if limit else cases
+    payload = []
+    for c in use:
+        cond = c.get("cond") or {}
+        subs = _subs_of(c)
+        payload.append({"name": c["name"],
+                        "subs": [list(kv) for kv in subs.items()],
+                        "V": cond.get("V_L", 1.0), "T": cond.get("T_K", 298.15)})
+    src = _DET_PROBE.format(root=_ROOT, payload=json.dumps(payload))
+    runs: dict = {}
+    for sd in seeds:
+        env = dict(os.environ)
+        env["PYTHONHASHSEED"] = sd
+        p = subprocess.run([sys.executable, "-X", "utf8", "-c", src],
+                           capture_output=True, text=True, encoding="utf-8",
+                           env=env, cwd=_ROOT)
+        if p.returncode != 0:
+            return [{"case": "<启动失败>", "kind": "子进程错误",
+                     "detail": (p.stderr or "")[-400:]}]
+        runs[sd] = json.loads(p.stdout)
+    bad: list[dict] = []
+    base_seed = seeds[0]
+    for i, row in enumerate(runs[base_seed]):
+        for sd in seeds[1:]:
+            other = runs[sd][i]
+            name = row.get("name", "?")
+            if row.get("err") or other.get("err"):
+                continue
+            if digest_only:
+                if row["digest"] != other["digest"]:
+                    bad.append({"case": name, "kind": "digest 不同",
+                                "detail": f"{base_seed}:{row['digest']} vs "
+                                          f"{sd}:{other['digest']}"})
+                continue
+            if row["digest"] != other["digest"]:
+                d = []
+                if abs((row.get("pH") or 0) - (other.get("pH") or 0)) > 1e-9:
+                    d.append(f"pH {row.get('pH')} vs {other.get('pH')}")
+                if row.get("degree") != other.get("degree"):
+                    d.append(f"degree {row.get('degree')} vs {other.get('degree')}")
+                bad.append({"case": name,
+                            "kind": "数值不同" if d else "仅摘要顺序不同",
+                            "detail": "; ".join(d) or
+                                      f"{row['digest'][:12]} vs {other['digest'][:12]}"})
+    return bad
+
+
+# ------------------------------------------------- ③ 输出守恒
+
+def _side_atoms(side: dict) -> tuple[dict, float]:
+    atoms: dict = {}
+    q = 0.0
+    for sp, coef in side.items():
+        for el, n in elements_of(sp).items():
+            atoms[el] = atoms.get(el, 0.0) + coef * n
+        q += coef * charge_of(sp)
+    return atoms, q
+
+
+def _conservation(ne) -> list[str]:
+    """净方程（Equation 结构）的元素与电荷守恒检查。返回违规描述。"""
+    la, lq = _side_atoms(ne.left)
+    ra, rq = _side_atoms(ne.right)
+    out = []
+    for el in sorted(set(la) | set(ra)):
+        a, b = la.get(el, 0.0), ra.get(el, 0.0)
+        # 相对容差：大系数允许 0.1% 的浮点残差，但绝不容忍"缺一个原子"。
+        if abs(a - b) > max(1e-6, 1e-3 * max(abs(a), abs(b))):
+            out.append(f"{el} 左{a:.4g} 右{b:.4g}（Δ{a - b:+.4g}）")
+    if abs(lq - rq) > max(1e-6, 1e-3 * max(abs(lq), abs(rq))):
+        out.append(f"电荷 左{lq:+.4g} 右{rq:+.4g}")
+    return out
+
+
+def check_cons(cases: list[dict], limit: int | None = None) -> list[dict]:
+    """引擎**输出**的净方程与分步方程必须元素 + 电荷守恒。
+
+    与 `helper.eqcheck` 的分工：eqcheck 验 `tests.json` 的**期望式**，
+    本函数验**引擎实际产出的式子**。
+    """
+    use = cases[:limit] if limit else cases
+    bad: list[dict] = []
+    for c in use:
+        try:
+            r = _react(c)
+        except Exception as e:
+            bad.append({"case": c["name"], "kind": "异常",
+                        "detail": f"{type(e).__name__}: {e}"})
+            continue
+        ne = r.net_equation
+        if ne is not None:
+            v = _conservation(ne)
+            if v:
+                bad.append({"case": c["name"], "kind": "净方程不守恒",
+                            "detail": "; ".join(v)})
+        for i, eq in enumerate(getattr(r, "equations", None) or [], 1):
+            v = _conservation(eq)
+            if v:
+                bad.append({"case": c["name"],
+                            "kind": f"分步方程#{i} 不守恒",
+                            "detail": "; ".join(v)})
+                break          # 每例只报第一条，避免同一病灶刷屏
+    return bad
+
+
+# ---------------------------------------------------------------- CLI
+
+_KINDS = {
+    "scale": ("① 尺度不变性", check_scale),
+    "det": ("② 进程确定性", check_det),
+    "cons": ("③ 输出守恒", check_cons),
+}
+
+
+def main(argv: list[str]) -> int:
+    args = list(argv)
+    limit = None
+    if "--n" in args:
+        i = args.index("--n")
+        limit = int(args[i + 1])
+        del args[i:i + 2]
+    picks = [a for a in args if a in _KINDS] or list(_KINDS)
+    verbose = "--all" in args
+    cases = load_cases()
+    if limit:
+        cases = cases[:limit]
+    total_bad = 0
+    print(f"不变量审计：{len(cases)} 例 · 检查 {', '.join(picks)}")
+    for key in picks:
+        title, fn = _KINDS[key]
+        bad = fn(cases)
+        total_bad += len(bad)
+        flag = "✓ 通过" if not bad else f"✗ {len(bad)} 条违规"
+        print(f"\n{title}  {flag}")
+        show = bad if verbose else bad[:12]
+        for b in show:
+            print(f"  · {b['case'][:34]:36} [{b['kind']}] {b['detail'][:100]}")
+        if len(bad) > len(show):
+            print(f"  … 另有 {len(bad) - len(show)} 条（--all 全列）")
+    print(f"\n===== 违规合计 {total_bad} 条 =====")
+    return 0 if total_bad == 0 else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
