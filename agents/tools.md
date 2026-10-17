@@ -36,8 +36,8 @@ python -m chemkit.testsuit <verb> [args]        # 等价旧写法（薄转发，
 | **T0 不跑** | 只改文档/日志/注释；或作用域可证为空 | — | 0 |
 | **T1 定向** | 改动只波及**可枚举**的用例（某族化学、某前缀、某数据条目） | `suite <前缀…>` + `case <前缀>` | 秒级 |
 | **T2 全量（锚定）** | 引擎**公共热路径/公共判据**改动（`speciation`/`engine`/`templates`/`candidates`） | `suite` | ~70 s |
-| **T3 落盘验收** | 提交前 | T2 + 未锚定约定 + `eqcheck` + `hygiene` | ~3 min |
-| **T3+ 发版** | 版本号变更 | T3 + `hess_audit`（带温度）+ `data_audit` + `db_matrix` | ~5 min |
+| **T3 落盘验收** | 提交前 | T2 + 未锚定约定 + `eqcheck` + `invariants cons` + `hygiene` | ~5 min |
+| **T3+ 发版** | 版本号变更 | T3 + `invariants`（四条全跑）+ `hess_audit`（带温度）+ `data_audit` + `db_matrix` | ~10 min |
 
 **跑 T2 之前先写一句"为什么必须全量"**（作用域真的不可枚举？）；
 写不出来就退回 T1。
@@ -95,6 +95,7 @@ python -m chemkit.helper.jsondb normalize chemkit/data/*.json   # 统一口径�
 |---|---|
 | `readback` | **读留档**：失败清单 / 单例详情 / 残差榜 |
 | `eqcheck` | 全库方程**精确守恒**（发版前固定动作） |
+| **`invariants`** | **不变量审计**（第 304 轮建、第 307 轮加第 4 条）：`scale` 尺度不变 / `det` 进程确定性 / `cons` 输出守恒 / **`heat` 绝热放热恒定**（锁封闭体系隔离逸出焓差）。退出码 0/1，`--jobs N` 并行、`--n <例数>` 抽样。实测：cons 31 条、**heat 0 条**、det 0 条 |
 | `hess_audit` | **Hess 自洽**，**必须带温度**（`--T 273.15 --T 363.15 --with-templates`） |
 | `data_audit` | 表内自洽：守恒/电子数/重复/冲突 |
 | `db_matrix` | 跨表完备性（按用例触达数排序，是数据库扩充路线图） |

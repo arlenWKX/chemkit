@@ -3,13 +3,15 @@
 ## 1. 怎么跑
 
 ```bash
-python -m chemkit.testsuit                  # 全量：1176 用例 + 内部自检 + 环闭合
+python -m chemkit.testsuit suite            # 全量：1378 用例 + 内部自检 + 环闭合
+python -m chemkit.testsuit help             # 全部子命令
 python -m chemkit.testsuit -h               # 用法
 python -m chemkit.testsuit my.json          # 自定义用例库
-python -m chemkit.testsuit --out result.json  # 结构化结果（cases/summary/checks）
+python -m chemkit.testsuit suite --out run.txt  # 把控制台输出同时写入文件
+# 结构化 JSON 是自动留档的 logs/suite-latest.json（helper/readback.py 读它）
 ```
 
-**1299 条断言** = 1378 条化学用例 + 123 条内部自检（温度域校验、酸碱地基
+**1501 条断言** = 1378 条化学用例 + 123 条内部自检（温度域校验、酸碱地基
 断言、高层 API 自检 22 通道、环闭合检查）。
 
 用例库的写法约定：断言键**出现即断言、不出现即不管**；`has` 是下限、

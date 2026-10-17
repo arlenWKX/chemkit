@@ -103,27 +103,26 @@ python -m chemkit.testsuit anchor off; python -m chemkit.testsuit suite; python 
 | A1★ | ✅ **第 306 轮已 adjudication** | `case_api` 的 `ok16` 断言「热层气相拆分 CaCO3+HCl」**恒失败**：旧窗 `0.6 ≤ heat ≤ 1.0`、`1.5 ≤ dT ≤ 2.5`，而引擎给 `heat = 0.251`、`dT = 0.599` | 旧窗既不包引擎真值也不含任何独立手算值。三条独立途径定真值：① 表内 ΔHf 自洽（CaCO₃→CaO+CO₂ 算 +178.32 vs 文献 +178.3 逐位吻合）；② 离子方程式手算 `CaCO₃+2H⁺→Ca²⁺+CO₂+H₂O` = −35.54 kJ/mol ⟹ 封闭 1.777 kJ；③ 开放口径 = 1.777 − 0.946（0.0466 mol CO₂ 脱气吸热 20.29 kJ/mol）= 0.251 kJ。新窗 `[0.2,0.3]/[0.45,0.75]` ⟹ `case_api` 22/22 |
 | A2★ | ✅ **第 306 轮已修（B1 同）** | 焓记账静默丢项（`thermo.py`）：`accounted` 只取「有 ΔHf 的物种」，`[CaCl]⁺`（ΔHf=None）被**无声丢弃**且不报 `missing`（旧门槛 `TRACE_MOL=1e-3`）⟹ 钙的正电荷焓从账上消失 | 改为缺 ΔHf 一律**按 0 计入 + 全部列入 `missing`**（无量级门槛）。验收：V=0.05 `heat=None → -0.344` 且 `missing=['[CaCl]^+']`；missing 不再随浓度跳变（修前 0.05 报/0.1 不报）；全库 `heat=None` 仅剩 30 例且全为 H/O 不闭合；套件 1284 零回归 |
 | A3★ | ✅ **第 306 轮已处置** | 缺失数据的规模：`beta.json` 244 条配离子中 238 条无 ΔHf；`ksp.json` 230 条固体中 134 条无。实测族相关 685 物种缺 449（65.5%） | **补数据路不可行**：可由表内 dH 热力学循环推导的**只有 2 个**（beta 仅 8 条有 dH 且需反应物两侧都有 ΔHf）——配离子/复盐生成焓极少测定。故走"按 0 + 显式报告"（见 A2），`missing` 现在全量可见（560 例有热值且 missing 非空） |
+| A4 | ✅ **第 307 轮已修** | `docs/testing.md`：① 用法写「无子命令跑全量」（实际只打帮助）；② `--out` 注释说是结构化 JSON（实际是把控制台输出同时写文件，结构化的是留档 `logs/suite-latest.json`）；③ 「1299 条断言」；④ 「1176 用例」 | 改为 `suite` 子命令 + 留档说明；断言数 1378+123=**1501**；用例数 **1378** |
+| A7 | ✅ **第 307 轮已注明** | `docs/performance.md` 称 `converg-baseline.json`「受版本控制」，该文件**不存在且未跟踪** | 就地注明「当前不存在且未跟踪」 |
+| A8 | ✅ **第 307 轮已注明** | `docs/performance.md` 引用 `testsuit perf` 子命令，`_VERBS` 里没有 `perf` | 就地注明「`_VERBS` 里没有 `perf` ⟹ 该流程不可用」 |
+| A9 | ✅ **第 307 轮已更新** | `docs/performance.md` 全表基线差一个量级（`iters_total 16217`、`p99 146`、`resid max 10.036`、`n=33/88`、`sof_total 1276641`） | 现值实测：`iters_total 31404`、`p99 220`、`resid p50/p90/max = 0.000/0.168/6.835`、`n(\|S\|>1)/n(\|S\|>0.1) = 28/157`；`sof_total` 标注「该口径已停采」 |
+| A10 | ✅ **第 307 轮已更新** | `docs/limitations.md`「通过 1284/1378」 | 现值 **1286/1378** + 内部自检 123/123 + 合计 1409/1501 |
+| A11 | ✅ **第 307 轮已修** | `README.md`「当前版本 0.5.56」 | **0.6.6** |
+| A12 | ✅ **第 307 轮已修** | `README.md`「logβ 194」 | **244** |
+| A13 | ✅ **第 307 轮已修** | `README.md` 示例 `r.escaped`（v0.6.0 已改名 `gas`） | `r.gas` |
+| A14 | ✅ **第 307 轮已修** | `README.md` 的 `gas_escape` 仍写「自产气体逸出」（第 302 轮已取消该语义） | 改为「气体逸出开闭（投料与自产同等遵守泡点）」 |
+| A15 | ✅ **第 307 轮已修** | `README.md` 1 处 + `docs/index.md` 3 处指向已删除的 `agents/handoff.md` | 全部改指 `agents/START.md` |
+| A16 | ✅ **第 307 轮已修** | `docs/limitations.md` 6 处指向已删除的 `docs/issues.md` | 改指 `agents/START.md` §5 并注明原文件已删 |
+| A17 | ✅ **第 307 轮已修** | `README.md` 环境变量块写 `CHEMKIT_TRACE`（引擎读 `CHEM_TRACE`，全仓 `CHEMKIT_TRACE` 0 命中） | 改为 `CHEM_TRACE` |
+| A18 | ✅ **第 307 轮已更正** | `docs/changelog.md` 仍写「泡点只约束自产气体 / `cap_eff = max(c_sat·V, 投料量)`」（第 302 轮已废除） | 就地更正为「投料与自产同等遵守泡点，豁免已废除」。**patch 版（0.6.4–0.6.6）按本文件自述不单列**，逐轮记于 `log.md` |
+| A19 | ✅ **第 307 轮已更正** | `docs/architecture.md` 同上，且 `fed` 是死参数 | 就地更正 + 标注 `fed` 函数体 0 次读取 |
+| A20 | ✅ **第 307 轮已注明** | 引用已删除的 `tools/*.py`（`sof_ab`/`frozen_audit` 等 7 处） | 就地标注「已随 `tools/` 删除」并给出现行替代（`helper/readback.py`） |
+| A21 | ✅ **第 307 轮已修** | `docs/data.md`「`tests.json` 1176」 | 改为 **1378**，并注明 1176 是第 147 轮的历史值 |
+| A22 | ✅ **第 307 轮已修** | 本文件原有两个 `## 6`、编号重复 | §5 改为「问题登记与修复状态」，章节重编号为 5/6/7 |
 | T4★ | ✅ **第 307 轮已重裁** | `LT4`/`LT8`（NaAlO₂ 溶液 pH）断言窗 `[12.2,13.0]`/`[12.7,13.3]` **包住错误推导值（12.63/13.045）、排除正确值（9.40/9.75）**——note 用错公式（把固相生成平衡的水解式当弱碱电离式）且与其 `has_not: Al(OH)_3` 前提互斥 | 三条独立途径定真值（引擎精确解 9.4000/9.7495；无固相弱碱式 `Kb = β₃/β₄ = 6.31e-9` ⟹ 9.3999/9.7495；`react()` 9.40/9.75）。新窗 `[9.1,9.7]/[9.45,10.05]`（不包旧值）⟹ 套件 **+2 = 1286/1378** |
-| A4 | `docs/testing.md:6,9,12` | ① 用法仍写 `python -m chemkit.testsuit`（无子命令）跑全量，**实际无参数只打印帮助**；② `--out result.json` 注释为「结构化结果（cases/summary/checks）」，**实际 `--out` 是把控制台输出同时写入文件**（文本，非结构化）；结构化 JSON 是自动留档的 `logs/suite-latest.json`；③ 「**1299 条断言**」应为 1378+122=**1500**；④「1176 用例」应为 **1378** | 逐条跑过/读过代码 |
-| A5★ | `chemkit/testsuit.py:1158` | 「合计」双重扣减：`passed = PASS_N - _p0 - len(_new)`，而 `_new` 里的失败项**本来就没进** `PASS_N` ⟹ 每个失败扣 2。打印 `1405/1501` 实际应为 `1404/1500` | 复刻 `main` 的计数逻辑，用 1 个失败用例 + 三电池得 `122/124 · 辅助 121/122`（正确值为 `122/123`） |
 | A5★ | ✅ **第 305 轮已修** | 同上；改为 `PASS_N - _p0` | 修后实测 `辅助 122/123`、合计 `1406/1501`（与用例 1284/1378 逐项自洽） |
 | A6 | `chemkit/testsuit.py:1792` | `python -m chemkit.testsuit --out X`（只有 `--out` 无子命令）**抛 `IndexError`** | 已复现 traceback |
-| A7 | `docs/testing.md:83`、`docs/performance.md:37-38` | 都称 `converg-baseline.json` **受版本控制**；实际**文件不存在且未跟踪**（第 303 轮清理时删了） | `os.path.exists` = False、`git ls-files` 空 |
-| A8 | `docs/performance.md:37,43` | 引用 `python -m chemkit.testsuit perf` 子命令；`_VERBS` 里**没有 `perf`**（只有 anchor/case/cmp/eqcheck/hygiene/patch/run/snapshot/suite） | 已打印 `_VERBS` |
-| A9 | `docs/performance.md` 全表基线 | `iters_total 16217`、`iters_p99 146`、`resid_p50/p90/max = 0/0.015/10.036`、`n(\|S\|>1)/n(\|S\|>0.1) = 33/88`、`sof_total 1276641` —— 与现状差一个量级 | 现测：`iters_total 31326`、`iters_p99 218`、`resid_live` p50/p90/max = `0/0.166/6.835`、`n(\|S\|>1) = 28`、`n(\|S\|>0.1) = 157` |
-| A10 | `docs/limitations.md:9` | 「通过 **1284/1378**」——第 304 轮后**这个数又对了**（现测 1284），但文档里的「合计 1501」仍是错的（应 1500） | 现测 |
-| A11 | `README.md:32` | 「当前版本 **0.5.56**」应为 **0.6.2** | `chemkit.__version__` |
-| A12 | `README.md:27` | 「logβ 194」应为 **244** | `len(beta.json)` |
-| A13 | `README.md:81` | 示例 `r.pH, r.escaped` —— **`Reaction` 已无 `escaped` 属性**（v0.6.0 改名 `gas`） | `hasattr(r,"escaped") = False`、`hasattr(r,"gas") = True` |
-| A14 | `README.md:72` | `gas_escape` 描述仍为「自产气体逸出」；该语义已于第 302 轮取消（投料与自产同等遵守泡点，且逸出不销毁物质） | `docs/api.md` 已更新，README 未跟 |
-| A15 | `README.md:119`、`docs/index.md:28,39` | 指向 **`agents/handoff.md`（文件已删除）** 共 4 处死链 | 文件不存在；`docs/index.md` 内 3 处 |
-| A16 | `docs/limitations.md` | 指向 **`docs/issues.md`（已删除）** 共 6 处死链 | 文件不存在 |
-| A17 | `README.md` 环境变量块 | `CHEMKIT_TRACE=1` 无效 —— 引擎读的是 **`CHEM_TRACE`**（无 `KIT`） | 代码里 `CHEMKIT_TRACE` 出现 0 次 |
-| A18 | `docs/changelog.md` | ① 「0.1.0 – 0.3.0 无记录」**错误**：旧 changelog 最早到 **0.3.1**（实际缺失是 0.3.0 以前）、且 git 首个 `__init__.py` 版本串是 **`3.0.0`** 不是 0.6.0；② 0.6.0/0.5.0 段**大量行被截断**（半句话结尾，共 11 处，如「…旧的"超泡点即永久删除"（`escaped` 账户）」）；③ 0.6.0 仍写「泡点只约束自产气体 / `cap_eff = max(c_sat·V, 投料量)`」，第 302 轮已废除；④ 第 302 轮的泡点对称化**无任何条目** | 逐条核对旧档与代码 |
-| A19 | `docs/architecture.md:312` | 同上：仍写「**泡点只约束自产气体**：投料量用 `cap_eff = max(c_sat·V, 投料量)`」；`_equil_gas_phase` 的 `fed` 参数**已完全不再使用**（函数体 `fed` 出现 0 次） | 读函数体 |
-| A20 | `docs/testing.md:49`、`docs/performance.md:6,30,59`、`docs/limitations.md:14,19,40` | 引用已删除的 `tools/fragility.py`、`tools/sof_ab.py`、`tools/frozen_audit.py`、`tools/flip_census.py`、`tools/osc.py`、`tools/hydrate_audit.py` | 7 处 |
-| A21 | `docs/data.md:19,247` | 「`tests.json` 1176」应为 **1378**；第 247 行「使套件 1284 → **1176**」是历史记录，方向与现值都需要注明 | `len(tests.json)` |
-| A22 | `agents/START.md`（本文件） | 已修：版本 0.6.1→0.6.2、补辅助检查行。另有**两个 `## 6`**（待办 / 别重复踩），编号重复 | `grep '^## '` 可见 |
 
 ### B. 引擎层面（**未改**，仅登记）
 
@@ -132,7 +131,7 @@ python -m chemkit.testsuit anchor off; python -m chemkit.testsuit suite; python 
 | B1★ | `chemkit/thermo.py:176` | 见 A2/A3：无 ΔHf 的物种被**静默**剔除。正确行为应是**在 `missing` 里报出**（哪怕量小），或按同族/同电荷近似并打 `flags` | 详情见 A2 |
 | B2 | `chemkit/data.py:274-278` | 池判据留了 **3 个对拍开关**（`CHEMKIT_POOL_LEGACY` / `CHEMKIT_POOL_T` / `CHEMKIT_POOL_VARIANT`，含 3 个变体分支）。第 297 轮已定最小版为默认 ⟹ 属**遗留实验脚手架**，应评估删除（连带 `_VARIANT` 的 `any_lt1` / `any_lt1_or_single` 分支） | 读代码 |
 | B3 | `chemkit/engine.py:1368,1388` | `gsup` 只剩**注释**（代码已删），但 `_equil_gas_phase` 的 `fed` / `fed_gas` 仍在签名与调用点传参而**函数体不用** —— 死参数 | `fed` 在函数体出现 0 次 |
-| B4 | `chemkit/version` | 内容 **`0.5.2`**（陈旧，与 `__version__ = 0.6.2` 不一致），且**全仓无任何读取者** | `grep` 无命中 |
+| B4 | ✅ **第 307 轮已删除** | `chemkit/version` 内容 `0.5.2`（陈旧，与 `__version__` 不一致），全仓**无任何读取者**，打包配置也未引用 | `git rm chemkit/version`；`git grep chemkit/version` 仅剩本登记条目 |
 | B5 | `chemkit/testsuit.py:763` `_perf_buckets` | 空列表即 `IndexError`（`srt[n//2]`）。正常路径不会空，但探针/子集场景会崩 | 已复现 |
 
 ### C. 断言与化学（95 例失败的分类，供第 304 轮用）

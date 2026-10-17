@@ -24,12 +24,12 @@ r.pH                              # 终态 pH
 | | |
 |---|---|
 | 化学范围 | 酸碱/缓冲、沉淀溶解、配位、氧化还原、气体逸出、绝热热效应 |
-| 数据规模 | 电对 163 · pKa 89 · Ksp 230 · logβ 194 · ΔHf 329 · 化合物附加属性 201 |
+| 数据规模 | 电对 163 · pKa 89 · Ksp 230 · logβ 244 · ΔHf 329 · 化合物附加属性 201 |
 | 元素覆盖 | 数据表 79 种元素；未收录元素经元素周期表级拆盐兜底仍可电离入账 |
 | 回归套件 | 1378 条化学用例 + 123 项内部自检；两套 pKw 约定（锚定/未锚定）均须通过 |
 | 依赖 | 无（含手写精确有理数配平） |
 
-当前版本 **0.5.56**。
+当前版本 **0.6.6**。
 
 ## 安装与自检
 
@@ -69,7 +69,7 @@ sys.feeds, sys.history, sys.result                   # 投料账 / 历次结果 
 | `p` | 外界气压（kPa），影响气体逸出阈值 | 101.3 |
 | `isothermal` | `True` 恒温；`False` 绝热耦合（温度不动点迭代） | True |
 | `kinetics` | 动力学层；`False` = 纯热力学基线（无限时间） | True |
-| `gas_escape` | 自产气体逸出；`False` = 闭口体系 | True |
+| `gas_escape` | 气体逸出开闭（投料与自产同等遵守泡点；`False` = 闭口体系） | True |
 | `tables` | 自定义数据表 | 包内单例 |
 
 ### 结果对象：`Reaction`
@@ -78,7 +78,7 @@ sys.feeds, sys.history, sys.result                   # 投料账 / 历次结果 
 r.changed / r.reacted / r.degree      # 判定层：有无净变化 / 是否狭义化学反应 / 2·1·0
 r.consumption / r.production          # 净消耗 / 净生成 {化学式: mol}
 r.initial / r.final                   # 初态（post-normalize）/ 终态组成
-r.pH, r.escaped                       # 终态 pH；逸出气相
+r.pH, r.gas                           # 终态 pH；气相存量 {化学式: mol}
 r.net_equation, r.net_equation_raw    # 总净方程（精编 / 原始），Equation 结构
 r.equations, r.steps                  # 分步方程式；走步过程（logK / S / extent / chem）
 r.annotations, r.override             # 标注（slow / blocked）；命中的 OVERRIDE 通道
@@ -101,7 +101,7 @@ r.raw                                 # 引擎原始 dict（含 H_excess 等记�
 ```bash
 CHEMKIT_SIT=0        python -m chemkit.testsuit suite   # 关离子强度层（回到全 I→0 口径）
 CHEMKIT_CL_BETA=0    python -m chemkit.testsuit suite   # 关氯合络合数据
-CHEMKIT_TRACE=1      python -m chemkit.testsuit case EU01   # 走步轨迹（pick/冻结/微步）
+CHEM_TRACE=1         python -m chemkit.testsuit case EU01   # 走步轨迹（pick/冻结/微步）
 ```
 
 ## 文档
@@ -116,7 +116,7 @@ CHEMKIT_TRACE=1      python -m chemkit.testsuit case EU01   # 走步轨迹（pic
 | [`docs/performance.md`](docs/performance.md) | 性能口径与实测指标 |
 | [`docs/limitations.md`](docs/limitations.md) | 已知局限 |
 | [`docs/changelog.md`](docs/changelog.md) | 版本历史 |
-| [`agents/handoff.md`](agents/handoff.md) | 项目当前状态与待办（开发向） |
+| [`agents/START.md`](agents/START.md) | 项目当前状态与待办（开发向） |
 
 ## 许可
 

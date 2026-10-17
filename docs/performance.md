@@ -3,7 +3,7 @@
 ## 1. 口径：裁决性能改动用确定性计数，不用墙钟
 
 共享/沙箱环境里墙钟的第一遍惩罚可达 **27%**：同一份代码在同一进程内跑三遍
-全量得到 53.6 s（首遍）/ 40.3 s / 42.1 s（`tools/sof_ab.py`，首末两遍是同
+全量得到 53.6 s（首遍）/ 40.3 s / 42.1 s（历史工具 `tools/sof_ab.py`，已随 `tools/` 目录删除；现值见下），首末两遍是同
 一份**旧**代码，`iters`/`steps`/逐例 digest 完全一致）。所以跨时间比较均值
 （"这轮 30.8 还是 33.9 ms"）没有意义。
 
@@ -27,24 +27,24 @@
 > 以 `no-cands` 退出，指标却报另一条 `|S| = 0.0 / 已达平衡` 的候选 ⟹ 全绿而化学
 > 错在主产物上。现在只有 `|S| ≤ 0.1`（与 `n(|S|>0.1)` 同一把尺子）的冻结通道才
 > 豁免。修口径后 `n(|S|>1)` 由 22 → **44**、`n(|S|>0.1)` 由 56 → **101**：
-> 这就是此前被冻掉的真实欠收敛规模（`tools/frozen_audit.py` 提供逐条来源）。
+> 这就是此前被冻掉的真实欠收敛规模（历史工具 `tools/frozen_audit.py` 已删；现由 `chemkit/helper/readback.py` 读留档提供逐条来源）。
 
 逐例判读同理：**不要用 dump 里的 `ms`**（含 GC 停顿，单例可被放大数千倍），
 用 `iters` / `steps` / `sof`。
 
 ## 2. 当前基线
 
-权威来源是受版本控制的 `converg-baseline.json`（`python -m chemkit.testsuit perf --write`
-刷新，`python -m chemkit.testsuit perf` 与 HEAD 逐项对账）：
+权威来源是受版本控制的 `converg-baseline.json`（该文件当前**不存在且未跟踪**；原用 `python -m chemkit.testsuit perf --write`
+刷新，而 `_VERBS` 里**没有 `perf`** 子命令 ⟹ 该流程不可用）：
 
 | 指标 | 值 |
 |---|---|
 | n | 1378 |
-| iters_total | 16217 |
-| iters_p99 | 146 |
-| sof_total | 1276641 |
-| resid_p50 / p90 / max | 0.0 / 0.015 / **10.036** |
-| n(\|S\|>1) / n(\|S\|>0.1) | 33 / 88 |
+| iters_total | 31404 |
+| iters_p99 | 220 |
+| sof_total | *（该口径已停采，现无此统计）* |
+| resid_p50 / p90 / max | 0.000 / 0.168 / **6.835** |
+| n(\|S\|>1) / n(\|S\|>0.1) | 28 / 157 |
 | digest_all | `fe15ddf367b33414` |
 
 墙钟（仅参考，不作门槛）：均值 **30.6 ms**、中位 15.0 ms、P90 47.8 ms
@@ -56,7 +56,7 @@
 **32.0 → 7.1**。这正是"性能手段的隐性代价"（[`../agents/log.md`](../agents/log.md) X-39）
 的对账方式：**先问它藏了什么，再问它省了多少**。
 
-残差尾部的构成（`tools/frozen_audit.py` 与探针 `resid_src` 可逐条查来源）：
+残差尾部的构成（`tools/frozen_audit.py` 已删；现由 `helper/readback.py` 与探针 `resid_src` 可逐条查来源）：
 `|S|` 最大的一批多为**痕量伪驱动**（`ext_max ≈ 1e-3` 的反应物池 + 巨大 `|S|`，
 如 Cu(I) 痕量物种）；真正需要化学裁决的是**可动量大且 `|S| > 1`** 的那一批。
 

@@ -25,7 +25,7 @@
 
 | 我想…… | 读 |
 |---|---|
-| 知道项目现在什么状态、接下来做什么 | [`../agents/handoff.md`](../agents/handoff.md) |
+| 知道项目现在什么状态、接下来做什么 | [`../agents/START.md`](../agents/START.md) |
 | 改数据或做测量（唯一可信路径、测量点自检、逐例单跑） | [`../agents/discipline.md`](../agents/discipline.md) |
 | 查缺陷类别与判断方法 | [`../agents/lessons.md`](../agents/lessons.md) |
 | 用审计工具与"一轮"的固定协议 | [`../agents/tools.md`](../agents/tools.md) |
@@ -36,7 +36,7 @@
 1. **README 不做细节**：新增细节写进这里的对应文件，README 最多加一行指针。
 2. **一个事实只写一处**：数据规模 → `data.md`；性能口径与指标 → `performance.md`；
    基线与发版门槛 → `testing.md`；版本历史 → `changelog.md`；
-   当前状态与待办 → `agents/handoff.md`。
+   当前状态与待办 → `agents/START.md`。
 3. **数字必须可复现**：文档里的规模/指标都从代码或数据本身现采（有对应的探针），
    不凭记忆写；采集方式写在 `agents/tools.md`。
 4. **失败实验必须留档**：证伪过的路线（含实测数字）写进 `agents/lessons.md`
