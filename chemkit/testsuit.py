@@ -1154,8 +1154,13 @@ def main(cases_path: str | None = None, out_path: str | None = None,
         _f0, _p0 = len(FAILS), PASS_N
         _fn()
         _new = list(FAILS[_f0:])
+        # A5（T10a）：`passed` 不许再扣 `len(_new)`——失败项**本来就没进**
+        # `PASS_N`（每处判定都是 `if ok: PASS_N += 1 else: FAILS.append`），
+        # 再扣一次等于每个失败扣 2。实测后果：单电池失败一条即
+        # `121/122`（真值 `122/123`），全量合计 `1405/1501`（真值
+        # `1404/1500`）；分子分母同时错且自洽，无法自查。
         CHECKS.append({"name": _nm, "ok": not _new,
-                       "passed": PASS_N - _p0 - len(_new), "fails": _new})
+                       "passed": PASS_N - _p0, "fails": _new})
     n_case = len(RESULTS)
     n_case_ok = sum(1 for r in RESULTS if r["ok"])
     n_chk = sum(c["passed"] + len(c["fails"]) for c in CHECKS)

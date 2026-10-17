@@ -25,6 +25,7 @@
     python -m chemkit.helper.invariants scale        # 只跑尺度
     python -m chemkit.helper.invariants det --n 40   # 只跑确定性，抽 40 例
     python -m chemkit.helper.invariants cons         # 只跑守恒
+    python -m chemkit.helper.invariants cons --jobs 8 # 并行（默认 min(4, cpu)）
 
 退出码：0 = 全部通过；1 = 有违规（供 CI / 发版门槛使用）。
 
@@ -88,6 +89,31 @@ def _conc(final: dict, V: float) -> dict:
     return {s: m / V for s, m in (final or {}).items() if m / V > _TRACE}
 
 
+def _jobs() -> int:
+    """并行 worker 数：默认 min(4, cpu)；`--jobs N` 或 `CHEMKIT_JOBS` 覆盖。
+
+    与 testsuit 同一范式（`ProcessPoolExecutor`）。scale/cons 的每条用例
+    互相独立（各跑自己的 react），并行安全；已实测逐例结果与串行一致。
+    """
+    import argparse
+    p = argparse.ArgumentParser(add_help=False)
+    p.add_argument("--jobs", type=int, default=0)
+    try:
+        ns, _ = p.parse_known_args()
+        if ns.jobs > 0:
+            return ns.jobs
+    except SystemExit:                           # pragma: no cover
+        pass
+    env = os.environ.get("CHEMKIT_JOBS")
+    if env:
+        try:
+            if int(env) > 0:
+                return int(env)
+        except ValueError:
+            pass
+    return max(1, min(4, os.cpu_count() or 1))
+
+
 # ------------------------------------------------- ① 尺度不变性
 
 def check_scale(cases: list[dict], factors=(0.1, 1.0, 10.0),
@@ -104,53 +130,68 @@ def check_scale(cases: list[dict], factors=(0.1, 1.0, 10.0),
     """
     bad: list[dict] = []
     use = cases[:limit] if limit else cases
+    jobs = _jobs()
+    if jobs > 1 and len(use) > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=jobs) as ex:
+            for row in ex.map(_scale_one, use, [factors] * len(use)):
+                bad.extend(row)
+        return bad
     for c in use:
-        subs0 = _subs_of(c)
-        if not subs0:
+        bad.extend(_scale_one(c, factors))
+    return bad
+
+
+def _scale_one(case: dict, factors=(0.1, 1.0, 10.0)) -> list[dict]:
+    """单例尺度检查（worker 入口；`factors` 必须显式传入——模块级函数
+    看不到 `check_scale` 的局部变量，Windows spawn 下闭包也不可用）。"""
+    bad: list[dict] = []
+    subs0 = _subs_of(case)
+    if not subs0:
+        return bad
+    cond = case.get("cond") or {}
+    V0 = cond.get("V_L", 1.0)
+    T0 = cond.get("T_K", 298.15)
+    base = None
+    for f in factors:
+        subs = {s: m * f for s, m in subs0.items()}
+        try:
+            r = _react({"subs": list(subs.items()),
+                        "cond": {"V_L": V0 * f, "T_K": T0}})
+        except Exception as e:                   # 引擎崩了也是缺陷
+            bad.append({"case": case["name"], "factor": f,
+                        "kind": "异常", "detail": f"{type(e).__name__}: {e}"})
             continue
-        cond = c.get("cond") or {}
-        V0 = cond.get("V_L", 1.0)
-        T0 = cond.get("T_K", 298.15)
-        base = None
-        for f in factors:
-            subs = {s: m * f for s, m in subs0.items()}
-            try:
-                r = _react({"subs": list(subs.items()),
-                            "cond": {"V_L": V0 * f, "T_K": T0}})
-            except Exception as e:                   # 引擎崩了也是缺陷
-                bad.append({"case": c["name"], "factor": f,
-                            "kind": "异常", "detail": f"{type(e).__name__}: {e}"})
+        cur = {"pH": r.pH, "degree": r.degree, "changed": r.changed,
+               "conc": _conc(r.final, V0 * f)}
+        if base is None:
+            base = (cur, f)
+            continue
+        b, bf = base
+        if (cur["pH"] is None) != (b["pH"] is None):
+            bad.append({"case": case["name"], "factor": f, "kind": "pH 有无",
+                        "detail": f"f={bf} → {b['pH']}, f={f} → {cur['pH']}"})
+        elif cur["pH"] is not None and abs(cur["pH"] - b["pH"]) > _TOL_PH:
+            bad.append({"case": case["name"], "factor": f, "kind": "pH 漂移",
+                        "detail": f"f={bf} → {b['pH']:.3f}, "
+                                  f"f={f} → {cur['pH']:.3f}"})
+        if cur["degree"] != b["degree"] or cur["changed"] != b["changed"]:
+            bad.append({"case": case["name"], "factor": f, "kind": "判定翻转",
+                        "detail": f"degree {b['degree']}→{cur['degree']}, "
+                                  f"changed {b['changed']}→{cur['changed']}"})
+        sp = set(cur["conc"]) | set(b["conc"])
+        _scale = max([abs(b["conc"].get(s, 0.0)) for s in sp]
+                     + [abs(cur["conc"].get(s, 0.0)) for s in sp] + [1e-12])
+        diff = []
+        for s in sorted(sp):
+            x, y = b["conc"].get(s, 0.0), cur["conc"].get(s, 0.0)
+            if max(abs(x), abs(y)) < _TRACE_REL * _scale:
                 continue
-            cur = {"pH": r.pH, "degree": r.degree, "changed": r.changed,
-                   "conc": _conc(r.final, V0 * f)}
-            if base is None:
-                base = (cur, f)
-                continue
-            b, bf = base
-            if (cur["pH"] is None) != (b["pH"] is None):
-                bad.append({"case": c["name"], "factor": f, "kind": "pH 有无",
-                            "detail": f"f={bf} → {b['pH']}, f={f} → {cur['pH']}"})
-            elif cur["pH"] is not None and abs(cur["pH"] - b["pH"]) > _TOL_PH:
-                bad.append({"case": c["name"], "factor": f, "kind": "pH 漂移",
-                            "detail": f"f={bf} → {b['pH']:.3f}, "
-                                      f"f={f} → {cur['pH']:.3f}"})
-            if cur["degree"] != b["degree"] or cur["changed"] != b["changed"]:
-                bad.append({"case": c["name"], "factor": f, "kind": "判定翻转",
-                            "detail": f"degree {b['degree']}→{cur['degree']}, "
-                                      f"changed {b['changed']}→{cur['changed']}"})
-            sp = set(cur["conc"]) | set(b["conc"])
-            _scale = max([abs(b["conc"].get(s, 0.0)) for s in sp]
-                         + [abs(cur["conc"].get(s, 0.0)) for s in sp] + [1e-12])
-            diff = []
-            for s in sorted(sp):
-                x, y = b["conc"].get(s, 0.0), cur["conc"].get(s, 0.0)
-                if max(abs(x), abs(y)) < _TRACE_REL * _scale:
-                    continue
-                if abs(x - y) > _TOL_REL * max(abs(x), abs(y), 1e-12):
-                    diff.append(f"{s}: {x:.4g}→{y:.4g}")
-            if diff:
-                bad.append({"case": c["name"], "factor": f, "kind": "浓度漂移",
-                            "detail": "; ".join(diff[:5])})
+            if abs(x - y) > _TOL_REL * max(abs(x), abs(y), 1e-12):
+                diff.append(f"{s}: {x:.4g}→{y:.4g}")
+        if diff:
+            bad.append({"case": case["name"], "factor": f, "kind": "浓度漂移",
+                        "detail": "; ".join(diff[:5])})
     return bad
 
 
@@ -261,26 +302,39 @@ def check_cons(cases: list[dict], limit: int | None = None) -> list[dict]:
     """
     use = cases[:limit] if limit else cases
     bad: list[dict] = []
+    jobs = _jobs()
+    if jobs > 1 and len(use) > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=jobs) as ex:
+            for row in ex.map(_cons_one, use):
+                bad.extend(row)
+        return bad
     for c in use:
-        try:
-            r = _react(c)
-        except Exception as e:
-            bad.append({"case": c["name"], "kind": "异常",
-                        "detail": f"{type(e).__name__}: {e}"})
-            continue
-        ne = r.net_equation
-        if ne is not None:
-            v = _conservation(ne)
-            if v:
-                bad.append({"case": c["name"], "kind": "净方程不守恒",
-                            "detail": "; ".join(v)})
-        for i, eq in enumerate(getattr(r, "equations", None) or [], 1):
-            v = _conservation(eq)
-            if v:
-                bad.append({"case": c["name"],
-                            "kind": f"分步方程#{i} 不守恒",
-                            "detail": "; ".join(v)})
-                break          # 每例只报第一条，避免同一病灶刷屏
+        bad.extend(_cons_one(c))
+    return bad
+
+
+def _cons_one(case: dict) -> list[dict]:
+    """单例守恒检查（worker 入口：进程池需要可 pickle 的模块级函数）。"""
+    bad: list[dict] = []
+    try:
+        r = _react(case)
+    except Exception as e:                           # noqa: BLE001
+        return [{"case": case["name"], "kind": "异常",
+                 "detail": f"{type(e).__name__}: {e}"}]
+    ne = r.net_equation
+    if ne is not None:
+        v = _conservation(ne)
+        if v:
+            bad.append({"case": case["name"], "kind": "净方程不守恒",
+                        "detail": "; ".join(v)})
+    for i, eq in enumerate(getattr(r, "equations", None) or [], 1):
+        v = _conservation(eq)
+        if v:
+            bad.append({"case": case["name"],
+                        "kind": f"分步方程#{i} 不守恒",
+                        "detail": "; ".join(v)})
+            break          # 每例只报第一条，避免同一病灶刷屏
     return bad
 
 
@@ -300,25 +354,37 @@ def main(argv: list[str]) -> int:
         i = args.index("--n")
         limit = int(args[i + 1])
         del args[i:i + 2]
+    jobs = _jobs()
+    for flag in ("--jobs",):
+        if flag in args:
+            i = args.index(flag)
+            jobs = int(args[i + 1])
+            del args[i:i + 2]
     picks = [a for a in args if a in _KINDS] or list(_KINDS)
     verbose = "--all" in args
     cases = load_cases()
     if limit:
         cases = cases[:limit]
     total_bad = 0
-    print(f"不变量审计：{len(cases)} 例 · 检查 {', '.join(picks)}")
+    import time
+    t0 = time.perf_counter()
+    print(f"不变量审计：{len(cases)} 例 · 检查 {', '.join(picks)}"
+          f" · jobs={jobs}")
     for key in picks:
         title, fn = _KINDS[key]
+        t1 = time.perf_counter()
         bad = fn(cases)
+        el = time.perf_counter() - t1
         total_bad += len(bad)
         flag = "✓ 通过" if not bad else f"✗ {len(bad)} 条违规"
-        print(f"\n{title}  {flag}")
+        print(f"\n{title}  {flag}  [{el:.1f}s]")
         show = bad if verbose else bad[:12]
         for b in show:
             print(f"  · {b['case'][:34]:36} [{b['kind']}] {b['detail'][:100]}")
         if len(bad) > len(show):
             print(f"  … 另有 {len(bad) - len(show)} 条（--all 全列）")
-    print(f"\n===== 违规合计 {total_bad} 条 =====")
+    print(f"\n===== 违规合计 {total_bad} 条 "
+          f"（总耗时 {time.perf_counter() - t0:.1f}s）=====")
     return 0 if total_bad == 0 else 1
 
 

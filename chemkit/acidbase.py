@@ -308,6 +308,15 @@ def dist_charge(pka: tuple, q: tuple, M: float, V: float, pH: float,
     去质子态占优，电荷 → −0.1；NH₄⁺/NH₃（order = [NH₃, NH₄⁺]）——
     pH 7 < pKa 9.25 时质子化态占优，电荷 → +0.1。
     `sgn=None` 等价全 +1（旧口径；仅当调用方确知链序与标签同向时可用）。
+
+    **量纲（T1，v0.6.4 修）**：`M` 是**账本摩尔量**（`charge_pH` 里
+    `rec[2] += m`，与 `fixed += z·m` 同源），所以本函数必须返回 mol
+    ——与 `_F` 的 `V·h − V·oh`、`fixed`、`z·V·cm` 同量纲。旧实现写成
+    `M·V·(sz/sw) if V != 1.0 else M·(sz/sw)`：V≠1 时返回 mol·L，**整个
+    方程混进一个体积因子**，同一浓度体系改体积即漂移（实测 GaCl₃+4NaOH
+    pH 13.95 → 6.85，跨 7.1 个单位）。V=1 时 mol·L 数值恰好等于 mol，
+    故 1378 例里 1370 例 V=1 全部隐身。`V` 参数保留（调用方签名稳定），
+    但**不再进入返回值**。
     """
     n = len(pka) + 1
     logw = [0.0]
@@ -322,7 +331,7 @@ def dist_charge(pka: tuple, q: tuple, M: float, V: float, pH: float,
         wi = 10.0 ** (logw[i] - mx)
         sw += wi
         sz += q[i] * wi
-    return M * V * (sz / sw) if V != 1.0 else M * (sz / sw)
+    return M * (sz / sw)
 
 
 def ledger_charge(ledger: dict) -> float:
@@ -510,9 +519,15 @@ def charge_pH(ledger: dict, V: float, T, T_K: float,
             sw = sum(ws)
             mq = sum(q[i] * ws[i] for i in range(n)) / sw
             mc = sum(cs[i] * ws[i] for i in range(n)) / sw
-            tot += M * V * mq
-            der -= ln10 * M * V * (sum(q[i] * cs[i] * ws[i] for i in range(n))
-                                   / sw - mq * mc)
+            # **量纲（T1，v0.6.4 修）**：M 是账本摩尔量 ⟹ 族电荷项 = M·⟨q⟩
+            # （mol）。旧实现写 `M * V * mq`（mol·L），与上方 `_F` 走
+            # `dist_charge` 的口径**不一致**：fast 路径的 Newton 同时求值
+            # `_F` 与 `_FD`，两把尺子差一个 V 因子 ⟹ 收敛到错根
+            # （实测同浓度 GaCl₃+NaOH：V=0.1/1/10 分别给 pH
+            # 12.95/10.40/6.85，而 F/V 曲线三体积逐点相同、根应唯一）。
+            tot += M * mq
+            der -= ln10 * M * (sum(q[i] * cs[i] * ws[i] for i in range(n))
+                               / sw - mq * mc)
         return tot, der
 
     if _F(lo) < 0.0:
