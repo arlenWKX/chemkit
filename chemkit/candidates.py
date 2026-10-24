@@ -22,14 +22,10 @@ from .core import (elements_of, charge_of, balance,
 from .data import Tables, _half_balance
 
 # ---------------------------------------------------------- 全局常数（§7 纪律：唯一、文档化）
-# ---- 外界气相模型：总压 101.3 kPa 惰性环境（外界气相不含产物气体）----
-# 热力学气体活度 a = p/p°（p°=101.325 kPa 标准压力）。
-# 自产气体：惰性环境下外界 p_i≈0，气体不断逸出直至残余分压与扫气速率达到
-# 稳态；按残余分压约定 P_RES=1 kPa（开放烧杯自然对流量级）→ a≈1e-2。
-# 外加供给气体（投料中的气体试剂）：可溶气体试剂（氨水、氯水等）真实形态
-# 是溶质，按溶质活度 a=c/c°（"持续供给"语义由账本浓度承载）——不用
-# p/p°≈1，否则 NH3 络合溶解（AgCl+浓氨水）等全部被低估。
-# 自产气体按泡点判据（见 S_of 气体分支）。
+# ---- 外界气相模型：恒压第二相，X(aq) ⇌ X(g) 由引擎作普通候选求解 ----
+# 热力学气体活度 a = p/p°（p°=101.325 kPa 标准压力）。有 Henry 数据时，
+# 相平衡由 H(T) 与外压决定；无数据时沿用 P_RES=1 kPa 的等效残余分压约定。
+# 投料中的气体试剂初始是溶质，按溶质活度 a=c/c°，随后与气相统一平衡。
 P_STD_KPA = 101.325             # 热力学标准压力
 P_EXT_KPA = 101.3               # 外界气相总压（惰性环境）
 P_RES_KPA = 1.0                 # 逸出气体残余分压约定（惰性扫气稳态）
@@ -298,7 +294,7 @@ def _set_proton_roots(T) -> None:
 
 @dataclass(slots=True)
 class Cand:
-    kind: str                 # redox / proton / precip / dissolve / complex / decomplex / derived
+    kind: str                 # redox / proton / precip / dissolve / complex / decomplex / derived / gas
     r: dict                   # 反应物（H+ 正则形，可含 "H^+" 与 "H_2O"）
     pr: dict                  # 产物
     logK: float               # 298 K 值；redox 为 n*dE0/0.05916

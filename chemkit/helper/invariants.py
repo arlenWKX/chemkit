@@ -142,8 +142,7 @@ def check_scale(cases: list[dict], factors=(0.1, 1.0, 10.0),
     体积线性变化，故不比较 mol，只比较 mol/L。
 
     注意：气相也要比——泡点是**浓度**界（`c_sat = H·p`），同浓度就该同泡点，
-    与总体积无关。这正是它能抓住 `_equil_gas_phase` 里
-    `cap`（mol）与浓度混用那类错误的原因。
+    与总体积无关。这能抓住相平衡把摩尔数与浓度混用那类错误。
     """
     bad: list[dict] = []
     use = cases[:limit] if limit else cases

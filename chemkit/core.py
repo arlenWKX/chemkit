@@ -55,7 +55,10 @@ def _parse(name: str) -> tuple[dict, int]:
     if m:
         charge = int(m.group(1) or "1") * (1 if m.group(2) == "+" else -1)
         s = s[: m.start()]
-    # 2. 水合点
+    # 2. 气相标记不改变化学成分
+    if s.endswith("(g)"):
+        s = s[:-3]
+    # 3. 水合点
     if "·" in s or "." in s:
         parts = re.split(r"[·.]", s)
         total: dict = {}
@@ -69,7 +72,7 @@ def _parse(name: str) -> tuple[dict, int]:
             for k, v in sub.items():
                 total[k] = total.get(k, 0) + coef * v
         return total, 0
-    # 3. 主体
+    # 4. 主体
     elems = _parse_body(s)
     return elems, charge
 

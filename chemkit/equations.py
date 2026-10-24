@@ -947,8 +947,8 @@ def _collect_steps(steps: list[dict]) -> list[tuple[dict, dict, float]]:
     """从原始 steps 收集显著步骤：(reactants, products, extent)。
 
     - extent < STEP_MIN：噪声，跳过；
-    - kind == 'dissolve'：物理溶解（NaHCO3 → Na+ + HCO3-），离子方程式
-      不体现——真正参与反应的是溶解后的离子，由后续步骤表达；
+    - kind == 'dissolve'/'gas'：物理溶解或纯换相，不作为化学反应呈现；
+      真正参与反应的是溶解后的物种，由后续步骤表达；
     - 同一净反应（含 H2O 挂侧差异）聚合：extent 求和；
     - 互为逆反应的对子在聚合时自然抵消（extent 相减）。
     - 瞬态中间体塌缩：复杂形成+解离对（如 Ag+ + 2I- → [AgI2]-,
@@ -959,7 +959,7 @@ def _collect_steps(steps: list[dict]) -> list[tuple[dict, dict, float]]:
     reps: dict[tuple, tuple[dict, dict]] = {}
     for st in steps:
         ext = st.get("extent", 0.0)
-        if ext < STEP_MIN or st.get("kind") == "dissolve":
+        if ext < STEP_MIN or st.get("kind") in ("dissolve", "gas"):
             continue
         eq = st.get("equation", "")
         if not eq:
